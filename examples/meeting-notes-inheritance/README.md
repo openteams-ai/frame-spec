@@ -10,11 +10,11 @@ This example shows a parent/child inheritance pattern for consistent, composable
 
 ## How to use them
 
-Run the parent alone to get clean meeting notes.
+Import and activate the parent frame alone in Collab, or paste it into another AI chat with your meeting notes, to get clean meeting notes.
 
-Run a child alone to get just that output.
+Import and activate a child frame alone to get just that output.
 
-Run the parent and a child together to get both — each printed exactly once, no duplication.
+Import and activate the parent and a child together to get both — each printed exactly once, no duplication.
 
 ## What this demonstrates
 
