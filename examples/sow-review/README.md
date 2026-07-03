@@ -4,6 +4,64 @@ A set of judgment frames for reviewing a **Statement of Work** from the smaller 
 perspective. Each lens reads the same SOW for a different class of risk. Use one lens or
 several — every lens inherits the shared context frame.
 
+## Why frames for SOW review
+
+A script can extract dates, dollar amounts, and named roles from a SOW. That's the
+deterministic layer — and frames don't help there.
+
+SOW review is an interpretation task. The model needs to read a contract and decide what
+counts as a risk — which requires vocabulary, norms, and output discipline that a generic
+prompt doesn't provide. Without a frame, the output tends to be complete but generic: it
+surfaces the same five concerns regardless of what the SOW actually says, and it can't
+distinguish a termination clause that's standard from one that's a deal-breaker for a small
+vendor on a fixed-fee engagement.
+
+The frames here don't compute anything. They tell the model **how to read**, **what to look
+for**, and **how to express what it found**:
+
+- The context frame establishes the vendor's specific realities — size, fee structure, team
+  location, background check timelines — so every lens evaluates the contract against *this*
+  vendor's constraints, not a generic vendor
+- Each role lens brings a different reading posture: what a Contract Reviewer flags as a
+  payment risk looks different from what a Delivery Manager flags as an invoicing blocker,
+  even when they're reading the same clause
+- The output discipline is built into the frame: flag critical issues to resolve before
+  signing, items to watch during execution, and strengths worth noting — not a freeform
+  summary the model decides to structure on its own
+
+The result is something auditable: findings tied to specific clauses, risks named with enough
+precision to act on, and explicit acknowledgment when something couldn't be assessed rather
+than a review that silently skips it.
+
+## What to send
+
+**Required:**
+- The SOW itself
+
+**Strongly recommended:**
+- The master agreement or MSA — payment terms (net 30/60/90/120), IP ownership, liability
+  caps, and indemnification clauses are almost never in the SOW; if you omit this, the frame
+  cannot assess where the real financial and legal risk actually sits
+- Any referenced attachments or exhibits — scope assumptions are frequently deferred to
+  appendices that appear in the SOW by name but aren't included in the document
+
+**Helpful context to include in your prompt:**
+- Team location and whether any members are outside the client's country
+- Whether the engagement is fixed-fee, T&M, or contingent
+- Known constraints (e.g., no cleared personnel available, fully remote team, AI tooling
+  is part of your standard workflow)
+
+**What the frame should say when something is missing:**
+
+The frame should name what it couldn't assess rather than silently skipping those sections.
+If you don't provide the master agreement, a good review will say something like: *"Master
+agreement not provided — payment terms, IP ownership, and indemnification clauses could not
+be assessed. Review these before signing."* If you don't provide company context, findings
+should note which recommendations assume a small, remote, fixed-fee vendor and flag where
+that assumption matters.
+
+Generic output that reads as complete when it isn't is worse than an explicit gap.
+
 ## Layering
 
 ```
