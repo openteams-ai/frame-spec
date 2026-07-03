@@ -33,7 +33,6 @@ Examples:
 - how to work with a specific customer
 - what counts as compliant or acceptable in a proposal
 - what terminology or reporting style should be used
-- context that orients judgment, not something that can be fully automated
 
 If the context is durable and should shape repeated work, it is a good candidate for a Frame.
 
