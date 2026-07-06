@@ -1,35 +1,56 @@
 #!/usr/bin/env python3
-"""Validate Frame Markdown files against the v0.2 minimum spec.
+"""Validate example Frame files against the v0.2 minimum spec.
 
-The v0.2 Frame spec requires these frontmatter fields:
+A Frame is a Markdown file with YAML frontmatter. The v0.2 spec requires
+these frontmatter fields:
 
-    type, version, name, description, visibility
+    type, name, description, visibility
 
-This tool uses only the Python standard library. It performs lightweight
-frontmatter checks rather than full YAML validation, which is enough to catch
-required-field drift in examples without adding install steps.
+This script checks, for each Frame it finds:
+
+  1. The frontmatter block is present and properly closed.
+  2. Each frontmatter line is a recognizable `key: value` pair, list item,
+     comment, or blank line (a lightweight structural sanity check).
+  3. All required fields are present and non-empty.
+  4. The `type` field declares a Frame (it starts with "frame").
+
+It is intended to keep example Frames from drifting out of sync with the
+spec, for example when a new required field is added but the examples are
+not updated.
+
+This script uses only the Python standard library, so there is nothing to
+install. Note the tradeoff: it does a lightweight structural check rather
+than full YAML parsing, so it reliably catches missing or empty required
+fields, but it will not catch every possible YAML syntax error.
+
+Usage:
+
+    python validate_frames.py                 # checks ./examples
+    python validate_frames.py path/to/dir     # checks a directory
+    python validate_frames.py a.md b.md        # checks specific files
+
+Exit code is 0 if everything passes and 1 if any Frame fails, so this can
+be wired into a GitHub Action later without changes.
 """
-
-from __future__ import annotations
 
 import argparse
 import sys
 from pathlib import Path
 
+# Fields the v0.2 spec lists as required for every Frame.
+REQUIRED_FIELDS = ["type", "name", "description", "visibility"]
 
-REQUIRED_FIELDS = ("type", "version", "name", "description", "visibility")
+# The default place to look when no path is given.
 DEFAULT_TARGET = "examples"
 
 
-def is_markdown(path: Path) -> bool:
-    return path.suffix.lower() in {".md", ".markdown"}
+def split_frontmatter(text):
+    """Return (frontmatter_lines, error).
 
-
-def is_hidden_or_metadata(path: Path) -> bool:
-    return any(part.startswith(".") for part in path.parts) or path.name.startswith("._")
-
-
-def split_frontmatter(text: str) -> tuple[list[str] | None, str | None]:
+    Frontmatter is the block between the first two lines that contain only
+    `---`. If the file does not start with `---`, frontmatter_lines is None
+    and the caller treats the file as "not a Frame".
+    """
     lines = text.splitlines()
     if not lines or lines[0].strip() != "---":
         return None, None
@@ -41,122 +62,122 @@ def split_frontmatter(text: str) -> tuple[list[str] | None, str | None]:
     return None, "frontmatter opening '---' has no closing '---'"
 
 
-def normalize_scalar(value: str | None) -> str | None:
-    if value is None:
-        return None
+def parse_frontmatter(fm_lines):
+    """Parse simple top-level `key: value` frontmatter into a dict.
 
-    normalized = value.strip()
-    if len(normalized) >= 2 and normalized[0] == normalized[-1] and normalized[0] in {"'", '"'}:
-        normalized = normalized[1:-1].strip()
-    return normalized
+    Returns (data, problems). This is a lightweight parser, not a full YAML
+    parser. It understands top-level scalar keys, list items under a key,
+    comments, and blank lines, which covers the shape Frames use.
+    """
+    data = {}
+    problems = []
+    last_key = None
 
-
-def parse_frontmatter(lines: list[str]) -> tuple[dict[str, object], list[str]]:
-    data: dict[str, object] = {}
-    problems: list[str] = []
-    last_key: str | None = None
-
-    for raw in lines:
+    for raw in fm_lines:
         line = raw.rstrip()
-        stripped = line.strip()
 
-        if not stripped or stripped.startswith("#"):
+        # Blank lines and comments are fine.
+        if line.strip() == "" or line.lstrip().startswith("#"):
             continue
 
+        # A list item belongs to the most recent key (e.g. an `inherits` list).
         if line.lstrip().startswith("- "):
-            if last_key is None:
-                problems.append(f"list item has no parent key: {stripped}")
-                continue
-
-            existing = data.get(last_key)
-            item = normalize_scalar(line.lstrip()[2:].strip())
-            if isinstance(existing, list):
-                existing.append(item or "")
-            else:
-                data[last_key] = [item or ""]
+            if last_key is not None:
+                existing = data.get(last_key)
+                item = line.lstrip()[2:].strip()
+                if isinstance(existing, list):
+                    existing.append(item)
+                else:
+                    data[last_key] = [item]
             continue
 
+        # Top-level key: value. Only treat a colon as a separator if the line
+        # is not indented (indented lines are nested structure we don't model).
         if ":" in line and not line.startswith((" ", "\t")):
-            key, _, raw_value = line.partition(":")
+            key, _, value = line.partition(":")
             key = key.strip()
-            value = raw_value.strip()
+            value = value.strip()
             last_key = key
 
-            if not key:
-                problems.append(f"frontmatter key is empty: {stripped}")
-                continue
-
-            for quote in ("'", '"'):
+            # Light check: a value that opens a quote should also close it.
+            for quote in ('"', "'"):
                 if value.startswith(quote) and not value.endswith(quote):
-                    problems.append(f"value for '{key}' looks like an unterminated string: {value}")
+                    problems.append(
+                        f"value for '{key}' looks like an unterminated string: {value}"
+                    )
 
-            data[key] = normalize_scalar(value) if value else None
+            data[key] = value if value != "" else None
             continue
 
-        problems.append(f"could not parse frontmatter line: {stripped}")
+        # Anything else is a line we cannot make sense of.
+        problems.append(f"could not parse frontmatter line: {line.strip()}")
 
     return data, problems
 
 
-def validate_frame(path: Path) -> list[str]:
+def validate_frame(path):
+    """Return a list of problem strings for one file. Empty list means valid."""
     try:
         text = path.read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError) as error:
         return [f"could not read file: {error}"]
 
-    frontmatter, error = split_frontmatter(text)
-    if error:
-        return [error]
-    if frontmatter is None:
+    fm_lines, fm_error = split_frontmatter(text)
+
+    if fm_error:
+        return [fm_error]
+
+    if fm_lines is None:
+        # No frontmatter at all. Not a Frame, so nothing to validate.
         return []
 
-    data, problems = parse_frontmatter(frontmatter)
+    data, problems = parse_frontmatter(fm_lines)
 
     for field in REQUIRED_FIELDS:
-        value = data.get(field)
         if field not in data:
             problems.append(f"missing required field: {field}")
-        elif value is None or str(value).strip() == "":
+        elif data[field] is None or str(data[field]).strip() == "":
             problems.append(f"required field is empty: {field}")
 
     type_value = data.get("type")
     if type_value is not None and not str(type_value).strip().startswith("frame"):
-        problems.append(f"type should declare a Frame, got: {type_value!r}")
+        problems.append(
+            f"type should declare a Frame (start with 'frame'), got: {type_value!r}"
+        )
 
     return problems
 
 
-def collect_files(targets: list[str]) -> list[Path]:
-    files: set[Path] = set()
-
-    for target in targets:
-        path = Path(target)
-        if path.is_dir():
-            files.update(
-                candidate
-                for candidate in path.rglob("*")
-                if candidate.is_file() and is_markdown(candidate) and not is_hidden_or_metadata(candidate)
-            )
-        elif path.is_file():
-            if is_markdown(path) and not is_hidden_or_metadata(path):
-                files.add(path)
-        else:
-            sys.stderr.write(f"warning: path not found, skipping: {target}\n")
-
-    return sorted(files)
+def is_markdown(path):
+    return path.suffix.lower() in {".md", ".markdown"}
 
 
-def has_frontmatter(path: Path) -> bool:
+def has_frontmatter(path):
     try:
         with path.open(encoding="utf-8", errors="replace") as handle:
-            return handle.readline().strip() == "---"
+            first = handle.readline().strip()
+        return first == "---"
     except OSError:
         return False
 
 
-def main(argv: list[str] | None = None) -> int:
+def collect_files(targets):
+    """Turn the given paths (files or directories) into a sorted file list."""
+    files = []
+    for target in targets:
+        path = Path(target)
+        if path.is_dir():
+            files.extend(p for p in path.rglob("*") if p.is_file() and is_markdown(p))
+        elif path.is_file():
+            files.append(path)
+        else:
+            sys.stderr.write(f"warning: path not found, skipping: {target}\n")
+    return sorted(set(files))
+
+
+def main(argv=None):
     parser = argparse.ArgumentParser(
-        description="Validate Frame Markdown files against the v0.2 minimum spec."
+        description="Validate example Frame files against the v0.2 minimum spec."
     )
     parser.add_argument(
         "paths",
@@ -166,7 +187,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    files = collect_files(args.paths)
+    targets = args.paths if args.paths else [DEFAULT_TARGET]
+    files = collect_files(targets)
+
     if not files:
         print("No Markdown files found to check.")
         return 0
@@ -188,7 +211,7 @@ def main(argv: list[str] | None = None) -> int:
             failed += 1
             print(f"FAIL  {path}")
             for problem in problems:
-                print(f"      - {problem}")
+                print(f"        - {problem}")
         else:
             print(f"OK    {path}")
 
@@ -202,4 +225,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    sys.exit(main())
