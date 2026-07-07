@@ -67,7 +67,7 @@ For the current boundary, read [docs/tools-and-aids.md](docs/tools-and-aids.md).
 - Read [docs/future-directions.md](docs/future-directions.md) for the map of future and discussion documents.
 - Read [docs/spec-enhancement-process.md](docs/spec-enhancement-process.md) for a proposed lightweight process that separates exploratory ideas from active spec proposals.
 - Read [docs/spec-and-implementation.md](docs/spec-and-implementation.md) for the boundary between the Frame spec and the systems that realize Frames.
-- Read [references/Intelligence Hub Whitepaper - v5.md](references/Intelligence%20Hub%20Whitepaper%20-%20v5.md) for the repository copy of the latest whitepaper that informed the later spec alignment notes.
+- Read [references/Intelligence Hub Whitepaper - v6.md](references/Intelligence%20Hub%20Whitepaper%20-%20v6.md) for the repository copy of the latest whitepaper that informed the later spec alignment notes.
 - Review [examples/self-frame/README.md](examples/self-frame/README.md) and [examples/nebi-frame-package/README.md](examples/nebi-frame-package/README.md) for richer future-oriented examples.
 
 ## Repository Layout
@@ -108,6 +108,7 @@ examples/
 references/
   Intelligence Hub Whitepaper - v4.md
   Intelligence Hub Whitepaper - v5.md
+  Intelligence Hub Whitepaper - v6.md
   travis-definition.md
 ```
 
