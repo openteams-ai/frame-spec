@@ -58,9 +58,11 @@ correctly say "X could not be assessed" instead of silently skipping it.
 
 ---
 
-## Other things that give it risk signal
+## Other information worth pairing with the frame
 
-A few sources worth considering as you extend this, roughly in order of ease to add:
+A few kinds of information that add real risk signal if you include them alongside the core
+inputs above. The frame can't go get these itself — but if you have them on hand, even a
+sentence or two is worth adding:
 
 - **Contract/master agreement terms** — payment terms (net 60/90/120), liability caps,
   termination clauses. These live outside the SOW itself and are easy to overlook, but define
@@ -76,8 +78,7 @@ A few sources worth considering as you extend this, roughly in order of ease to 
   in conversation.
 - **Cross-project comparison** — if the same client has multiple active engagements, risk
   signals on one project (e.g., non-renewal hints) are relevant context for the others, and vice
-  versa. Worth eventually feeding sibling-project snapshots in, not just the one project's
-  material.
+  versa. Worth including sibling-project snapshots, not just the one project's material.
 - **Industry/regulatory shifts** — for regulated-industry clients, upcoming regulatory changes
   affecting AI tool use or data handling can create risk that has nothing to do with how the
   engagement itself is going.
@@ -85,6 +86,7 @@ A few sources worth considering as you extend this, roughly in order of ease to 
   postings suddenly listing in-house ML engineering roles could be a soft signal of insourcing
   intent.
 
-Most of these require new data connections (news search, ticketing systems, etc.) rather than
-sources you may already have available. Treat them as a "phase two" list — worth knowing about,
-not worth blocking an initial run on.
+None of these should block an initial run. They're context a person gathers and pastes in —
+"client announced layoffs last month," "payment terms are net 90, no liability cap" — not data
+the frame connects to. When you include them, label them like any other input section so the
+frame can cite them as evidence.
