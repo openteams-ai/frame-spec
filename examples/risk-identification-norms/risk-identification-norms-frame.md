@@ -48,7 +48,7 @@ assume it means.
   escalation-flavored language (CC'ing more senior people, "per my last message" phrasing)
   compared to earlier in the engagement — not tone in isolation, but a *change* in tone.
 - **Unprompted engagement.** Healthy accounts generate organic follow-on interest ("could you
-  also help with X"). Its total absence over a long stretch isn't damning on its own, but is
+  also help with X"). Its total absence over a long stretch isn't a concern on its own, but is
   worth noting if paired with other flags.
 
 ## Commercial Norms
