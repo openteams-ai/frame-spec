@@ -39,7 +39,7 @@ If the context is durable and should shape repeated work, it is a good candidate
 ## What Frames Are Not
 
 - **Not organizational memory.** A frame is not a wiki, knowledge base, or repository of everything the org knows. It carries a specific slice — intent, meaning, purpose, judgment — not a complete record.
-- **Not the full context for a model or prompt.** The task-specific context — the request itself, attachments, tool output, app state — still arrives with the task. A frame travels alongside that context, not in place of it.
+- **Not the full context for a model or prompt.** The task-specific context — the request itself, attachments, tool output, app state — still arrives separately from the frame. A frame travels alongside that context, not in place of it.
 - **Not a Cog or Op.** A frame doesn't execute anything. It orients the Cog that does (a Cog is an AI worker; an Op is a workflow that coordinates Cogs and humans). Frames carry context; Cogs consume it; Ops coordinate the work.
 - **Not a one-off prompt.** If it only applies to one task, it belongs in the prompt. A frame earns its place when the same intent, norms, or judgment needs to travel across multiple tasks, tools, or agents.
 - **Not a substitute for deterministic computation.** If the output can be produced by a formula or a script, use the formula or the script. A frame can guide how the result is interpreted, framed, or reported, but it should not replace the calculation itself.
