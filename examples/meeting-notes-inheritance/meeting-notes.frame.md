@@ -5,7 +5,7 @@ name: Meeting Notes
 description: Turns a raw meeting transcript into house-style notes — action items first, then themed discussion sections — the same way regardless of who runs it. Parent frame for person- and project-specific note variations.
 visibility: internal
 scope: team
-maintainer: smcmillan@openteams.com
+author: smcmillan@openteams.com
 ---
 
 # Meeting Notes

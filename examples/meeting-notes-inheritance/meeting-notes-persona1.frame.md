@@ -5,7 +5,7 @@ name: Meeting Notes — Persona 1
 description: Child frame. Outputs only a GitHub Issues section derived from the meeting. Run it alone for just issues, or alongside the parent Meeting Notes frame to get notes + issues with no duplication.
 visibility: internal
 scope: user:persona1
-maintainer: smcmillan@openteams.com
+author: smcmillan@openteams.com
 inherits: ./meeting-notes.frame.md
 ---
 

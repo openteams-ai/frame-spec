@@ -5,7 +5,7 @@ name: Meeting Notes — Persona 2
 description: Child frame. Outputs only a per-participant program-manager briefing. Run it alone for just the briefing, or alongside the parent Meeting Notes frame to get notes + briefing with no duplication.
 visibility: internal
 scope: user:persona2
-maintainer: smcmillan@openteams.com
+author: smcmillan@openteams.com
 inherits: ./meeting-notes.frame.md
 ---
 

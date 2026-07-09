@@ -16,6 +16,8 @@ Import and activate a child frame alone to get just that output (either formatte
 
 Import and activate the parent and a child together to get both — each printed exactly once, no duplication (the full meeting notes plus the GitHub Issues section, or the full meeting notes plus the program-manager briefing).
 
+In Collab, inheritance works by manually activating all of the frames you want in context. Each frame's instructions state how it composes with the others, so the example doesn't depend on automatic resolution of the `inherits` reference.
+
 ## What this demonstrates
 
 Each child frame declares what it adds and what it does not reproduce. This keeps output consistent and composable without the parent needing to know about its children.
