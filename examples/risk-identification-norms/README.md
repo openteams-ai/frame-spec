@@ -85,8 +85,3 @@ sentence or two is worth adding:
 - **Vendor/competitor mentions in the client's own public materials** — e.g., a client's job
   postings suddenly listing in-house ML engineering roles could be a soft signal of insourcing
   intent.
-
-None of these should block an initial run. They're context a person gathers and pastes in —
-"client announced layoffs last month," "payment terms are net 90, no liability cap" — not data
-the frame connects to. When you include them, label them like any other input section so the
-frame can cite them as evidence.
