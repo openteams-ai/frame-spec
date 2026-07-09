@@ -83,7 +83,7 @@ These are not required in `v0.2`, but they are encouraged:
 
 - `version`
 - `scope`
-- `author`
+- `maintainer`
 - `inherits`
 
 ### `version`
@@ -112,9 +112,9 @@ Examples:
 
 `v0.2` does not require a formal scope grammar.
 
-### `author`
+### `maintainer`
 
-The person, team, or organization that wrote the Frame.
+The person, team, or organization that maintains the Frame.
 
 ### `inherits`
 
@@ -222,7 +222,7 @@ description: Writing guidance for engineering documentation that extends a broad
 visibility: internal
 version: 0.1.0
 scope: department
-author: engineering enablement
+maintainer: engineering enablement
 inherits: editorial-style-guide
 ---
 
@@ -235,7 +235,7 @@ inherits: editorial-style-guide
 - Code examples are preferred over abstract descriptions.
 ```
 
-This example includes several suggested fields from `v0.2`, including `version`, `scope`, `author`, and `inherits`.
+This example includes several suggested fields from `v0.2`, including `version`, `scope`, `maintainer`, and `inherits`.
 
 ## Inheritance Example
 

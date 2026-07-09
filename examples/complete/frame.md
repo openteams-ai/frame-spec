@@ -5,7 +5,7 @@ description: Writing guidance for engineering documentation that builds on a bro
 visibility: internal
 version: 0.1.0
 scope: department
-author: engineering enablement
+maintainer: engineering enablement
 inherits: editorial-style-guide
 ---
 

@@ -21,7 +21,7 @@ A valid Frame should be a Markdown file with YAML frontmatter that includes:
 
 It may also include:
 - scope
-- author
+- maintainer
 
 The rest of the file should be normal Markdown containing useful contextual guidance.
 
@@ -51,7 +51,7 @@ Phase 2: Draft the Frame
 - Always include `type: frame`.
 - Always include `name`, `description`, and `visibility`.
 - Prefer `visibility: shared` unless the conversation clearly points to another value.
-- Include `scope` and `author` when supported by the conversation.
+- Include `scope` and `maintainer` when supported by the conversation.
 - Keep the draft concise, practical, and reusable.
 - Make sure it reads like a reusable shared working context, not a project summary or action list.
 - Write it so it can be shared with both OpenTeams and the customer.

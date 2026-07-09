@@ -4,7 +4,7 @@ name: "OpenTeams Brand Voice"
 description: "Shared guidance for how OpenTeams communicates in external-facing writing."
 visibility: internal
 scope: company
-author: "marketing"
+maintainer: "marketing"
 ---
 
 # OpenTeams Brand Voice

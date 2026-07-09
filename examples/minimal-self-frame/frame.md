@@ -5,7 +5,7 @@ description: Minimal self-referential Frame describing how the current adopt-now
 visibility: internal
 version: 0.1.0
 scope: project
-author: frame-spec-authors
+maintainer: frame-spec-maintainers
 ---
 
 # Frame Spec v0.2 Working Frame
@@ -21,7 +21,7 @@ author: frame-spec-authors
 - A `v0.2` Frame is a Markdown file with YAML frontmatter.
 - It must include `type: frame`, `name`, `description`, and `visibility`.
 - It should usually include `version`, especially when the Frame will be revised or shared over time.
-- It may also include fields like `scope` and `author`.
+- It may also include fields like `scope` and `maintainer`.
 - The rest of the file should contain useful cultural or operational context in normal Markdown.
 
 ## Ways Of Working

@@ -335,8 +335,8 @@
                   </div>
 
                   <div class="wide field">
-                    <label for="author">Author</label>
-                    <input id="author" type="text" value="" placeholder="Person, team, or organization" />
+                    <label for="maintainer">Maintainer</label>
+                    <input id="maintainer" type="text" value="" placeholder="Person, team, or organization" />
                   </div>
                 </div>
               </div>
@@ -429,7 +429,7 @@ What does good work look like here?"></textarea>
         description: document.getElementById("description"),
         visibility: document.getElementById("visibility"),
         scope: document.getElementById("scope"),
-        author: document.getElementById("author"),
+        maintainer: document.getElementById("maintainer"),
         goals: document.getElementById("goals"),
         terminology: document.getElementById("terminology"),
         rules: document.getElementById("rules"),
@@ -455,7 +455,7 @@ What does good work look like here?"></textarea>
         description: "Shared guidance for how OpenTeams communicates in external-facing writing.",
         visibility: "internal",
         scope: "company",
-        author: "marketing",
+        maintainer: "marketing",
         goals: `Be clear, direct, and credible.
 Avoid hype when describing technical capabilities.`,
         terminology: `Prefer "Frame" over "alignment file".
@@ -498,7 +498,7 @@ Prefer plain explanation over jargon when possible.`,
         const description = fields.description.value.trim();
         const visibility = fields.visibility.value.trim();
         const scope = fields.scope.value.trim();
-        const author = fields.author.value.trim();
+        const maintainer = fields.maintainer.value.trim();
 
         const frontmatter = [
           "---",
@@ -512,8 +512,8 @@ Prefer plain explanation over jargon when possible.`,
           frontmatter.push(`scope: ${scope}`);
         }
 
-        if (author) {
-          frontmatter.push(`author: ${yamlValue(author)}`);
+        if (maintainer) {
+          frontmatter.push(`maintainer: ${yamlValue(maintainer)}`);
         }
 
         frontmatter.push("---");

@@ -5,7 +5,7 @@ name: Frame Spec Stewardship
 description: Shared guidance for how the Frame spec should be evolved, reviewed, and discussed as a portable open standard.
 visibility: internal
 scope: project
-author: frame-spec-authors
+maintainer: frame-spec-maintainers
 ---
 
 # Frame Spec Stewardship
