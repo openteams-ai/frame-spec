@@ -12,11 +12,11 @@ This example shows a parent/child inheritance pattern for consistent, composable
 
 Import and activate the parent frame alone in Collab, or paste it into another AI chat with your meeting notes, to get clean meeting notes — action items first, then themed discussion sections.
 
-Import and activate a child frame alone to get just that output (either formatted notes for GitHub Issues or a per-participant program-manager briefing).
+In the tested Collab workflow, import and activate a child frame alone to get just that child output (either formatted notes for GitHub Issues or a per-participant program-manager briefing).
 
-Import and activate the parent and a child together to get both — each printed exactly once, no duplication (the full meeting notes plus the GitHub Issues section, or the full meeting notes plus the program-manager briefing).
+To get combined output in that workflow, import and activate the parent and a child together — each is printed exactly once, with no duplication (the full meeting notes plus the GitHub Issues section, or the full meeting notes plus the program-manager briefing).
 
-In Collab, inheritance works by manually activating all of the frames you want in context. Each frame's instructions state how it composes with the others, so the example doesn't depend on automatic resolution of the `inherits` reference.
+In this test, Collab required manual activation of both Frames because it did not automatically resolve the `inherits` reference. In an implementation that supports Frame Spec v0.2 inheritance resolution, activating the child should resolve and load the parent automatically, combining their guidance with the child taking precedence where they conflict.
 
 ## What this demonstrates
 
