@@ -5,9 +5,8 @@ name: Meeting Notes — Persona 1
 description: Child frame. Outputs only a GitHub Issues section derived from the meeting. Run it alone for just issues, or alongside the parent Meeting Notes frame to get notes + issues with no duplication.
 visibility: internal
 scope: user:persona1
-author: smcmillan@openteams.com
-status: draft
-inherits: meeting-notes
+maintainer: smcmillan@openteams.com
+inherits: ./meeting-notes.frame.md
 ---
 
 # Meeting Notes — Persona 1 (Issues)
@@ -20,7 +19,7 @@ printed exactly once.
 ## GitHub Issues
 
 Convert the meeting's work into issues ready to add to a GitHub project board.
-Format it to be **pasted back to Claude to create the issues.**
+Format it so it is ready to add to GitHub manually or to pass to an issue-creation assistant or workflow.
 
 ### What becomes an issue
 - One issue per **discrete deliverable or task** — usually each action item,
@@ -49,6 +48,6 @@ Rules:
 - **Title** is a short noun phrase, not a sentence.
 - **`Parent:`** appears only on sub-issues; its value must match the parent
   issue's Title exactly.
-- **Notes are optional** and come before the DOD. Keep them brief.
+- **Notes are optional** and come before the Definition of Done (DOD). Keep them brief.
 - **`# DOD` is required** on every issue — concrete, verifiable bullets
   describing the done state, not steps. Derive them from what was discussed.

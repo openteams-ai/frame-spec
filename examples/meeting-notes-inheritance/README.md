@@ -10,11 +10,11 @@ This example shows a parent/child inheritance pattern for consistent, composable
 
 ## How to use them
 
-Import and activate the parent frame alone in Collab, or paste it into another AI chat with your meeting notes, to get clean meeting notes.
+Import and activate the parent frame alone in Collab, or paste it into another AI chat with your meeting notes, to get clean meeting notes — action items first, then themed discussion sections.
 
-Import and activate a child frame alone to get just that output.
+Import and activate a child frame alone to get just that output (either formatted notes for GitHub Issues or a per-participant program-manager briefing).
 
-Import and activate the parent and a child together to get both — each printed exactly once, no duplication.
+Import and activate the parent and a child together to get both — each printed exactly once, no duplication (the full meeting notes plus the GitHub Issues section, or the full meeting notes plus the program-manager briefing).
 
 ## What this demonstrates
 
