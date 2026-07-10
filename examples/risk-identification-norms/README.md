@@ -2,7 +2,23 @@
 
 This README describes what to send the Risk Identification Norms frame so it can produce a
 risk register with minimal back-and-forth. Package everything as a single input (or a few
-clearly labeled sections) — the frame reads all of it together, not sequentially.
+clearly labeled sections) so the AI assistant receives it all alongside the active Frame. The
+Frame is passive guidance — it doesn't retrieve or process anything on its own; the assistant
+does the reading, using the Frame to know what to look for.
+
+## Data handling
+
+This frame works with sensitive material — client communications, contract values, personnel
+details, invoices, calendars, and security findings. Before sending any of it:
+
+- **Use only data you're authorized to share.** Confirm the engagement or client contract
+  permits this material being reviewed this way.
+- **Use an approved AI environment.** Send this material only to an AI environment your
+  organization has approved for data at this sensitivity level.
+- **Send the minimum necessary.** Include the excerpts that carry the signal, not entire
+  mailboxes, repositories, or document stores.
+- **Redact before sending.** Strip credentials, API keys, and other secrets, and remove
+  personal information that isn't needed to assess the risk.
 
 ## Required inputs
 
@@ -61,8 +77,8 @@ correctly say "X could not be assessed" instead of silently skipping it.
 ## Other information worth pairing with the frame
 
 A few kinds of information that add real risk signal if you include them alongside the core
-inputs above. The frame can't go get these itself — but if you have them on hand, even a
-sentence or two is worth adding:
+inputs above. The Frame won't pull these in on its own — the AI assistant only sees what you
+provide alongside it — but if you have them on hand, even a sentence or two is worth adding:
 
 - **Contract/master agreement terms** — payment terms (net 60/90/120), liability caps,
   termination clauses. These live outside the SOW itself and are easy to overlook, but define
@@ -70,9 +86,11 @@ sentence or two is worth adding:
 - **Public news about the client organization** — layoffs, leadership changes, funding/earnings
   news, M&A activity. A client-side reorg is one of the strongest external leading indicators of
   project risk and isn't visible in your internal comms at all.
-- **Key contact's public signals** — a client sponsor updating LinkedIn to "open to work" or
-  changing roles is a strong early warning of champion turnover, often before it shows up in any
-  email.
+- **Verified changes in a key contact's role** — if you can confirm through an attributed,
+  reliable source (a company announcement, a direct notification, an org-chart update) that a
+  client sponsor has changed roles or left, that's a strong early warning of champion turnover.
+  Rely on confirmed, attributable changes rather than reading intent into someone's personal
+  profile activity.
 - **Support/ticket volume** (if the engagement includes any ongoing support component) — a
   spike in client-reported issues is a leading indicator of dissatisfaction independent of tone
   in conversation.

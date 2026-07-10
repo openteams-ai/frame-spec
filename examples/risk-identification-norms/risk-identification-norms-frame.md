@@ -5,10 +5,7 @@ name: Risk Identification Norms
 description: How to read raw project material (meeting notes, email threads, snapshots) and flag risks against a delivery organization's client relationship, commercial, delivery, resourcing, technical, and strategic norms. Produces a risk register with evidence, probability, and severity for each flag.
 visibility: internal
 scope: team:delivery
-author: your-name@your-org.com
-status: draft
-document_id: example.risk-identification-norms
-tags: [risk, norms, assessment]
+author: Shayla McMillan (@mcshayla) <smcmillan@openteams.com>
 ---
 
 # Risk Identification Norms
@@ -62,8 +59,10 @@ assume it means.
   invoice approval at the client organization are leading indicators worth surfacing even if
   they seem tangential to the work itself.
 - **Personnel/background-check delays.** If notes mention background checks, access
-  provisioning, or onboarding taking longer than 2–4 weeks, or if named personnel keep changing
-  before clearance, flag it — the billing clock doesn't start until clearance does.
+  provisioning, or onboarding taking longer than the window this engagement expects (check the
+  SOW or onboarding plan for the agreed timeline), or if named personnel keep changing before
+  clearance, flag it. Whether the delay affects billing depends on the contract — flag it and
+  note that the billing impact should be confirmed against the SOW's terms.
 
 ## Delivery Norms
 
@@ -117,13 +116,18 @@ accompanied by the reasoning behind it — a label with no justification is not 
 > Why it matters: [one sentence]
 > Probability: [Low / Medium / High] — [one sentence reasoning grounded in the evidence above;
 > do not invent a numeric percentage]
-> Amount at stake: [what's actually threatened — contract value/renewal, timeline, margin,
-> relationship — stated in plain terms using the project snapshot (SOW value, term remaining,
-> renewal date). If the snapshot doesn't include enough detail to assess this, say so rather than
-> guessing a figure.]
-> Overall severity: [Low / Medium / High] — derived from probability × amount at stake, not a
-> separate guess. State the combination that produced it (e.g., "Medium probability + high
-> amount at stake = High overall").
+> Impact: [Low / Medium / High] — what's threatened (contract value/renewal, timeline, margin,
+> relationship) and roughly how much, judged on this qualitative scale:
+>   - **Low:** limited or recoverable effect — a single slipped internal date, minor rework, easily absorbed.
+>   - **Medium:** material effect on margin, timeline, or client confidence that needs active management.
+>   - **High:** threatens the contract, renewal, a key relationship, or a hard delivery commitment.
+> Ground the rating in the project snapshot (SOW value, term remaining, renewal date) where the
+> evidence supports it. If the snapshot doesn't include enough detail to place it on the scale, say
+> so rather than guessing a figure.
+> Overall severity: [Low / Medium / High] — a qualitative judgment weighing probability against
+> impact, not a calculated product of the two. Explain the judgment in one sentence (e.g.,
+> "unlikely, but would threaten renewal if it happened, so Medium on balance"). Do not present it
+> as a computed, multiplied, or calibrated score.
 > Suggested response type: [Avoid / Mitigate / Transfer / Accept / Escalate for human judgment]
 > — one sentence on why this type fits, e.g. "Escalate for human judgment: this involves account
 > strategy that depends on relationship context not visible in the source material."
@@ -132,7 +136,7 @@ accompanied by the reasoning behind it — a label with no justification is not 
 
 After listing individual flags, compile them into a single table:
 
-| Risk Event | Evidence Source | Probability | Amount at Stake | Overall Severity | Suggested Response |
+| Risk Event | Evidence Source | Probability | Impact | Overall Severity | Suggested Response |
 |---|---|---|---|---|---|
 
 ### Closing summary
