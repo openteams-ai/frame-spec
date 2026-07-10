@@ -5,7 +5,7 @@ name: OpenTeams Founder-in-Residence Program
 description: Context, principles, and operating guidance for creating aligned founder-led companies from OpenTeams employees, former employees, contractors, and close collaborators.
 visibility: internal
 scope: company
-author: OpenTeams
+maintainer: OpenTeams
 ---
 
 # OpenTeams Founder-in-Residence Program
