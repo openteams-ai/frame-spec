@@ -2,7 +2,7 @@
 type: frame [0.2]
 version: 0.1.0
 name: Risk Identification Norms
-description: How to read raw project material (meeting notes, email threads, snapshots) and flag risks against a delivery organization's client relationship, commercial, delivery, resourcing, technical, and strategic norms. Produces a risk register with evidence, probability, and severity for each flag.
+description: Guides an AI assistant to read raw project material (meeting notes, email threads, snapshots) and flag risks against a delivery organization's client relationship, commercial, delivery, resourcing, technical, and strategic norms. The resulting risk register includes evidence, probability, and severity for each flag.
 visibility: internal
 scope: team:delivery
 author: Shayla McMillan (@mcshayla) <smcmillan@openteams.com>
@@ -147,5 +147,5 @@ End with:
   was provided, so burn rate/margin erosion could not be assessed")
 - A reminder that probability and severity ratings are qualitative estimates based on available
   evidence, not calibrated statistical scores, and that response decisions should be made by a
-  human with full account context — the frame's suggested response type is a starting point for
-  discussion, not a directive.
+  human with full account context — the suggested response type in the output is a starting point
+  for discussion, not a directive.

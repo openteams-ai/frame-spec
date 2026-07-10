@@ -1,10 +1,10 @@
 # Risk Identification Norms — Input Guide
 
-This README describes what to send the Risk Identification Norms frame so it can produce a
-risk register with minimal back-and-forth. Package everything as a single input (or a few
-clearly labeled sections) so the AI assistant receives it all alongside the active Frame. The
-Frame is passive guidance — it doesn't retrieve or process anything on its own; the assistant
-does the reading, using the Frame to know what to look for.
+This README describes what task material to provide alongside the Risk Identification Norms
+Frame so an AI assistant can produce a risk register with minimal back-and-forth. Package the
+selected material as a single input (or a few clearly labeled sections) so the assistant receives
+it alongside the active Frame. The Frame is passive guidance — it doesn't retrieve or process
+anything on its own; the assistant does the reading, using the Frame to know what to look for.
 
 ## Data handling
 
@@ -22,8 +22,8 @@ details, invoices, calendars, and security findings. Before sending any of it:
 
 ## Required inputs
 
-Without these, the frame can still flag communication/delivery issues but cannot assess
-probability or amount at stake with any real grounding.
+Without these, the AI assistant can still flag communication or delivery issues while applying
+the Frame, but it cannot assess probability or impact with any real grounding.
 
 **1. Project snapshot**
 - Client name, project name
@@ -55,8 +55,8 @@ probability or amount at stake with any real grounding.
 - CI status patterns if flaky infra is a recurring theme
 
 **6. Time-tracking data by role**
-- Needed for the frame to speak to margin erosion or overallocation with any precision
-- Without this, the frame should say "margin risk could not be assessed" rather than guess
+- Needed for the AI assistant to assess margin erosion or overallocation with any precision
+- Without this, the output should say "margin risk could not be assessed" rather than guess
 
 ## Situational (include only if relevant to this specific project)
 
@@ -68,8 +68,8 @@ unresolved ones are a direct technical risk input, not just a delivery one
 ## How to package it
 
 Simplest version: one document per project with clearly labeled sections matching the list
-above (even if some sections say "none available"). The frame should be told explicitly when
-a category is missing rather than left to guess — this is what lets its closing summary
+above (even if some sections say "none available"). Tell the AI assistant explicitly when a
+category is missing rather than leaving it to guess — this is what lets the closing summary
 correctly say "X could not be assessed" instead of silently skipping it.
 
 ---
