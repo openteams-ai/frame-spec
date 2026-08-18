@@ -1,5 +1,7 @@
 # Frame Spec
 
+**Current release: [v0.2.0](https://github.com/openteams-ai/frame-spec/releases/tag/v0.2.0)** — frozen snapshot at [spec/v0.2.md](spec/v0.2.md), changes tracked in the [changelog](CHANGELOG.md).
+
 Frames are scoped, text-based artifacts that carry the cultural and operational context within which work happens.
 
 They are intended to be:
@@ -86,6 +88,7 @@ docs/
   v1-gap-analysis.md
   canonical-identity-proposal.md
 USING-FRAMES.md
+CHANGELOG.md
 tools/
   README.md
   frame-builder.html
@@ -98,6 +101,7 @@ share/
 spec/
   README.md
   frame-spec.md
+  v0.2.md
 examples/
   minimal/
   complete/
@@ -114,12 +118,12 @@ references/
 
 ## Current Status
 
-This is still an early draft.
+The spec is early but released: `v0.2.0` is the first official release and is safe to adopt now.
 
 What exists now:
 
 - a working concept and definition for Frames
-- a small spec that can be adopted immediately (currently `v0.2`)
+- a small released spec that can be adopted immediately (`v0.2.0`, frozen at [spec/v0.2.md](spec/v0.2.md))
 - a design note describing the problem and direction
 - future-oriented spec discussion documents
 - a Nebi integration illustration
