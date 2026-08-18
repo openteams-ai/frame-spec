@@ -12,7 +12,8 @@ This script checks, for each Frame it finds:
   2. Each frontmatter line is a recognizable `key: value` pair, list item,
      comment, or blank line (a lightweight structural sanity check).
   3. All required fields are present and non-empty.
-  4. The `type` field declares a Frame (it starts with "frame").
+  4. The `type` field is a valid Frame declaration: exactly `frame`, or
+     `frame [<major>.<minor>]` (for example `frame [0.2]`).
 
 It is intended to keep example Frames from drifting out of sync with the
 spec, for example when a new required field is added but the examples are
@@ -34,11 +35,17 @@ be wired into a GitHub Action later without changes.
 """
 
 import argparse
+import re
 import sys
 from pathlib import Path
 
 # Fields the v0.2 spec lists as required for every Frame.
 REQUIRED_FIELDS = ["type", "name", "description", "visibility"]
+
+# The only valid `type` values: `frame`, or `frame [<major>.<minor>]`.
+# The bracketed token is the spec conformance family (major.minor only);
+# patch-qualified tokens such as `frame [0.2.0]` are not valid.
+TYPE_PATTERN = re.compile(r"^frame(?: \[\d+\.\d+\])?$")
 
 # The default place to look when no path is given.
 DEFAULT_TARGET = "examples"
@@ -140,9 +147,10 @@ def validate_frame(path):
             problems.append(f"required field is empty: {field}")
 
     type_value = data.get("type")
-    if type_value is not None and not str(type_value).strip().startswith("frame"):
+    if type_value is not None and not TYPE_PATTERN.match(str(type_value).strip()):
         problems.append(
-            f"type should declare a Frame (start with 'frame'), got: {type_value!r}"
+            "type must be 'frame' or 'frame [<major>.<minor>]' "
+            f"(for example 'frame [0.2]'), got: {type_value!r}"
         )
 
     return problems

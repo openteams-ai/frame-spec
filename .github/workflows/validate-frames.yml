@@ -18,5 +18,8 @@ jobs:
         with:
           python-version: "3.x"
 
+      - name: Run validator tests
+        run: python -m unittest discover -s tools
+
       - name: Validate example Frames
         run: python tools/validate_frames.py examples

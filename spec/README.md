@@ -1,10 +1,20 @@
 # Spec
 
-This directory contains the current adopt-now spec as well as room for more formal spec artifacts over time.
+This directory contains the released spec, the working draft, and room for more formal spec artifacts over time.
 
-## Current
+## Released Versions
 
-- [frame-spec.md](frame-spec.md) is the current minimum spec intended for immediate use.
+Each release is frozen as a versioned snapshot that will not change after release:
+
+- [v0.2.md](v0.2.md) — `v0.2.0`, the current release (2026-08-18)
+
+Released snapshots are the normative reference for implementers. Changes between releases are recorded in the [changelog](../CHANGELOG.md).
+
+## Working Draft
+
+- [frame-spec.md](frame-spec.md) is the working draft of the spec.
+
+At the moment of a release the working draft and the newest snapshot are identical. Between releases the working draft may drift ahead; edits to it are not normative until they land in a released snapshot.
 
 ## Later
 
