@@ -6,7 +6,7 @@ It is meant to inform later versions of the spec after `v0.2`, not to define the
 
 ## Purpose
 
-This note translates the alignment review against [Intelligence Hub Whitepaper - v5.md](../references/Intelligence%20Hub%20Whitepaper%20-%20v5.md) into a concrete spec-focused gap list for `frame-spec v1`.
+This note translates the alignment review against revision 5 of the [Intelligence Hub whitepaper](https://github.com/openteams-ai/inthub-whitepaper) into a concrete spec-focused gap list for `frame-spec v1`.
 
 The `v5` whitepaper sharpens several assumptions that were only implicit in `v4`, especially around organizational memory, policy-governed access to shared context, and reviewable selective sharing. Those additions increase the importance of identity, governance, and composition work for later versions, but they do not require a conceptual reset of the current Frame spec direction.
 
