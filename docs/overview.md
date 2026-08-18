@@ -116,4 +116,4 @@ The current direction is:
 
 ## Reference
 
-The working definition text is also preserved in [../references/travis-definition.md](../references/travis-definition.md).
+The broader architecture this definition emerged from is described in the [Intelligence Hub whitepaper](https://github.com/openteams-ai/inthub-whitepaper).
