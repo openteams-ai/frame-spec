@@ -118,7 +118,7 @@ references/
 
 ## Current Status
 
-The spec is early but released: `v0.2.0` is the first official release and is safe to adopt now.
+The spec is early but released: `v0.2.0` is the first official release and is available for adoption now.
 
 What exists now:
 

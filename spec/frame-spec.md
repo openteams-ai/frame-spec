@@ -60,6 +60,10 @@ type: frame [0.2]
 
 This is the minimal explicit hook that tells an AI system or surrounding implementation that the file is intended to be handled as a Frame rather than as generic Markdown. The bracketed spec version is optional but recommended.
 
+These are the only two valid forms: `frame`, or `frame [<major>.<minor>]`.
+
+The bracketed token names the spec conformance family as `major.minor`. Spec releases themselves are identified by three-part version numbers such as `v0.2.0`. Patch releases clarify wording without changing conformance requirements, so the patch component never appears in the `type` token: `frame [0.2]` declares conformance with any `v0.2.x` release, while `frame [0.2.0]` is not a valid value.
+
 ### `name`
 
 Short human-readable name for the Frame.
