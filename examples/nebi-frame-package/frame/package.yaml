@@ -1,11 +1,11 @@
 spec_version: "0.2"
-package_id: "openteams.company-core"
+package_id: "acme.company-core"
 package_version: "0.1.0"
-package_name: "OpenTeams Company Core Frame"
-publisher: "openteams"
+package_name: "Acme Company Core Frame"
+publisher: "acme"
 summary: "Company-level Frame package with core cultural and operational context."
 default_format: "yaml"
-root_scope: "company:openteams"
+root_scope: "company:acme"
 frames:
   - "company.yaml"
 distribution:

@@ -1,5 +1,7 @@
 # Nebi Integration
 
+[Nebi](https://nebi.nebari.dev/) is an open-source, multi-user environment management tool led by OpenTeams: "git for environments," built on Pixi. Today Nebi manages computational environments; the plan is to expand it beyond environments, which could make it a natural packaging and distribution layer for Frames. Nebi does not currently define or ship Frame support — this note explores how it could.
+
 ## Position
 
 Nebi is a potential mechanism for packaging, versioning, and distributing Frames.
@@ -10,7 +12,7 @@ The intended boundary is:
 
 - Frames are the semantic artifacts
 - Nebi may carry and distribute them
-- Desktop may surface them for discovery, import, export, and sharing
+- [Collab](https://openteams.com/collab/) may surface them for discovery, import, export, and sharing
 
 ## Why Nebi Is Attractive
 
@@ -24,9 +26,9 @@ Nebi already gives a useful set of primitives:
 
 That makes it a plausible vehicle for Frame packages.
 
-## Apollo-Inspired Direction
+## Extending Pixi Metadata
 
-An existing pattern is to extend Nebi metadata through structured fields in `pixi.toml`.
+One pattern is to extend Nebi metadata through structured fields in `pixi.toml`.
 
 A Frame package could follow a similar approach by declaring Frame metadata under a dedicated namespace.
 
@@ -36,7 +38,7 @@ Illustrative example:
 [workspace]
 name = "company-core-frame"
 version = "0.1.0"
-description = "Company-level Frame package for OpenTeams"
+description = "Company-level Frame package for Acme"
 channels = ["conda-forge"]
 platforms = ["linux-64", "osx-arm64", "osx-64", "win-64"]
 
@@ -46,12 +48,12 @@ python = ">=3.11"
 [tool.nebi.frame]
 spec-version = "0.2"
 
-[tool.nebi.frame.openteams.company-core]
-name = "OpenTeams Company Core Frame"
+[tool.nebi.frame.acme.company-core]
+name = "Acme Company Core Frame"
 description = "Company-level Frame package with cultural and operational context."
-author = { name = "OpenTeams", email = "info@openteams.com" }
+author = { name = "Acme", email = "info@example.com" }
 tags = ["frame", "company", "culture", "operations"]
-root-scope = "company:openteams"
+root-scope = "company:acme"
 default-format = "yaml"
 frame-manifest = "frame/package.yaml"
 sharing = "internal"
@@ -87,7 +89,7 @@ One possible future flow:
 2. Add Nebi metadata in `pixi.toml`.
 3. Validate the Frame manifest and documents.
 4. Publish the package through Nebi-supported distribution.
-5. Import it through Nebi or a Desktop sharing flow.
+5. Import it through Nebi or a Collab sharing flow.
 
 ## Caution
 

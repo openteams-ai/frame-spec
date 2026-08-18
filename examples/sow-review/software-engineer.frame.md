@@ -5,7 +5,7 @@ name: SOW Review — Software Engineer / Tech Lead Lens
 description: Reviews a SOW for technical scope, feasibility constraints, tooling assumptions, and work that is harder than the contract implies.
 visibility: public
 scope: team:project-delivery
-author: example
+maintainer: example
 status: stable
 document_id: example.sow-review.software-engineer
 inherits:

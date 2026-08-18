@@ -5,7 +5,7 @@ name: SOW Review — Program Manager Lens
 description: Reviews a SOW for schedule risk, resource constraints, unclear ownership, and governance gaps that affect day-to-day execution.
 visibility: public
 scope: team:project-delivery
-author: example
+maintainer: example
 status: stable
 document_id: example.sow-review.program-manager
 inherits:

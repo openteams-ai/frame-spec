@@ -2,11 +2,11 @@
 
 ## Current Working Definition
 
-The following text captures the current working definition that motivated this proposal:
+The following text captures the current working definition that motivated this specification:
 
 > A Frame is a scoped, text-based artifact — a file or folder of files using an open spec — that carries the cultural and operational context within which work happens. Every organization has implicit context: brand voice, technical terminology, regulatory constraints, departmental conventions, team norms, project goals. Today, this lives in style guides, wikis, Slack history, onboarding documents, and the heads of senior employees. When AI is brought to bear without this context, the organization must re-explain itself in every interaction, and the resulting work suffers — generic, inconsistent, and disconnected from how the organization actually operates.
 >
-> Frames make this context explicit, portable, inheritable, and shareable. A Frame is read by humans, applied by Cogs, and exchanged across organizational boundaries when appropriate. Frames are first-class artifacts: they live independently of Cogs and Progs and can be authored, discovered, sold, and inherited on their own.
+> Frames make this context explicit, portable, inheritable, and shareable. A Frame is read by humans, applied by Cogs, and exchanged across organizational boundaries when appropriate. Frames are first-class artifacts: they live independently of Cogs and Ops and can be authored, discovered, sold, and inherited on their own.
 >
 > A Frame typically carries a mix of cultural context (the why and what of the work) and the concrete artifacts that operationalize that context (the how and with what):
 >
@@ -16,7 +16,7 @@ The following text captures the current working definition that motivated this p
 > Style — tone of voice, formatting conventions, brand expression
 > Norms — implicit expectations about how work gets done
 > Skills — named capabilities the work depends on
-> Tool specifications — Nebi spec files that document the tools the Frame expects to be available
+> Tool specifications — files that document the tools the Frame expects to be available
 > Prompts — reusable prompt fragments to be loaded into Cog context
 > Architecture descriptions — relevant software and system context that orients the work
 > Business process details — the procedural backbone that the work follows
@@ -95,15 +95,17 @@ That implies the spec should carry structured identity metadata for:
 
 This helps distinguish an official published Frame from a local copy, reviewed export, or forked derivative without depending on one particular storage system or application.
 
-## Relationship To Cogs And Progs
+## Relationship To Cogs And Ops
 
-Frames are not the same thing as Cogs or Progs.
+(See [ecosystem.md](ecosystem.md) for one-line definitions of Cogs, Ops, and the related projects.)
+
+Frames are not the same thing as Cogs or Ops.
 
 - Frames carry cultural and operational context
 - Cogs consume and apply that context
-- Progs remain executable or programmatic components that should stay distinct
+- Ops remain executable or programmatic components that should stay distinct
 
-This separation matters because the Frame should remain inspectable and shareable even when the consuming Cog or Prog changes.
+This separation matters because the Frame should remain inspectable and shareable even when the consuming Cog or Op changes.
 
 ## Current Direction
 
@@ -111,8 +113,8 @@ The current direction is:
 
 - define an open Frame spec first
 - keep Frames as normal text artifacts or folders
-- use Nebi as a likely packaging and distribution mechanism
-- support future Desktop sharing without making the app the definition of the spec
+- use [Nebi](https://nebi.nebari.dev/) as a likely packaging and distribution mechanism
+- support future sharing through apps such as [Collab](https://openteams.com/collab/) without making any app the definition of the spec
 
 ## Reference
 

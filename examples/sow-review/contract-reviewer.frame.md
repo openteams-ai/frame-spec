@@ -5,7 +5,7 @@ name: SOW Review — Contract Reviewer Lens
 description: Reviews a SOW for legal exposure, payment risk, missing or deferred terms, and clauses that shift burden to the vendor.
 visibility: public
 scope: team:project-delivery
-author: example
+maintainer: example
 status: stable
 document_id: example.sow-review.contract-reviewer
 inherits:

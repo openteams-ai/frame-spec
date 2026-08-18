@@ -1,6 +1,6 @@
 # Frame Builder Kit
 
-This folder is meant to be easy to share internally over Slack or email.
+This folder is meant to be easy to share as a standalone kit over chat or email.
 
 ## What To Send
 

@@ -68,7 +68,7 @@ sections:
   architecture:
     summaries:
       - "A Frame is the semantic artifact; Nebi is a potential packaging and delivery layer."
-      - "Desktop sharing should consume and expose Frames without redefining the spec."
+      - "Collab sharing should consume and expose Frames without redefining the spec."
   business_process:
     procedures:
       - "Spec revisions should update both the abstract sketch and at least one concrete example Frame when practical."
@@ -84,5 +84,5 @@ sections:
   escalation:
     triggers:
       - "spec-field-ambiguity"
-      - "desktop-sharing-requirement-conflict"
+      - "sharing-requirement-conflict"
       - "nebi-packaging-assumption-conflict"

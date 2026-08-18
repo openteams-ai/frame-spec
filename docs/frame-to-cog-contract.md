@@ -13,6 +13,8 @@ Its purpose is narrower:
 
 This note builds on [frame-cog-op-boundary.md](frame-cog-op-boundary.md) and the architectural distinction between Frames, Cogs, and Ops described in the [Intelligence Hub whitepaper](https://github.com/openteams-ai/inthub-whitepaper).
 
+(See [ecosystem.md](ecosystem.md) for one-line definitions of Cogs and Ops.)
+
 ## Framing Assumption
 
 The current repository is defining Frames first.
@@ -101,7 +103,7 @@ A Frame should expose:
 
 Why this matters:
 
-- the whitepaper assumes active composition of multiple Frames
+- the [Intelligence Hub whitepaper](https://github.com/openteams-ai/inthub-whitepaper) assumes active composition of multiple Frames
 - a Cog should not be forced to invent its own meaning when company, project, partner, and personal context all appear together
 
 ### 5. Provenance and Authority

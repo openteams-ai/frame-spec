@@ -5,7 +5,7 @@ name: SOW Review — QA / Security Engineer Lens
 description: Reviews a SOW for testing scope, compliance framework requirements, and whether validation deliverables are achievable within the budget allocated per phase.
 visibility: public
 scope: team:project-delivery
-author: example
+maintainer: example
 status: stable
 document_id: example.sow-review.qa-security
 inherits:

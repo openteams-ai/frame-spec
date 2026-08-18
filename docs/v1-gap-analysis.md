@@ -8,6 +8,8 @@ It is meant to inform later versions of the spec after `v0.2`, not to define the
 
 This note translates the alignment review against revision 5 of the [Intelligence Hub whitepaper](https://github.com/openteams-ai/inthub-whitepaper) into a concrete spec-focused gap list for `frame-spec v1`.
 
+(For definitions of Cogs, Ops, Collab, and Nebi, see [ecosystem.md](ecosystem.md).)
+
 The `v5` whitepaper sharpens several assumptions that were only implicit in `v4`, especially around organizational memory, policy-governed access to shared context, and reviewable selective sharing. Those additions increase the importance of identity, governance, and composition work for later versions, but they do not require a conceptual reset of the current Frame spec direction.
 
 The current repository already aligns strongly with the whitepaper's core definition of a Frame:
@@ -16,7 +18,7 @@ The current repository already aligns strongly with the whitepaper's core defini
 - readable by humans
 - usable by Cogs
 - inheritable and shareable
-- distinct from Cogs, Ops, Desktop, and Nebi
+- distinct from Cogs, Ops, Collab, and Nebi
 
 What the whitepaper adds is not a replacement of the current direction, but a stronger set of product and ecosystem assumptions that the spec will eventually need to support.
 
@@ -30,7 +32,7 @@ The repository and whitepaper are already aligned on:
 - inheritance across organizational scopes
 - selective sharing across boundaries
 - Nebi as packaging and distribution infrastructure
-- Desktop as a consumer and management surface rather than the source of truth
+- Collab as a consumer and management surface rather than the source of truth
 
 This means the spec does not need a conceptual reset.
 
@@ -74,7 +76,7 @@ Document-level visibility alone is not enough for the sharing model described in
 
 ### 3. Local memory is not modeled
 
-The whitepaper introduces a local-first Desktop behavior in which a user's active context is composed from:
+The whitepaper introduces a local-first Collab behavior in which a user's active context is composed from:
 
 - inherited organizational Frames
 - installed external Frames
@@ -257,10 +259,10 @@ Suggested fields:
 provenance:
   origin: "local"
   derived_from:
-    - "frame:openteams.company.core@1.2.0"
+    - "frame:acme.company.core@1.2.0"
   imported_via:
     kind: "marketplace"
-    source: "openteams"
+    source: "acme"
   promotion:
     promotable: true
     target_classes:
@@ -363,10 +365,10 @@ Suggested additions:
 Example:
 
 ```text
-user:openteams/alex
-role:openteams/legal-reviewer
+user:acme/alex
+role:acme/legal-reviewer
 community:nebari/contributors
-session:openteams/demo/customer-onboarding
+session:acme/demo/onboarding
 ```
 
 This matters because the whitepaper explicitly assumes personal Frames, community Frames, and temporary active composition.
@@ -387,7 +389,7 @@ Suggested non-goals:
 
 - defining Cog manifests
 - defining Op execution logic
-- defining UI state for Desktop
+- defining UI state for Collab
 
 This boundary should be made explicit in the spec.
 
@@ -411,18 +413,18 @@ Suggested fields:
 
 ```yaml
 identity:
-  frame_id: "openteams.brand.voice"
+  frame_id: "acme.brand.voice"
   version: "1.2.0"
-  publisher: "openteams"
+  publisher: "acme"
   canonical_source:
-    uri: "nebi://openteams/frames/brand-voice"
+    uri: "nebi://acme/frames/brand-voice"
     digest: "sha256:abcd1234"
   authority:
     status: "official"
     maintained_by:
       - "marketing-ops"
   derived_from:
-    - "openteams.brand.voice@1.1.0"
+    - "acme.brand.voice@1.1.0"
 ```
 
 Suggested `authority.status` values:
@@ -515,7 +517,7 @@ This would align well with the whitepaper's ecosystem claims.
 
 Show a user-authored local Frame that is later promoted to a team library with provenance intact.
 
-This would test the whitepaper's local-memory story without forcing Desktop-specific objects into the spec.
+This would test the whitepaper's local-memory story without forcing Collab-specific objects into the spec.
 
 ### Example 5: Official Frame plus derived fork
 

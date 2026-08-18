@@ -1,5 +1,5 @@
 ---
-type: frame
+type: frame [0.2]
 name: Frame Spec v0.2 Working Frame
 description: Minimal self-referential Frame describing how the current adopt-now Frame spec should be understood and used.
 visibility: internal

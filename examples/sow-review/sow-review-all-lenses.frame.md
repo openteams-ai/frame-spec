@@ -5,7 +5,7 @@ name: SOW Review — All Lenses
 description: Complete single-file SOW review frame — small vendor context plus all seven professional lenses (Contract Reviewer, Program Manager, Software Engineer, Delivery Manager, Business Owner, QA/Security, Technical Writer). Activate this one frame for a full multi-lens contract review.
 visibility: public
 scope: team:project-delivery
-author: example
+maintainer: example
 status: stable
 document_id: example.sow-review.all-lenses
 inherits:

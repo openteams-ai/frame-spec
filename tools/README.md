@@ -11,7 +11,7 @@ The builder helps non-technical users produce:
 - valid `type: frame` frontmatter
 - the required `v0.2` metadata fields
 - a Markdown body using common Frame sections
-- a broader range of Frames than just style or brand examples
+- many kinds of Frames, not just style or brand guides
 
 The generated output can be:
 
@@ -21,14 +21,14 @@ The generated output can be:
 
 This builder is intentionally simple and tracks the current [../spec/frame-spec.md](../spec/frame-spec.md) spec.
 
-It now starts in a guided blank state and lets the user load an example on demand.
+It starts in a guided blank state and lets the user load an example on demand.
 
 ## AI-Guided Authoring
 
 This directory also includes lightweight AI authoring aids:
 
 - [frame-authoring-assistant-prompt.md](frame-authoring-assistant-prompt.md): a copy-paste prompt for any chat-based AI assistant
-- [customer-shared-frame-prompt.md](customer-shared-frame-prompt.md): a copy-paste prompt for creating a shared Frame for OpenTeams and a customer
+- [customer-shared-frame-prompt.md](customer-shared-frame-prompt.md): a copy-paste prompt for creating a shared Frame between your organization and a customer
 - [frame-authoring-assistant/SKILL.md](frame-authoring-assistant/SKILL.md): a reusable skill for AI-assisted Frame interviews and drafting
 
 These are meant for people who would rather talk through a Frame than build it from scratch in the form.
@@ -66,6 +66,6 @@ The scope of this validator is limited to lightweight `v0.2` Frame frontmatter c
 - validate full YAML
 - certify Frame quality or correctness
 - define runtime behavior
-- enforce Nexus, Collab, registry, or deployment behavior
+- enforce Collab, registry, or deployment behavior
 - replace human review
 

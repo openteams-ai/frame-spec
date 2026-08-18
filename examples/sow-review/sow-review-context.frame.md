@@ -5,7 +5,7 @@ name: SOW Review — Small Vendor Context
 description: Shared context for reviewing a Statement of Work from the smaller vendor's perspective. Parent frame for the seven SOW review lenses — activate it alongside any lens frame.
 visibility: public
 scope: team:project-delivery
-author: example
+maintainer: example
 status: stable
 document_id: example.sow-review.context
 inherits:

@@ -1,8 +1,10 @@
 # Design Note
 
+> Historical note: this design note predates the first released spec (v0.2.0) and is preserved as background.
+
 ## Problem
 
-Organizations need a way to preserve and share cultural and operational context so that both humans and Cogs can work from a coherent base.
+Organizations need a way to preserve and share cultural and operational context so that both humans and Cogs (see [ecosystem.md](ecosystem.md)) can work from a coherent base.
 
 That context is rarely absent. It is usually implicit.
 
@@ -58,7 +60,7 @@ Important unresolved questions include:
 3. How should inheritance and exceptions work?
 4. What review states should be visible to both humans and Cogs?
 5. How should source and decision references be represented?
-6. What should a built-in Desktop sharing workflow require?
+6. What should a built-in Collab sharing workflow require?
 7. How much should the first spec optimize for human authoring versus machine validation?
 
 ## Current Boundary
@@ -66,20 +68,20 @@ Important unresolved questions include:
 The Frame spec should remain distinct from:
 
 - Cogs
-- Progs
+- Ops
 - application-specific UI objects
 - one particular packaging system
 
-The spec may be packaged and distributed through Nebi, but Nebi should not define what a Frame means.
+The spec may be packaged and distributed through [Nebi](https://nebi.nebari.dev/), but Nebi should not define what a Frame means.
 
 ## Product Direction
 
-One likely product direction is that Frame sharing becomes a built-in feature of the Desktop App.
+One likely product direction is that Frame sharing becomes a built-in feature of [Collab](https://openteams.com/collab/).
 
 That suggests a few design constraints:
 
 - a Frame should still exist as a normal text artifact or folder outside the app
-- Desktop should discover, import, export, and attach Frames without redefining the spec
+- Collab should discover, import, export, and attach Frames without redefining the spec
 - review state, provenance, and scope should remain visible outside the app
 
 ## Recommended Near-Term Path

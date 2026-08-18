@@ -1,5 +1,7 @@
 # Early Onboarding Adoption Insights
 
+> Note: this document records early internal onboarding conversations at OpenTeams before the first public release of the spec. It is preserved as background for Frame authors and implementers.
+
 This note summarizes lessons from early internal conversations where people were taught what Frames are, how to create them, and how to use them in everyday AI work.
 
 It is not a spec proposal.

@@ -1,5 +1,5 @@
 ---
-type: frame
+type: frame [0.2]
 name: Editorial Style Guide
 description: Shared guidance for clear, consistent external writing.
 visibility: shared

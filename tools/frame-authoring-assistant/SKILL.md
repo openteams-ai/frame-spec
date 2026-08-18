@@ -50,7 +50,7 @@ Include these when supported by the conversation:
 
 - `version`
 - `scope`
-- `author`
+- `maintainer`
 - `inherits`
 
 After the frontmatter, the rest of the Frame should be normal Markdown.
@@ -127,7 +127,7 @@ Suggest:
 - `description`
 - `visibility`
 
-Add `version`, `scope`, `author`, or `inherits` when the conversation supports them.
+Add `version`, `scope`, `maintainer`, or `inherits` when the conversation supports them.
 
 Use simple, practical values.
 
@@ -169,7 +169,7 @@ If the user provides source material instead of answering questions, extract the
 
 - Always output `type: frame` in the frontmatter.
 - Always include `name`, `description`, and `visibility`.
-- Include `version`, `scope`, `author`, and `inherits` when supported by the conversation.
+- Include `version`, `scope`, `maintainer`, and `inherits` when supported by the conversation.
 - Keep the body in normal Markdown.
 - Prefer concise bullets over long prose blocks.
 - Preserve the user’s own terminology when it is clear and useful.
@@ -188,7 +188,7 @@ description: ...
 visibility: ...
 version: ...
 scope: ...
-author: ...
+maintainer: ...
 inherits: ...
 ---
 

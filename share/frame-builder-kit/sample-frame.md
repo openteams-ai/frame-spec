@@ -1,13 +1,13 @@
 ---
 type: frame
-name: "OpenTeams Brand Voice"
-description: "Shared guidance for how OpenTeams communicates in external-facing writing."
+name: "Acme Brand Voice"
+description: "Shared guidance for how Acme communicates in external-facing writing."
 visibility: internal
 scope: company
 maintainer: "marketing"
 ---
 
-# OpenTeams Brand Voice
+# Acme Brand Voice
 
 ## Goals
 
@@ -16,8 +16,8 @@ maintainer: "marketing"
 
 ## Terminology
 
-- Prefer "Frame" over "alignment file".
-- Prefer "spec" over "protocol".
+- Prefer "customer" over "client".
+- Prefer "guide" over "manual".
 
 ## Style
 

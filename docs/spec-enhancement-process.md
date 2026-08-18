@@ -54,7 +54,7 @@ Location:
 
 Examples:
 
-- `spec/v0.1.md`
+- `spec/v0.2.md`
 
 ### 2. Active Proposal
 
@@ -116,7 +116,7 @@ The simplest structure that supports this distinction is:
 ```text
 spec/
   README.md
-  v0.1.md
+  v0.2.md
 
 enhancements/
   README.md
@@ -333,7 +333,7 @@ If the project adopts an `enhancements/` track, good initial candidates might in
 By contrast, these likely remain better as exploratory notes for now:
 
 - broad packaging direction
-- Desktop-facing behavior
+- Collab-facing behavior
 - full Cog or Op implications
 - domain-specific use-case narratives without a concrete proposal
 

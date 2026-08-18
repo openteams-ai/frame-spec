@@ -8,6 +8,8 @@ Its purpose is to help keep the boundary between Frames, Cogs, and Ops clear as 
 
 The definitions here are grounded in the repository's current direction and the architecture described in the [Intelligence Hub whitepaper](https://github.com/openteams-ai/inthub-whitepaper).
 
+(For one-line definitions of Cogs, Ops, and related projects, see [ecosystem.md](ecosystem.md).)
+
 ## Core Distinction
 
 At a high level:
@@ -202,7 +204,7 @@ These are best treated as Frame-level interpretation guidance, because they gove
 
 Statements such as:
 
-- "Search SAM.gov for similar awards."
+- "Search SAM.gov (the US federal contract award database) for similar awards."
 - "Scrape GitHub for current implementation evidence."
 - "Look for association events in target geographies."
 

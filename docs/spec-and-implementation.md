@@ -33,11 +33,11 @@ Implementation should define:
 
 Examples:
 
-- RBAC
-- VFS mounting
+- RBAC (role-based access control)
+- virtual filesystem (VFS) mounting
 - registry lookup
 - runtime layering
-- Desktop or Hub-specific activation behavior
+- product-specific activation behavior (for example, in Collab)
 
 ## The Important Middle
 

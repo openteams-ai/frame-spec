@@ -5,7 +5,7 @@ name: SOW Review — Business Owner Lens
 description: Reviews a SOW for revenue risk, staffing constraints, reputational exposure, and whether the commercial terms serve the vendor as a small company.
 visibility: public
 scope: team:project-delivery
-author: example
+maintainer: example
 status: stable
 document_id: example.sow-review.business-owner
 inherits:

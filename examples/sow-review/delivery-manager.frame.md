@@ -5,7 +5,7 @@ name: SOW Review — Delivery Manager / Scrum Master Lens
 description: Reviews a SOW for sprint governance, unnamed roles, and anything that could stall delivery or block final acceptance and invoicing.
 visibility: public
 scope: team:project-delivery
-author: example
+maintainer: example
 status: stable
 document_id: example.sow-review.delivery-manager
 inherits:
