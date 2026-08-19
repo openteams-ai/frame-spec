@@ -19,7 +19,7 @@ Frozen snapshot: [spec/v0.2.md](spec/v0.2.md)
 - Recommended frontmatter fields: `version`, `scope`, `maintainer`, `inherits`.
 - Inheritance semantics: explicit declaration via `inherits`, child takes precedence over parents, parents read in order, transitive resolution optional (implementations should disclose their behavior).
 - Body content: free-form Markdown with no required or expected sections, kept concise because it is loaded as system context for AI assistants.
-- Minimum expected agent handling: detect `type: frame`, read frontmatter as metadata, apply the body as contextual guidance, resolve declared parents.
+- Minimum expected agent handling: detect `type: frame`, read frontmatter as metadata, and apply the body as contextual guidance. Resolving `inherits` is recommended but not required for conformance, since it depends on how a tool stores and addresses Frames.
 
 ### What v0.2 intentionally does not define
 

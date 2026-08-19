@@ -29,7 +29,7 @@ A file is a valid `v0.2` Frame if it is:
 
 Nothing else in this document is required. The recommended fields are optional, and the body is free-form Markdown with no required or expected structure. A Frame with the four required fields and a single paragraph of guidance is a valid Frame.
 
-An implementation conforms to `v0.2` if it handles Frames as described in Expected Agent Handling, below.
+An implementation conforms to `v0.2` if it can do the four things listed in Expected Agent Handling, below. Resolving `inherits` is recommended but not required.
 
 ### Conventions
 
@@ -280,13 +280,16 @@ No special infrastructure is required.
 
 ## Expected Agent Handling
 
-At a minimum, an implementation must be able to:
+An implementation must be able to:
 
 1. Detect `type: frame` in the frontmatter.
 2. Read the remaining frontmatter as lightweight metadata.
 3. Read the Markdown body as contextual guidance for work.
 4. Apply that guidance when the Frame is made active by a user or system.
-5. When `inherits` is present, resolve parent Frames and combine their guidance with the child's.
+
+That is the whole requirement. An implementation that can do those four things with a single Markdown file conforms to `v0.2`.
+
+Beyond that, an implementation should resolve parent Frames when `inherits` is present, combining their guidance with the child's. This is a strong recommendation rather than a requirement, because resolving parents means locating other files, which depends on how a given tool stores and addresses Frames. Implementations should disclose whether they resolve `inherits`, so authors know whether a layered set of Frames will behave as written.
 
 `v0.2` does not require more advanced behavior such as transitive inheritance resolution, provenance validation, or canonical-source lookup.
 
