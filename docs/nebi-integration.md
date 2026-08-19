@@ -1,6 +1,6 @@
 # Nebi Integration
 
-[Nebi](https://nebi.nebari.dev/) is an open-source, multi-user environment management tool led by OpenTeams: "git for environments," built on Pixi. Today Nebi manages computational environments; the plan is to expand it beyond environments, which could make it a natural packaging and distribution layer for Frames. Nebi does not currently define or ship Frame support — this note explores how it could.
+[Nebi](ecosystem.md) is an open-source, multi-user environment management tool led by OpenTeams: "git for environments," built on Pixi. Today Nebi manages computational environments; the plan is to expand it beyond environments, which could make it a natural packaging and distribution layer for Frames. Nebi does not currently define or ship Frame support — this note explores how it could.
 
 ## Position
 
@@ -12,7 +12,7 @@ The intended boundary is:
 
 - Frames are the semantic artifacts
 - Nebi may carry and distribute them
-- [Collab](https://openteams.com/collab/) may surface them for discovery, import, export, and sharing
+- [Collab](ecosystem.md) may surface them for discovery, import, export, and sharing
 
 ## Why Nebi Is Attractive
 

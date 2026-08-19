@@ -9,3 +9,12 @@ The Frame spec is open and tool-agnostic: nothing in this repository requires an
 - **Intelligence Hub** — the broader architecture connecting the pieces above, described in the [Intelligence Hub whitepaper](https://github.com/openteams-ai/inthub-whitepaper), which is maintained in its own public repository.
 
 None of these projects define what a Frame is. The spec in this repository stands alone; these projects illustrate how Frames may be applied, hosted, and distributed.
+
+## Reference Links
+
+This page is the single place in the repository where these external URLs are recorded. Other documents link here rather than repeating them, so a URL only has to be updated in one file.
+
+- Intelligence Hub whitepaper — <https://github.com/openteams-ai/inthub-whitepaper>
+- Collab — <https://openteams.com/collab/>
+- Nebi — <https://nebi.nebari.dev/>
+- OpenTeams — <https://openteams.com/>

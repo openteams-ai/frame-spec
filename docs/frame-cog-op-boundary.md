@@ -6,7 +6,7 @@ It is not the Frame spec itself.
 
 Its purpose is to help keep the boundary between Frames, Cogs, and Ops clear as the Frame spec matures and later Cog and Op specs are discussed.
 
-The definitions here are grounded in the repository's current direction and the architecture described in the [Intelligence Hub whitepaper](https://github.com/openteams-ai/inthub-whitepaper).
+The definitions here are grounded in the repository's current direction and the architecture described in the [Intelligence Hub whitepaper](ecosystem.md).
 
 (For one-line definitions of Cogs, Ops, and related projects, see [ecosystem.md](ecosystem.md).)
 

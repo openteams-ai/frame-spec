@@ -11,7 +11,7 @@ Its purpose is narrower:
 - describe the minimum contract the Frame spec will likely need to expose for future Cogs to consume Frames reliably
 - clarify what the Frame spec should define without trying to define Cog internals prematurely
 
-This note builds on [frame-cog-op-boundary.md](frame-cog-op-boundary.md) and the architectural distinction between Frames, Cogs, and Ops described in the [Intelligence Hub whitepaper](https://github.com/openteams-ai/inthub-whitepaper).
+This note builds on [frame-cog-op-boundary.md](frame-cog-op-boundary.md) and the architectural distinction between Frames, Cogs, and Ops described in the [Intelligence Hub whitepaper](ecosystem.md).
 
 (See [ecosystem.md](ecosystem.md) for one-line definitions of Cogs and Ops.)
 
@@ -103,7 +103,7 @@ A Frame should expose:
 
 Why this matters:
 
-- the [Intelligence Hub whitepaper](https://github.com/openteams-ai/inthub-whitepaper) assumes active composition of multiple Frames
+- the [Intelligence Hub whitepaper](ecosystem.md) assumes active composition of multiple Frames
 - a Cog should not be forced to invent its own meaning when company, project, partner, and personal context all appear together
 
 ### 5. Provenance and Authority

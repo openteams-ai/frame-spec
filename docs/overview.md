@@ -113,9 +113,9 @@ The current direction is:
 
 - define an open Frame spec first
 - keep Frames as normal text artifacts or folders
-- use [Nebi](https://nebi.nebari.dev/) as a likely packaging and distribution mechanism
-- support future sharing through apps such as [Collab](https://openteams.com/collab/) without making any app the definition of the spec
+- use [Nebi](ecosystem.md) as a likely packaging and distribution mechanism
+- support future sharing through apps such as [Collab](ecosystem.md) without making any app the definition of the spec
 
 ## Reference
 
-The broader architecture this definition emerged from is described in the [Intelligence Hub whitepaper](https://github.com/openteams-ai/inthub-whitepaper).
+The broader architecture this definition emerged from is described in the [Intelligence Hub whitepaper](ecosystem.md).

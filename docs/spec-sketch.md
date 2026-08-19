@@ -119,7 +119,7 @@ frame-package/
 
 Interpretation:
 
-- `nebi.toml` carries packaging metadata if [Nebi](https://nebi.nebari.dev/) is used
+- `nebi.toml` carries packaging metadata if [Nebi](ecosystem.md) is used
 - `frame/package.yaml` is the Frame package manifest
 - each `frame/*.yaml` file defines one scoped Frame document
 - `references/` holds supporting human-facing material

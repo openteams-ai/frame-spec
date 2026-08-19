@@ -6,7 +6,7 @@ It is meant to inform later versions of the spec after `v0.2`, not to define the
 
 ## Purpose
 
-This note translates the alignment review against revision 5 of the [Intelligence Hub whitepaper](https://github.com/openteams-ai/inthub-whitepaper) into a concrete spec-focused gap list for `frame-spec v1`.
+This note translates the alignment review against revision 5 of the [Intelligence Hub whitepaper](ecosystem.md) into a concrete spec-focused gap list for `frame-spec v1`.
 
 (For definitions of Cogs, Ops, Collab, and Nebi, see [ecosystem.md](ecosystem.md).)
 

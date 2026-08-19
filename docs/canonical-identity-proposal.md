@@ -145,7 +145,7 @@ Meaning:
 Notes:
 
 - the spec should not require a single URI scheme
-- `nebi://` (a hypothetical scheme for [Nebi](https://nebi.nebari.dev/), an environment management tool from OpenTeams) is a good reference example, not the only possible form
+- `nebi://` (a hypothetical scheme for [Nebi](ecosystem.md), an environment management tool from OpenTeams) is a good reference example, not the only possible form
 - an OCI registry reference (for example `quay.io/acme/frames/brand-voice:1.2.0`) is another plausible concrete form, since Nebi already publishes to OCI registries
 - the `uri` may point to a package publication, registry entry, or stable manifest path
 

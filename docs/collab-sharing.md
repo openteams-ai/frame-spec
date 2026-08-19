@@ -1,6 +1,6 @@
 # Collab Sharing
 
-One likely product direction is that Frame sharing becomes a built-in feature of [Collab](https://openteams.com/collab/), OpenTeams' desktop app and hub.
+One likely product direction is that Frame sharing becomes a built-in feature of [Collab](ecosystem.md), OpenTeams' desktop app and hub.
 
 That suggests a few spec-level requirements.
 
@@ -19,7 +19,7 @@ A Collab client may eventually need to:
 - browse available Frames
 - inspect Frame metadata before attaching or importing
 - show scope, inheritance, review status, and sharing boundaries
-- import Frame packages from [Nebi](https://nebi.nebari.dev/)-backed sources
+- import Frame packages from [Nebi](ecosystem.md)-backed sources
 - export reviewed Frames for partner sharing
 
 ## Current Recommendation

@@ -106,7 +106,7 @@ Location:
 
 Examples:
 
-- the [Intelligence Hub whitepaper](https://github.com/openteams-ai/inthub-whitepaper), maintained in its own repository
+- the [Intelligence Hub whitepaper](ecosystem.md), maintained in its own repository
 - historical framing notes
 
 ## Proposed Repository Structure

@@ -2,7 +2,7 @@
 
 This example illustrates one possible way to use Nebi metadata to describe and distribute a Frame package.
 
-[Nebi](https://nebi.nebari.dev/) is an open-source environment management tool led by OpenTeams; it does not currently define Frame support, so this example is illustrative of a possible future integration.
+[Nebi](../../docs/ecosystem.md) is an open-source environment management tool led by OpenTeams; it does not currently define Frame support, so this example is illustrative of a possible future integration.
 
 It is inspired by the pattern of extending Nebi metadata through structured keys in `pixi.toml`.
 

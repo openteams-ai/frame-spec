@@ -17,7 +17,7 @@ These notes are useful for discussion and future design, but they are not requir
 ## Future Spec Exploration
 
 - [spec-sketch.md](spec-sketch.md) explores a richer future shape for Frame artifacts and packaging.
-- [v1-gap-analysis.md](v1-gap-analysis.md) maps the current draft against the [Intelligence Hub whitepaper](https://github.com/openteams-ai/inthub-whitepaper) assumptions.
+- [v1-gap-analysis.md](v1-gap-analysis.md) maps the current draft against the [Intelligence Hub whitepaper](ecosystem.md) assumptions.
 - [canonical-identity-proposal.md](canonical-identity-proposal.md) proposes richer identity and authoritative-source metadata.
 - [frame-cog-op-boundary.md](frame-cog-op-boundary.md) captures a working rubric for the boundary and contract between context, workers, and orchestration.
 - [frame-to-cog-contract.md](frame-to-cog-contract.md) describes the minimum future contract Frames may need to expose for Cog (see [ecosystem.md](ecosystem.md)) consumers, explicitly from the Frame side.

@@ -72,11 +72,11 @@ The Frame spec should remain distinct from:
 - application-specific UI objects
 - one particular packaging system
 
-The spec may be packaged and distributed through [Nebi](https://nebi.nebari.dev/), but Nebi should not define what a Frame means.
+The spec may be packaged and distributed through [Nebi](ecosystem.md), but Nebi should not define what a Frame means.
 
 ## Product Direction
 
-One likely product direction is that Frame sharing becomes a built-in feature of [Collab](https://openteams.com/collab/).
+One likely product direction is that Frame sharing becomes a built-in feature of [Collab](ecosystem.md).
 
 That suggests a few design constraints:
 

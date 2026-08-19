@@ -68,7 +68,7 @@ For the current boundary, read [docs/tools-and-aids.md](docs/tools-and-aids.md).
 - Read [docs/future-directions.md](docs/future-directions.md) for the map of future and discussion documents.
 - Read [docs/spec-enhancement-process.md](docs/spec-enhancement-process.md) for a proposed lightweight process that separates exploratory ideas from active spec proposals.
 - Read [docs/spec-and-implementation.md](docs/spec-and-implementation.md) for the boundary between the Frame spec and the systems that realize Frames.
-- Read the [Intelligence Hub whitepaper](https://github.com/openteams-ai/inthub-whitepaper), published in its own repository, for the broader architecture vision that informed the later spec alignment notes.
+- Read the Intelligence Hub whitepaper — published in its own repository and linked from [docs/ecosystem.md](docs/ecosystem.md) — for the broader architecture vision that informed the later spec alignment notes.
 - Review [examples/self-frame/README.md](examples/self-frame/README.md) and [examples/nebi-frame-package/README.md](examples/nebi-frame-package/README.md) for richer future-oriented examples.
 
 ## Repository Layout
@@ -144,7 +144,7 @@ What is intentionally not required for the current spec:
 
 ## Working Position On Nebi And Collab
 
-[Nebi](https://nebi.nebari.dev/) (an open-source environment management tool led by OpenTeams) and [Collab](https://openteams.com/collab/) (OpenTeams' desktop app for private AI, with a hosted hub) are treated here as potential mechanisms, not as the semantic definition of a Frame. See [docs/ecosystem.md](docs/ecosystem.md) for fuller definitions.
+Nebi (an open-source environment management tool led by OpenTeams) and Collab (OpenTeams' desktop app for private AI, with a hosted hub) are treated here as potential mechanisms, not as the semantic definition of a Frame. See [docs/ecosystem.md](docs/ecosystem.md) for fuller definitions and links.
 
 The intended boundary is:
 
