@@ -6,8 +6,11 @@ These examples show what Frames look like in practice. They fall into three grou
 
 These use only what the released [v0.2 spec](../spec/v0.2.md) defines. Start here.
 
+A reminder as you read them: `v0.2` requires four frontmatter fields and nothing else. The body is free-form, and none of these examples' section headings are required by the spec.
+
 - [minimal/](minimal/) — the smallest valid Frame, using only the required fields.
-- [complete/](complete/) — a fuller Frame that also uses the suggested fields, including `inherits`.
+- [code-review-norms/](code-review-norms/) — a Frame with only the four required fields and a genuinely useful body, showing that the value lives in the body rather than the metadata.
+- [with-suggested-fields/](with-suggested-fields/) — a fuller Frame that also uses the suggested fields, including `inherits`.
 - [minimal-self-frame/](minimal-self-frame/) — a self-referential Frame that uses the minimum spec to describe the spec itself.
 - [spec-stewardship-frame/](spec-stewardship-frame/) — a Frame capturing stewardship guidance for this spec.
 

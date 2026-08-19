@@ -20,6 +20,23 @@ In `v0.2`, a Frame should be:
 - usable by a Cog (a specialized, self-contained AI worker that performs discrete tasks, oriented by the Frames that apply to it) or another AI assistant
 - easy to share manually
 
+## Conformance
+
+A file is a valid `v0.2` Frame if it is:
+
+- a Markdown file, and
+- its YAML frontmatter carries the four required fields: `type`, `name`, `description`, and `visibility`
+
+Nothing else in this document is required. The recommended fields are optional, and the body is free-form Markdown with no required or expected structure. A Frame with the four required fields and a single paragraph of guidance is a valid Frame.
+
+An implementation conforms to `v0.2` if it handles Frames as described in Expected Agent Handling, below.
+
+### Conventions
+
+- **must** marks a requirement. A Frame or implementation that violates it does not conform to `v0.2`.
+- **should** marks a strong recommendation that may be set aside with good reason.
+- **may** marks something entirely optional.
+
 ## File Format
 
 The preferred `v0.2` format is:
@@ -37,7 +54,7 @@ That future directory shape is intentionally left open for later, since it is mo
 
 ## Required Fields
 
-Every `v0.2` Frame should have:
+Every `v0.2` Frame must have:
 
 - `type`
 - `name`
@@ -140,21 +157,11 @@ Values should be references that an implementation can resolve — typically a f
 
 After the frontmatter, the rest of the file is normal Markdown.
 
-The body should contain the context the Frame is meant to carry.
+The body is free-form. `v0.2` defines no required sections, no expected sections, and no section taxonomy at all.
 
-Typical content may include:
-
-- terminology
-- goals
-- rules
-- style guidance
-- norms
-- relevant skills
-- business process notes
+The body should carry whatever context the Frame exists to convey. In practice that is often terminology, goals, rules, style guidance, norms, relevant skills, or business process notes — but those are examples of what some authors have found useful, not a checklist to work through. Most Frames need only one or two of them, and a Frame that carries a single rule well is a good Frame.
 
 Frames are intended to be loaded as system context for AI assistants, where tokens are at a premium. Authors should keep body content concise: prefer short bullets over long prose, omit boilerplate, and include only the guidance that would actually change how work is done. A Frame that is too long to read quickly is too long to be useful.
-
-`v0.2` does not require a fixed section taxonomy.
 
 ## Inheritance
 
@@ -216,7 +223,7 @@ visibility: shared
 
 This example is intentionally minimal. It uses only the fields required by `v0.2`.
 
-## More Complete Example
+## Example With Suggested Fields
 
 ```md
 ---
@@ -273,7 +280,7 @@ No special infrastructure is required.
 
 ## Expected Agent Handling
 
-At a minimum, an implementation should be able to:
+At a minimum, an implementation must be able to:
 
 1. Detect `type: frame` in the frontmatter.
 2. Read the remaining frontmatter as lightweight metadata.

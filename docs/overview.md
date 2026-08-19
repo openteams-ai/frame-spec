@@ -21,6 +21,8 @@ The following text captures the current working definition that motivated this s
 > Architecture descriptions — relevant software and system context that orients the work
 > Business process details — the procedural backbone that the work follows
 
+That definition describes what Frames are *for*. It is deliberately broader than the released spec, which defines only the four required frontmatter fields and leaves the body entirely free-form — see [../spec/v0.2.md](../spec/v0.2.md).
+
 ## Why Frames Matter
 
 Organizations already have cultural and operational context, but it is usually fragmented across:
@@ -50,20 +52,9 @@ Frames aim to make that context:
 
 ## What A Frame Carries
 
-A Frame may include:
+The body of a Frame is free-form Markdown, so it can carry whatever context matters: rules, terminology, goals, style, norms, skills, tool specifications, prompts, architecture descriptions, or business process details.
 
-- rules
-- terminology
-- goals
-- style
-- norms
-- skills
-- tool specifications
-- prompts
-- architecture descriptions
-- business process details
-
-Not every Frame must include all of these, but the spec should allow them.
+These are examples of what a Frame *can* carry, not a structure it *should* have. The spec defines no sections at all — see [Body Content](../spec/v0.2.md#body-content). Most Frames need only one or two of these, and a short Frame that carries a single rule well is a good Frame.
 
 ## Scope And Hierarchy
 
