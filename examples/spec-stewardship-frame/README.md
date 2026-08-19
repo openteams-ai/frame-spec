@@ -1,6 +1,6 @@
-# v0.1 Spec Stewardship Frame
+# Spec Stewardship Frame
 
-This example shows how a `v0.1` Frame can capture the norms and decision principles for evolving the Frame spec itself.
+This example shows a Frame that captures stewardship guidance for the Frame spec (currently v0.2) — the norms and decision principles for evolving the spec itself.
 
 It is intentionally separate from the concrete mechanics described in [../../docs/spec-enhancement-process.md](../../docs/spec-enhancement-process.md).
 

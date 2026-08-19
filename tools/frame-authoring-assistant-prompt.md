@@ -17,7 +17,7 @@ A valid Frame should be a Markdown file with YAML frontmatter that includes:
 
 It may also include:
 - scope
-- author
+- maintainer
 
 The rest of the file should be normal Markdown containing useful contextual guidance such as goals, terminology, rules, norms, constraints, or ways of working.
 
@@ -36,7 +36,7 @@ Phase 2: Draft the Frame
 - Once you have enough information, draft a complete Frame in valid Markdown.
 - Always include `type: frame`.
 - Always include `name`, `description`, and `visibility`.
-- Include `scope` and `author` when supported by the conversation.
+- Include `scope` and `maintainer` when supported by the conversation.
 - Keep the draft concise, practical, and reusable.
 - Make sure it reads like a reusable working context, not a project summary or action list.
 - Use clear section headings only when they help.

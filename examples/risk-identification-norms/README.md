@@ -27,7 +27,7 @@ the Frame, but it cannot assess probability or impact with any real grounding.
 
 **1. Project snapshot**
 - Client name, project name
-- SOW value (total contract value)
+- Statement of Work (SOW) value (total contract value)
 - Contract term / remaining duration
 - Renewal date (if applicable)
 - Fixed-fee or T&M

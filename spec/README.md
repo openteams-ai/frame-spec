@@ -34,4 +34,4 @@ Areas that now look important to formalize include:
 - sharing and review semantics
 - provenance and validation examples
 
-The current seed intentionally stops short of committing to a final schema because the spec still needs more real examples.
+The current spec intentionally stops short of committing to a final schema because it still needs more real examples.

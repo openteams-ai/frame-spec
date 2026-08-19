@@ -5,7 +5,7 @@ name: SOW Review — Technical Writer Lens
 description: Reviews a SOW for documentation scope, format expectations, and consistency between the high-level summary and the detailed deliverable descriptions.
 visibility: public
 scope: team:project-delivery
-author: example
+maintainer: example
 status: stable
 document_id: example.sow-review.technical-writer
 inherits:

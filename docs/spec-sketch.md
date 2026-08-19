@@ -1,6 +1,6 @@
 # Spec Sketch
 
-This document is a future-facing sketch, not the current adopt-now spec.
+This document is a future-facing sketch, not the current adopt-now spec. The field names and structure below do not correspond to the released v0.2 format; see [../spec/v0.2.md](../spec/v0.2.md) for the current spec.
 
 For immediate use, see [../spec/frame-spec.md](../spec/frame-spec.md).
 
@@ -119,7 +119,7 @@ frame-package/
 
 Interpretation:
 
-- `nebi.toml` carries packaging metadata if Nebi is used
+- `nebi.toml` carries packaging metadata if [Nebi](ecosystem.md) is used
 - `frame/package.yaml` is the Frame package manifest
 - each `frame/*.yaml` file defines one scoped Frame document
 - `references/` holds supporting human-facing material
@@ -127,7 +127,7 @@ Interpretation:
 ## Package Manifest Draft
 
 ```yaml
-spec_version: "0.2"
+spec_version: "1.0-draft"
 package_id: "acme.operating-frame"
 package_version: "0.1.0"
 package_name: "Acme Operating Frame"
@@ -232,7 +232,7 @@ sections:
 Frames should remain self-describing even when copied between:
 
 - repositories
-- Hubs
+- hubs
 - local memory
 - partner exports
 - marketplaces
@@ -381,6 +381,6 @@ The minimal useful version likely needs only:
 1. Should one package usually contain one Frame tree or many independent scopes?
 2. How strict should override validation be in v0?
 3. Which sections are required versus merely allowed?
-4. What should Desktop sharing require from Frame metadata?
+4. What should Collab sharing require from Frame metadata?
 5. How should canonical identity behave for reviewed exports, local copies, and forks?
 6. How much schema enforcement should exist before more real examples are authored?

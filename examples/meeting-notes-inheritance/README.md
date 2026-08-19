@@ -10,7 +10,7 @@ This example shows a parent/child inheritance pattern for consistent, composable
 
 ## How to use them
 
-Import and activate the parent frame alone in Collab, or paste it into another AI chat with your meeting notes, to get clean meeting notes — action items first, then themed discussion sections.
+Import and activate the parent frame alone in Collab, an OpenTeams desktop app that applies Frames (see [../../docs/ecosystem.md](../../docs/ecosystem.md)), or paste it into another AI chat with your meeting notes, to get clean meeting notes — action items first, then themed discussion sections.
 
 In the tested Collab workflow, import and activate a child frame alone to get just that child output (either formatted notes for GitHub Issues or a per-participant program-manager briefing).
 

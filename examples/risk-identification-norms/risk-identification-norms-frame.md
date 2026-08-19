@@ -5,7 +5,7 @@ name: Risk Identification Norms
 description: Guides an AI assistant to read raw project material (meeting notes, email threads, snapshots) and flag risks against a delivery organization's client relationship, commercial, delivery, resourcing, technical, and strategic norms. The resulting risk register includes evidence, probability, and severity for each flag.
 visibility: internal
 scope: team:delivery
-author: Shayla McMillan (@mcshayla) <smcmillan@openteams.com>
+maintainer: Shayla McMillan (@mcshayla)
 ---
 
 # Risk Identification Norms

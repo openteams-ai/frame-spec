@@ -29,7 +29,7 @@ It does not define:
 
 The model should be:
 
-- portable across files, packages, Hubs, and marketplaces
+- portable across files, packages, hubs, and marketplaces
 - self-describing when copied out of its original environment
 - precise enough for tooling
 - simple enough for human authors to understand
@@ -41,11 +41,11 @@ Suggested top-level section:
 
 ```yaml
 identity:
-  frame_id: "openteams.brand.voice"
+  frame_id: "acme.brand.voice"
   version: "1.2.0"
-  publisher: "openteams"
+  publisher: "acme"
   canonical_source:
-    uri: "nebi://openteams/frames/brand-voice"
+    uri: "nebi://acme/frames/brand-voice"
     digest: "sha256:3b7e4c..."
   authority:
     status: "official"
@@ -53,7 +53,7 @@ identity:
       - "marketing-ops"
   lineage:
     derived_from:
-      - "openteams.brand.voice@1.1.0"
+      - "acme.brand.voice@1.1.0"
     variant_of: null
 ```
 
@@ -72,7 +72,7 @@ Requirements:
 
 Examples:
 
-- `openteams.brand.voice`
+- `acme.brand.voice`
 - `nebari.community.contribution-guide`
 - `health-consortium.hipaa.compliance`
 
@@ -111,7 +111,7 @@ Requirements:
 
 Examples:
 
-- `openteams`
+- `acme`
 - `nebari-community`
 - `contoso-legal`
 
@@ -128,7 +128,7 @@ Suggested fields:
 
 ```yaml
 canonical_source:
-  uri: "nebi://openteams/frames/brand-voice"
+  uri: "nebi://acme/frames/brand-voice"
   digest: "sha256:3b7e4c..."
 ```
 
@@ -145,7 +145,8 @@ Meaning:
 Notes:
 
 - the spec should not require a single URI scheme
-- `nebi://` is a good reference example, not the only possible form
+- `nebi://` (a hypothetical scheme for [Nebi](ecosystem.md), an environment management tool from OpenTeams) is a good reference example, not the only possible form
+- an OCI registry reference (for example `quay.io/acme/frames/brand-voice:1.2.0`) is another plausible concrete form, since Nebi already publishes to OCI registries
 - the `uri` may point to a package publication, registry entry, or stable manifest path
 
 ### `identity.authority`
@@ -193,7 +194,7 @@ Suggested fields:
 ```yaml
 lineage:
   derived_from:
-    - "openteams.brand.voice@1.1.0"
+    - "acme.brand.voice@1.1.0"
   variant_of: null
 ```
 
@@ -226,7 +227,7 @@ identity:
 
 ## Normative Interpretation Rules
 
-These are the core semantics I would recommend for `v1`.
+These are the core semantics recommended for `v1`.
 
 ### Rule 1
 
@@ -297,11 +298,11 @@ These are not strict spec requirements, but they are the behaviors the model is 
 
 ```yaml
 identity:
-  frame_id: "openteams.brand.voice"
+  frame_id: "acme.brand.voice"
   version: "1.2.0"
-  publisher: "openteams"
+  publisher: "acme"
   canonical_source:
-    uri: "nebi://openteams/frames/brand-voice"
+    uri: "nebi://acme/frames/brand-voice"
     digest: "sha256:3b7e4c..."
   authority:
     status: "official"
@@ -316,11 +317,11 @@ identity:
 
 ```yaml
 identity:
-  frame_id: "openteams.brand.voice"
+  frame_id: "acme.brand.voice"
   version: "1.2.0"
-  publisher: "openteams"
+  publisher: "acme"
   canonical_source:
-    uri: "nebi://openteams/frames/brand-voice"
+    uri: "nebi://acme/frames/brand-voice"
     digest: "sha256:3b7e4c..."
   authority:
     status: "official"
@@ -337,11 +338,11 @@ This artifact would differ from the canonical publication through separate prove
 
 ```yaml
 identity:
-  frame_id: "openteams.partner-safe.brand.voice"
+  frame_id: "acme.partner-safe.brand.voice"
   version: "1.0.0"
-  publisher: "openteams"
+  publisher: "acme"
   canonical_source:
-    uri: "nebi://openteams/frames/partner-safe-brand-voice"
+    uri: "nebi://acme/frames/partner-safe-brand-voice"
     digest: "sha256:91aa22..."
   authority:
     status: "official"
@@ -349,8 +350,8 @@ identity:
       - "marketing-ops"
   lineage:
     derived_from:
-      - "openteams.brand.voice@1.2.0"
-    variant_of: "openteams.brand.voice"
+      - "acme.brand.voice@1.2.0"
+    variant_of: "acme.brand.voice"
 ```
 
 ### Example 4: Customer-local fork
@@ -368,8 +369,8 @@ identity:
       - "contoso-marketing"
   lineage:
     derived_from:
-      - "openteams.brand.voice@1.2.0"
-    variant_of: "openteams.brand.voice"
+      - "acme.brand.voice@1.2.0"
+    variant_of: "acme.brand.voice"
 ```
 
 ## Open Questions
@@ -384,11 +385,11 @@ These are the main design choices still worth debating:
 
 ## Recommendation
 
-For `v1`, I would recommend:
+For `v1`, the recommendation is:
 
 1. Make `frame_id`, `version`, `publisher`, and `canonical_source.uri` required for published Frames.
 2. Strongly recommend `canonical_source.digest`.
 3. Include `authority.status` and `lineage` as optional but standard fields.
-4. Keep signatures and trust enforcement out of the core Frame document spec unless the team decides they are essential for first release.
+4. Keep signatures and trust enforcement out of the core Frame document spec unless the maintainers decide they are essential for that release.
 
 That gives the spec a clean notion of "official version" without tying it to any single implementation.

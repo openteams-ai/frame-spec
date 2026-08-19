@@ -6,7 +6,9 @@ It is not the Frame spec itself.
 
 Its purpose is to help keep the boundary between Frames, Cogs, and Ops clear as the Frame spec matures and later Cog and Op specs are discussed.
 
-The definitions here are grounded in the repository's current direction and the architecture described in [../references/Intelligence Hub Whitepaper - v5.md](../references/Intelligence%20Hub%20Whitepaper%20-%20v5.md).
+The definitions here are grounded in the repository's current direction and the architecture described in the [Intelligence Hub whitepaper](ecosystem.md).
+
+(For one-line definitions of Cogs, Ops, and related projects, see [ecosystem.md](ecosystem.md).)
 
 ## Core Distinction
 
@@ -202,7 +204,7 @@ These are best treated as Frame-level interpretation guidance, because they gove
 
 Statements such as:
 
-- "Search SAM.gov for similar awards."
+- "Search SAM.gov (the US federal contract award database) for similar awards."
 - "Scrape GitHub for current implementation evidence."
 - "Look for association events in target geographies."
 

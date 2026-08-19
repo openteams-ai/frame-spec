@@ -37,4 +37,4 @@ Earlier drafts evolved inside this repository before the first release:
 - **v0.1.1** — added the `version` field and the optional bracketed spec-version syntax in `type` (at the time, `type: frame [0.1.1]`).
 - **v0.2** — added inheritance (`inherits` field and semantics), body-conciseness guidance, and the trust note about loading Frames as system context.
 
-These drafts were superseded by `v0.2.0` and were not released as snapshots.
+These drafts were superseded by `v0.2.0` and were not released as snapshots. No Frames conforming to them were ever published, so implementations do not need to support pre-0.2 `type` tokens such as `frame [0.1.1]`.

@@ -1,9 +1,9 @@
-document_id: "openteams.company.core"
-scope: "company:openteams"
+document_id: "acme.company.core"
+scope: "company:acme"
 inherits_from: []
 visibility: "internal"
 status: "draft"
-summary: "Core company-level Frame for OpenTeams."
+summary: "Core company-level Frame for Acme."
 sections:
   terminology:
     preferred_terms:
@@ -12,7 +12,7 @@ sections:
           - "shared context file"
   goals:
     objectives:
-      - "Preserve coherent organizational context across teams and Cogs."
+      - "Preserve coherent organizational context across teams and AI agents."
   rules:
     required:
       - "Export only reviewed Frames outside the company."

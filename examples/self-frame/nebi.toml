@@ -1,5 +1,6 @@
 # Illustrative only: this shows one place Nebi metadata could sit
 # around a Frame package. The exact contract is not yet final.
+# (Nebi: see ../../docs/ecosystem.md)
 
 [workspace]
 name = "frame-spec-self-frame"

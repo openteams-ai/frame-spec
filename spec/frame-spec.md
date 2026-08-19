@@ -287,4 +287,4 @@ At a minimum, an implementation should be able to:
 
 This document is the current adopt-now spec.
 
-Future ideas such as richer identity, packaging, layering semantics, Desktop behavior, and whitepaper alignment are tracked separately in the discussion docs.
+Future ideas such as richer identity, packaging, layering semantics, and application integration are tracked separately in the discussion docs.
