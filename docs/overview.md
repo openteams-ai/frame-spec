@@ -21,7 +21,7 @@ The following text captures the current working definition that motivated this s
 > Architecture descriptions — relevant software and system context that orients the work
 > Business process details — the procedural backbone that the work follows
 
-That definition describes what Frames are *for*. It is deliberately broader than the released spec, which defines only the four required frontmatter fields and leaves the body entirely free-form — see [../spec/v0.2.md](../spec/v0.2.md).
+That definition describes what Frames are *for*. It is deliberately broader than the released spec, which defines only the four required metadata fields and leaves the body entirely free-form — see [../spec/v0.2.md](../spec/v0.2.md).
 
 ## Why Frames Matter
 
@@ -52,9 +52,17 @@ Frames aim to make that context:
 
 ## What A Frame Carries
 
-The body of a Frame is free-form Markdown, so it can carry whatever context matters: rules, terminology, goals, style, norms, skills, tool specifications, prompts, architecture descriptions, or business process details.
+The body of a Frame is free-form, so it can carry whatever context matters: rules, terminology, goals, style, norms, skills, tool specifications, prompts, architecture descriptions, or business process details.
 
 These are examples of what a Frame *can* carry, not a structure it *should* have. The spec defines no sections at all — see [Body Content](../spec/v0.2.md#body-content). Most Frames need only one or two of these, and a short Frame that carries a single rule well is a good Frame.
+
+## What A Frame Is Made Of
+
+A Frame has two parts: a small set of named metadata fields, and a body of guidance. That is the shape.
+
+The medium is a separate question. Markdown with YAML frontmatter is the recommended way to write and exchange a Frame, and it is what nearly every author should use — it is readable, diffable, and needs no tooling. But a Frame stored as JSON in an API response, a row in a database, or a field in an existing config file is the same Frame, provided the fields and the body survive intact.
+
+Released `v0.2` required Markdown. The [working draft](../spec/frame-spec.md) separates the shape from the medium and defines JSON as a second serialization, with schemas for both in [../spec/schema/](../spec/schema/README.md). The reason is not format variety for its own sake: it is that a system which already has somewhere to keep structured text should not have to imitate a filesystem in order to hold a Frame.
 
 ## Scope And Hierarchy
 
@@ -103,7 +111,7 @@ This separation matters because the Frame should remain inspectable and shareabl
 The current direction is:
 
 - define an open Frame spec first
-- keep Frames as normal text artifacts or folders
+- keep Frames as ordinary structured text, in whatever medium already fits
 - use [Nebi](ecosystem.md) as a likely packaging and distribution mechanism
 - support future sharing through apps such as [Collab](ecosystem.md) without making any app the definition of the spec
 

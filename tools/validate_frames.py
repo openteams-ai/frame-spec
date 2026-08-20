@@ -1,45 +1,56 @@
 #!/usr/bin/env python3
-"""Validate example Frame files against the v0.2 minimum spec.
+"""Validate Frame artifacts against the minimum spec.
 
-A Frame is a Markdown file with YAML frontmatter. The v0.2 spec requires
-these frontmatter fields:
+A Frame is metadata plus a body. The spec requires these metadata fields:
 
     type, name, description, visibility
 
-This script checks, for each Frame it finds:
+This script checks both serializations the spec defines:
 
-  1. The frontmatter block is present and properly closed.
+  * Markdown with YAML frontmatter (the reference serialization). Metadata is
+    the frontmatter mapping; the body is everything after the closing `---`.
+  * JSON. Metadata fields are members of the top-level object; the body is the
+    optional `body` string.
+
+For each Frame it finds, it checks:
+
+  1. The metadata block is present and readable (frontmatter properly closed,
+     or JSON that parses into an object).
   2. Each frontmatter line is a recognizable `key: value` pair, list item,
      comment, or blank line (a lightweight structural sanity check).
   3. All required fields are present and non-empty.
   4. The `type` field is a valid Frame declaration: exactly `frame`, or
      `frame [<major>.<minor>]` (for example `frame [0.2]`).
+  5. For JSON Frames, that field values have the right JSON types.
 
 It is intended to keep example Frames from drifting out of sync with the
 spec, for example when a new required field is added but the examples are
 not updated.
 
 This script uses only the Python standard library, so there is nothing to
-install. Note the tradeoff: it does a lightweight structural check rather
-than full YAML parsing, so it reliably catches missing or empty required
-fields, but it will not catch every possible YAML syntax error.
+install. Note the tradeoff for Markdown Frames: it does a lightweight
+structural check rather than full YAML parsing, so it reliably catches
+missing or empty required fields, but it will not catch every possible YAML
+syntax error. The machine-readable schemas in `spec/schema/` are the fuller
+check, for anyone who wants to run a real validator.
 
 Usage:
 
     python validate_frames.py                 # checks ./examples
     python validate_frames.py path/to/dir     # checks a directory
-    python validate_frames.py a.md b.md        # checks specific files
+    python validate_frames.py a.md b.json     # checks specific files
 
 Exit code is 0 if everything passes and 1 if any Frame fails, so this can
 be wired into a GitHub Action later without changes.
 """
 
 import argparse
+import json
 import re
 import sys
 from pathlib import Path
 
-# Fields the v0.2 spec lists as required for every Frame.
+# Fields the spec lists as required for every Frame.
 REQUIRED_FIELDS = ["type", "name", "description", "visibility"]
 
 # The only valid `type` values: `frame`, or `frame [<major>.<minor>]`.
@@ -122,23 +133,9 @@ def parse_frontmatter(fm_lines):
     return data, problems
 
 
-def validate_frame(path):
-    """Return a list of problem strings for one file. Empty list means valid."""
-    try:
-        text = path.read_text(encoding="utf-8")
-    except (OSError, UnicodeDecodeError) as error:
-        return [f"could not read file: {error}"]
-
-    fm_lines, fm_error = split_frontmatter(text)
-
-    if fm_error:
-        return [fm_error]
-
-    if fm_lines is None:
-        # No frontmatter at all. Not a Frame, so nothing to validate.
-        return []
-
-    data, problems = parse_frontmatter(fm_lines)
+def check_metadata(data):
+    """Check required fields and the `type` grammar. Serialization-independent."""
+    problems = []
 
     for field in REQUIRED_FIELDS:
         if field not in data:
@@ -156,8 +153,94 @@ def validate_frame(path):
     return problems
 
 
+def check_json_types(data):
+    """Check JSON field types. Frontmatter values are always text, so this
+    only applies to the JSON serialization, where a field can genuinely be a
+    number, object, or something else the spec does not allow."""
+    problems = []
+
+    # `type` is left out: a non-string `type` already fails the grammar check
+    # in check_metadata, with a more useful message than a type complaint.
+    for field in REQUIRED_FIELDS:
+        if field == "type":
+            continue
+        if field in data and not isinstance(data[field], str):
+            problems.append(
+                f"required field '{field}' must be a string, got "
+                f"{type(data[field]).__name__}"
+            )
+
+    if "body" in data and not isinstance(data["body"], str):
+        problems.append(
+            f"'body' must be a string, got {type(data['body']).__name__}"
+        )
+
+    inherits = data.get("inherits")
+    if inherits is not None:
+        if isinstance(inherits, list):
+            if not all(isinstance(item, str) and item.strip() for item in inherits):
+                problems.append("'inherits' list entries must be non-empty strings")
+        elif not isinstance(inherits, str):
+            problems.append(
+                "'inherits' must be a string or a list of strings, got "
+                f"{type(inherits).__name__}"
+            )
+
+    return problems
+
+
+def validate_markdown_frame(path):
+    """Validate a Markdown Frame. Empty list means valid."""
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as error:
+        return [f"could not read file: {error}"]
+
+    fm_lines, fm_error = split_frontmatter(text)
+
+    if fm_error:
+        return [fm_error]
+
+    if fm_lines is None:
+        # No frontmatter at all. Not a Frame, so nothing to validate.
+        return []
+
+    data, problems = parse_frontmatter(fm_lines)
+
+    return problems + check_metadata(data)
+
+
+def validate_json_frame(path):
+    """Validate a JSON Frame. Empty list means valid."""
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as error:
+        return [f"could not read file: {error}"]
+
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError as error:
+        return [f"could not parse JSON: {error}"]
+
+    if not isinstance(data, dict):
+        return [f"a JSON Frame must be an object, got {type(data).__name__}"]
+
+    return check_json_types(data) + check_metadata(data)
+
+
+def validate_frame(path):
+    """Return a list of problem strings for one file. Empty list means valid."""
+    if is_json(path):
+        return validate_json_frame(path)
+    return validate_markdown_frame(path)
+
+
 def is_markdown(path):
     return path.suffix.lower() in {".md", ".markdown"}
+
+
+def is_json(path):
+    return path.suffix.lower() == ".json"
 
 
 def has_frontmatter(path):
@@ -169,13 +252,43 @@ def has_frontmatter(path):
         return False
 
 
+def looks_like_json_frame(path):
+    """A JSON file is treated as a Frame if it is an object with a `type` that
+    claims to be a Frame. Other JSON in the tree (package manifests, config)
+    is skipped rather than failed. A misspelled claim such as 'framework'
+    still gets picked up, so the `type` grammar can reject it."""
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return False
+
+    if not isinstance(data, dict):
+        return False
+
+    type_value = data.get("type")
+    return isinstance(type_value, str) and type_value.strip().lower().startswith("frame")
+
+
+def is_frame_candidate(path):
+    """True if this file claims to be a Frame and should therefore be checked."""
+    if is_markdown(path):
+        return has_frontmatter(path)
+    if is_json(path):
+        return looks_like_json_frame(path)
+    return False
+
+
 def collect_files(targets):
     """Turn the given paths (files or directories) into a sorted file list."""
     files = []
     for target in targets:
         path = Path(target)
         if path.is_dir():
-            files.extend(p for p in path.rglob("*") if p.is_file() and is_markdown(p))
+            files.extend(
+                p
+                for p in path.rglob("*")
+                if p.is_file() and (is_markdown(p) or is_json(p))
+            )
         elif path.is_file():
             files.append(path)
         else:
@@ -185,7 +298,7 @@ def collect_files(targets):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(
-        description="Validate example Frame files against the v0.2 minimum spec."
+        description="Validate Frame artifacts against the minimum spec."
     )
     parser.add_argument(
         "paths",
@@ -199,17 +312,17 @@ def main(argv=None):
     files = collect_files(targets)
 
     if not files:
-        print("No Markdown files found to check.")
+        print("No Markdown or JSON files found to check.")
         return 0
 
     checked = 0
     failed = 0
     skipped = 0
 
-    print(f"Checking {len(files)} Markdown file(s)...\n")
+    print(f"Checking {len(files)} file(s)...\n")
 
     for path in files:
-        if not has_frontmatter(path):
+        if not is_frame_candidate(path):
             skipped += 1
             continue
 

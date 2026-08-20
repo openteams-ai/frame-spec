@@ -54,16 +54,20 @@ Run it on a single file or a directory:
 
 ```
 python validate_frames.py path/to/frame.md
+python validate_frames.py path/to/frame.json
 python validate_frames.py examples
 ```
 
-It checks that a Markdown Frame has the required `v0.2` frontmatter fields (`type`, `name`, `description`, `visibility`) and that the frontmatter block is present and readable. It exits with a non-zero status if any Frame fails, so it can run in CI.
+It checks that a Frame has the required fields (`type`, `name`, `description`, `visibility`) and that its metadata is present and readable. Both serializations are covered: Markdown with YAML frontmatter, and JSON. A Markdown file with no frontmatter, or a JSON file whose `type` does not claim to be a Frame, is skipped rather than failed. It exits with a non-zero status if any Frame fails, so it can run in CI.
+
+For the fuller, schema-based check, see [../spec/schema/README.md](../spec/schema/README.md).
 
 ### Scope
 
-The scope of this validator is limited to lightweight `v0.2` Frame frontmatter checks for authoring and repository example hygiene. It does not:
+The scope of this validator is limited to lightweight Frame metadata checks for authoring and repository example hygiene. It does not:
 
 - validate full YAML
+- check anything about body content
 - certify Frame quality or correctness
 - define runtime behavior
 - enforce Collab, registry, or deployment behavior

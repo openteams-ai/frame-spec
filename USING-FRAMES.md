@@ -8,7 +8,11 @@ It does not require any special infrastructure.
 
 ## What A Frame Is
 
-A Frame is a Markdown file that carries context for work.
+A Frame is a small document that carries context for work.
+
+In everyday use that means a Markdown file with a few fields at the top — `type`, `name`, `description`, and `visibility` — and the context itself written below. That is the form this guide uses throughout, and the form to send when you share a Frame with someone else.
+
+The spec itself defines the fields and the body rather than the file format, so a tool may also hold a Frame as JSON or as a record in its own storage. That matters if you are building something; it does not change how you write one. Write the Markdown file.
 
 That context might include:
 
@@ -20,7 +24,7 @@ That context might include:
 - process expectations
 - customer or partner context
 
-Include only what applies to you. The spec requires four frontmatter fields and nothing more, so there are no sections you have to fill in and no minimum length. One clear rule in the body is a perfectly good Frame.
+Include only what applies to you. The spec requires four fields and nothing more, so there are no sections you have to fill in and no minimum length. One clear rule in the body is a perfectly good Frame.
 
 Think of a Frame as a reusable context document that helps an AI tool work in the right way for your team, company, customer, or project.
 
@@ -238,4 +242,4 @@ Try these steps:
 - Use [tools/frame-authoring-assistant-prompt.md](tools/frame-authoring-assistant-prompt.md) to help create new Frames.
 - Use [tools/frame-authoring-assistant/SKILL.md](tools/frame-authoring-assistant/SKILL.md) for AI-guided Frame authoring.
 - Use [tools/frame-reader/SKILL.md](tools/frame-reader/SKILL.md) when your AI tool supports reusable skills and you want more consistent Frame consumption.
-- Use `tools/validate_frames.py` as a lightweight preflight check for v0.2 Frame frontmatter.
+- Use `tools/validate_frames.py` as a lightweight preflight check that a Frame has the required fields.

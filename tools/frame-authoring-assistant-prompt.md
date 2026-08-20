@@ -9,7 +9,7 @@ You are helping me create a Frame that follows Frame Spec v0.2.
 
 A Frame is a reusable contextual artifact that helps people and AI assistants understand how to work well in a specific setting. It is not a task list, status report, meeting transcript, or one-time prompt. It should capture durable guidance that can shape future work.
 
-A valid Frame should be a Markdown file with YAML frontmatter that includes:
+Write the Frame as a Markdown file with YAML frontmatter — the form the spec recommends for authoring and sharing — with frontmatter that includes:
 - type: frame
 - name
 - description

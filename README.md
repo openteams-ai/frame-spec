@@ -23,7 +23,9 @@ If you want to use Frames in day-to-day AI work:
 
 If you want to implement or adopt the spec:
 
-- Read [spec/v0.2.md](spec/v0.2.md), the released `v0.2.0` snapshot. It is the normative reference, and it is small: four required frontmatter fields and a free-form Markdown body. ([spec/frame-spec.md](spec/frame-spec.md) is the working draft, which may drift ahead between releases.)
+- Read [spec/v0.2.md](spec/v0.2.md), the released `v0.2.0` snapshot. It is the normative reference, and it is small: four required frontmatter fields and a free-form Markdown body.
+- Read [spec/frame-spec.md](spec/frame-spec.md) if you are implementing now. It is the working draft, which may drift ahead between releases; it currently separates the shape of a Frame — metadata plus a body — from the medium that carries it, and defines JSON alongside Markdown as a serialization.
+- Check [spec/schema/](spec/schema/README.md) for machine-readable schemas of both serializations, with required fields, types, and what is deliberately left unconstrained.
 
 If you want background or future discussion:
 
@@ -36,12 +38,13 @@ If you want background or future discussion:
 This is the fuller toolkit for people who are actively writing Frames.
 
 - Read [spec/v0.2.md](spec/v0.2.md) for the released spec.
+- Read [spec/schema/README.md](spec/schema/README.md) for the field-by-field schema table and the JSON Schema files.
 - Browse [examples/README.md](examples/README.md) for an index of all examples, grouped by whether they are canonical, illustrative, or future-facing.
 - Open [tools/frame-builder.html](tools/frame-builder.html) for a simple offline builder that generates valid Frame Markdown.
 - Use [tools/frame-authoring-assistant-prompt.md](tools/frame-authoring-assistant-prompt.md) when someone would rather create a Frame through an AI-guided conversation.
 - Use [tools/customer-shared-frame-prompt.md](tools/customer-shared-frame-prompt.md) when creating a shared Frame between your organization and an external partner or customer.
 - Use [share/frame-builder-kit/README.md](share/frame-builder-kit/README.md) for the standalone distribution copy of the builder.
-- Run [tools/validate_frames.py](tools/validate_frames.py) as a preflight check that a Frame has the required v0.2 fields.
+- Run [tools/validate_frames.py](tools/validate_frames.py) as a preflight check that a Frame has the required fields, in either the Markdown or the JSON serialization.
 
 ## Tools And Aids
 
@@ -78,6 +81,10 @@ spec/
   README.md
   frame-spec.md          # working draft
   v0.2.md                # released v0.2.0 snapshot (normative)
+  schema/
+    README.md
+    frame-frontmatter.schema.json   # Markdown serialization (frontmatter)
+    frame.schema.json               # JSON serialization
 CHANGELOG.md
 USING-FRAMES.md
 examples/
@@ -85,6 +92,7 @@ examples/
   minimal/
   code-review-norms/
   with-suggested-fields/
+  json-serialization/
   minimal-self-frame/
   spec-stewardship-frame/
   sow-review/
@@ -137,7 +145,7 @@ What exists now:
 
 What is intentionally not required for the current spec:
 
-- a finalized schema
+- a schema for body structure, sections, or content (the field schemas in [spec/schema/](spec/schema/README.md) cover metadata only)
 - a finalized Nebi packaging contract
 - a built-in Collab sharing implementation
 - settled governance for publication and discovery

@@ -1,65 +1,139 @@
-# Frame Spec v0.2
+# Frame Spec — Working Draft (targets v0.3)
+
+## Status
+
+This is the working draft. It is **not normative**. The normative reference is the released snapshot, [v0.2.md](v0.2.md).
+
+This draft makes one substantive change to `v0.2`: it separates the *shape* of a Frame from the *medium* a Frame is written in. `v0.2` defined a Frame as a Markdown file. This draft defines a Frame as metadata plus a body, and defines Markdown-with-frontmatter as one serialization of that shape — the recommended one — alongside JSON.
+
+Because that widens what counts as a Frame rather than narrowing it, it is a minor-version change and targets `v0.3`. See [Relationship To v0.2](#relationship-to-v02).
 
 ## Purpose
 
 This is the adopt-now definition of a Frame.
 
-The goal of `v0.2` is immediate use with just enough structure to support composition.
+The goal is immediate use with just enough structure to support composition.
 
-If someone can write a Frame today, share it, and layer it with other Frames so that context flows from broad to narrow scope, then `v0.2` is doing its job.
+If someone can write a Frame today, share it, and layer it with other Frames so that context flows from broad to narrow scope, then the spec is doing its job.
 
 ## Definition
 
 A Frame is a scoped, text-based artifact that carries cultural and operational context for work.
 
+A Frame is:
 
-In `v0.2`, a Frame should be:
-
-- a Markdown file
+- **structured**: a small set of named metadata fields plus a body of guidance
 - human-readable
 - usable by a Cog (a specialized, self-contained AI worker that performs discrete tasks, oriented by the Frames that apply to it) or another AI assistant
 - easy to share manually
 
+A Frame is not defined by its file format. Markdown with YAML frontmatter is the recommended way to write and exchange one, and is what most authors should use, but a Frame is the *shape* — not the medium that carries it.
+
 ## Conformance
 
-A file is a valid `v0.2` Frame if it is:
+There are three separate things that can conform.
 
-- a Markdown file, and
-- its YAML frontmatter carries the four required fields: `type`, `name`, `description`, and `visibility`
+### A Frame conforms if
 
-Nothing else in this document is required. The recommended fields are optional, and the body is free-form Markdown with no required or expected structure. A Frame with the four required fields and a single paragraph of guidance is a valid Frame.
+- it carries the four required fields — `type`, `name`, `description`, and `visibility` — with non-empty values, and
+- it is written in a serialization that satisfies the rules in [Serializations](#serializations)
 
-An implementation conforms to `v0.2` if it can do the four things listed in Expected Agent Handling, below. Resolving `inherits` is recommended but not required.
+Nothing else in this document is required. The recommended fields are optional, and the body is free-form with no required or expected structure. A Frame with the four required fields and a single paragraph of guidance is a valid Frame.
+
+### A serialization conforms if
+
+- the four required fields are recoverable by name, with their declared types
+- the body is recoverable as text
+- the `type` field survives, so the artifact stays self-identifying
+- an implementation that knows the serialization can convert to and from the reference serialization without losing required fields or body text
+
+### An implementation conforms if
+
+- it can do the four things listed in [Expected Agent Handling](#expected-agent-handling), for at least one conforming serialization
+
+An implementation must document which serializations it reads. Resolving `inherits` is recommended but not required.
 
 ### Conventions
 
-- **must** marks a requirement. A Frame or implementation that violates it does not conform to `v0.2`.
+- **must** marks a requirement. A Frame, serialization, or implementation that violates it does not conform.
 - **should** marks a strong recommendation that may be set aside with good reason.
 - **may** marks something entirely optional.
 
-## File Format
+## Frame Shape
 
-The preferred `v0.2` format is:
+A Frame has exactly two parts:
 
-- Markdown body
-- YAML frontmatter at the top
+1. **Metadata** — a map of named fields. Four are required; several more are recommended; authors may add their own.
+2. **Body** — free-form text carrying the context the Frame exists to convey.
+
+That is the whole data model. Everything else in this document either describes those fields, or describes how to write that shape down.
+
+| Field | Type | Status | Notes |
+| --- | --- | --- | --- |
+| `type` | string | **required** | Exactly `frame`, or `frame [<major>.<minor>]` |
+| `name` | string | **required** | Short human-readable name |
+| `description` | string | **required** | One or two sentences on what it is for |
+| `visibility` | string | **required** | Suggested values below; not a closed set |
+| `version` | string | recommended | The Frame's own version, not the spec's |
+| `scope` | string | recommended | Where the Frame applies |
+| `maintainer` | string | recommended | Person, team, or organization |
+| `inherits` | string, or array of strings | recommended | One or more parent Frames |
+| body | text | optional | Free-form; no required structure |
+| anything else | any | optional | Extension fields are permitted and ignored by conforming implementations that do not understand them |
+
+The body is optional in the sense that an empty body still conforms. It is also the part that carries the value, so a Frame with an empty body is valid and pointless.
+
+Machine-readable schemas for both defined serializations are in [schema/](schema/README.md).
+
+## Serializations
+
+A serialization is a way of writing the Frame shape down. This draft defines two, and permits others that meet the serialization conformance rules above.
+
+### Markdown with YAML frontmatter (reference serialization)
+
+- Metadata is a YAML mapping in frontmatter, delimited by `---` at the start of the file and `---` after the last field.
+- The body is everything after the closing `---`.
+- Conventional file name: `frame.md`. Conventional extension: `.md`.
 
 This intentionally follows the general shape that Skills (reusable instruction files that give an AI assistant task-specific guidance) already use, without requiring the full Skills standard to define what a Frame is.
 
-In `v0.2`, the canonical form is a single Markdown file.
+This is the **reference serialization**: when a Frame crosses a tool or organizational boundary, and nothing else has been agreed, write it this way. It is the form every conforming implementation should be able to read, and the form the rest of this document uses for examples.
 
-Future versions may also support a directory form with a canonical entry file such as `frame.md` plus optional supporting assets.
+### JSON
 
-That future directory shape is intentionally left open for later, since it is more closely tied to implementation and distribution concerns than to the minimum adopt-now definition.
+- Metadata fields are members of a single top-level JSON object.
+- The body is the value of the `body` member, a string.
+- Conventional file name: `frame.json`.
+
+JSON exists for the cases where Markdown is the wrong container: an API response, a database column, a tool's own configuration file, a Frame generated or consumed programmatically.
+
+### Other serializations
+
+A Frame may also be carried by any other format that satisfies the serialization conformance rules — a YAML document, a TOML file, a row in a table, a field in an existing config file, a record in a content system.
+
+The spec does not enumerate these and does not need to. What it requires is that the required fields and the body survive the trip, and that `type` is among them so that whatever reads the artifact next can still tell it is a Frame.
+
+Authors should not invent a serialization when one of the two defined ones will do. The reason to define the shape independently of the medium is not to encourage variety — it is so that a system which already has a place to put structured text does not have to pretend to be a filesystem in order to hold a Frame.
+
+### Body Text Format
+
+The body is human-readable text. Markdown formatting is conventional and is what implementations should assume when rendering, but no formatting is required and plain text is fine. An implementation must not reject a Frame because its body is not valid Markdown.
+
+### Round-Tripping
+
+Converting a Frame between conforming serializations must preserve the required fields and the body text. Extension fields and comments may be lost. Field order and whitespace may change.
+
+The two defined serializations map onto each other directly: each frontmatter field becomes a member of the JSON object, and the Markdown body becomes the `body` string.
+
+### Directory Form
+
+The canonical form of a Frame is a single artifact.
+
+Future versions may also support a directory form with a canonical entry file such as `frame.md` or `frame.json` plus optional supporting assets. That future shape is intentionally left open for later, since it is more closely tied to implementation and distribution concerns than to the minimum adopt-now definition.
 
 ## Required Fields
 
-Every `v0.2` Frame must have:
-
-- `type`
-- `name`
-- `description`
-- `visibility`
+Every Frame must have `type`, `name`, `description`, and `visibility`.
 
 ### `type`
 
@@ -72,10 +146,10 @@ type: frame
 or, to specify which version of the Frame Spec the Frame conforms to:
 
 ```yaml
-type: frame [0.2]
+type: frame [0.3]
 ```
 
-This is the minimal explicit hook that tells an AI system or surrounding implementation that the file is intended to be handled as a Frame rather than as generic Markdown. The bracketed spec version is optional but recommended.
+This is the minimal explicit hook that tells an AI system or surrounding implementation that the artifact is intended to be handled as a Frame rather than as generic text. The bracketed spec version is optional but recommended.
 
 These are the only two valid forms: `frame`, or `frame [<major>.<minor>]`.
 
@@ -100,7 +174,7 @@ Suggested values:
 
 ## Recommended Fields
 
-These are not required in `v0.2`, but they are encouraged:
+These are not required, but they are encouraged:
 
 - `version`
 - `scope`
@@ -117,7 +191,7 @@ version: 0.1.0
 
 This tracks the Frame's own revision history, not the spec version. Authors should update this when the content of the Frame changes.
 
-`version` is suggested rather than required in `v0.2` so people can start using Frames without first committing to a versioning scheme. When a Frame is expected to be shared, revised, or referenced over time, including `version` is strongly recommended.
+`version` is suggested rather than required so people can start using Frames without first committing to a versioning scheme. When a Frame is expected to be shared, revised, or referenced over time, including `version` is strongly recommended.
 
 ### `scope`
 
@@ -131,7 +205,7 @@ Examples:
 - `partner`
 - `personal`
 
-`v0.2` does not require a formal scope grammar.
+The spec does not require a formal scope grammar.
 
 ### `maintainer`
 
@@ -155,9 +229,7 @@ Values should be references that an implementation can resolve — typically a f
 
 ## Body Content
 
-After the frontmatter, the rest of the file is normal Markdown.
-
-The body is free-form. `v0.2` defines no required sections, no expected sections, and no section taxonomy at all.
+The body is free-form. The spec defines no required sections, no expected sections, and no section taxonomy at all.
 
 The body should carry whatever context the Frame exists to convey. In practice that is often terminology, goals, rules, style guidance, norms, relevant skills, or business process notes — but those are examples of what some authors have found useful, not a checklist to work through. Most Frames need only one or two of them, and a Frame that carries a single rule well is a good Frame.
 
@@ -174,6 +246,7 @@ A Frame may declare that it inherits from one or more parent Frames using the `i
 3. The child takes precedence. Where parent and child guidance conflict, the child wins.
 4. Parents are read in order. When multiple parents are listed, earlier entries have lower precedence than later entries. The child always has highest precedence.
 5. Inheritance is not transitive by default. If A inherits B and B inherits C, an implementation may resolve the full chain, but is not required to.
+6. Inheritance does not depend on serialization. A Frame may inherit from a parent written in a different serialization.
 
 Because transitive resolution is optional, the same Frame may behave differently across tools. Implementations should disclose whether they resolve inheritance chains transitively, and authors should not rely on transitive resolution unless a specific tool guarantees it.
 
@@ -196,9 +269,11 @@ This is a convention, not a requirement. A Frame may inherit from any other Fram
 
 ## Minimal Example
 
+In the reference serialization:
+
 ```md
 ---
-type: frame [0.2]
+type: frame [0.3]
 name: Editorial Style Guide
 description: Shared guidance for clear, consistent external writing.
 visibility: shared
@@ -221,13 +296,29 @@ visibility: shared
 - Make important assumptions explicit.
 ```
 
-This example is intentionally minimal. It uses only the fields required by `v0.2`.
+This example is intentionally minimal. It uses only the required fields.
+
+## The Same Frame In JSON
+
+```json
+{
+  "type": "frame [0.3]",
+  "name": "Editorial Style Guide",
+  "description": "Shared guidance for clear, consistent external writing.",
+  "visibility": "shared",
+  "body": "# Editorial Style Guide\n\n## Goals\n\n- Be clear, direct, and credible.\n- Avoid hype and overclaiming.\n\n## Terminology\n\n- Prefer \"Frame\" over \"alignment file\".\n\n## Style\n\n- Use calm, explanatory language.\n- Make important assumptions explicit.\n"
+}
+```
+
+This is the same Frame. Same fields, same body, same meaning, different container. An implementation that reads both must treat them identically.
+
+Note what the JSON form costs: the body is a single escaped string, which is fine for a program and unpleasant for a person. That is why Markdown is the reference serialization and JSON is the alternative, rather than the other way around.
 
 ## Example With Suggested Fields
 
 ```md
 ---
-type: frame [0.2]
+type: frame [0.3]
 name: Engineering Documentation Style
 description: Writing guidance for engineering documentation that extends a broader editorial style guide.
 visibility: internal
@@ -246,15 +337,31 @@ inherits: editorial-style-guide
 - Code examples are preferred over abstract descriptions.
 ```
 
-This example includes several suggested fields from `v0.2`, including `version`, `scope`, `maintainer`, and `inherits`.
+This example includes several suggested fields, including `version`, `scope`, `maintainer`, and `inherits`.
 
 ## Inheritance Example
 
 In the example above, the engineering documentation Frame inherits the editorial style guide Frame. All parent guidance applies unless the child Frame overrides it. The child Frame narrows broad editorial guidance into conventions for engineering documentation.
 
-## What v0.2 Does Not Try To Define
+## Relationship To v0.2
 
-`v0.2` intentionally does not standardize:
+Every valid `v0.2` Frame is a valid Frame under this draft. The required fields are unchanged, the recommended fields are unchanged, the inheritance semantics are unchanged, and the reference serialization is the Markdown-with-frontmatter form that `v0.2` required. Nothing an author has already written needs to be revised, and `type: frame [0.2]` remains a valid declaration.
+
+What changes:
+
+| | `v0.2` | This draft |
+| --- | --- | --- |
+| What a Frame is | a Markdown file | metadata plus a body |
+| Markdown with frontmatter | required | the reference serialization, recommended for interchange |
+| JSON | undefined | a defined serialization |
+| Other formats | not conformant | conformant if the required fields and body survive |
+| Implementation duty | read Markdown Frames | read at least one conforming serialization, and document which |
+
+The practical effect for implementers is narrow: an implementation that reads Markdown Frames and says so already conforms. The effect for authors is that a Frame stored in a system with no filesystem — an app's database, an API payload, a config file — is now a Frame rather than an approximation of one.
+
+## What This Draft Does Not Try To Define
+
+It intentionally does not standardize:
 
 - package manifests
 - canonical identity
@@ -262,39 +369,46 @@ In the example above, the engineering documentation Frame inherits the editorial
 - review workflows
 - publication registries
 - runtime management
+- body structure or section taxonomy
 
-Those may become part of later versions, but they should not block immediate use. 
+Those may become part of later versions, but they should not block immediate use.
 
-Note on trust: Because a Frame is loaded as system context, it can influence how an AI assistant behaves. Provenance and source verification are future-facing and are not defined in v0.2. Until they are, implementations and users should only load Frames from trusted sources and should not treat a Frame's contents as verified.
+Note on trust: Because a Frame is loaded as system context, it can influence how an AI assistant behaves. Provenance and source verification are future-facing and are not defined here. Until they are, implementations and users should only load Frames from trusted sources and should not treat a Frame's contents as verified.
 
 ## Sharing
 
-A `v0.2` Frame may be shared in any ordinary way, including:
+A Frame may be shared in any ordinary way, including:
 
 - email
 - chat
 - git
 - shared folders
+- any system that can hold structured text
 
-No special infrastructure is required.
+No special infrastructure is required. When sharing outside a context where the serialization has been agreed, use the reference serialization.
 
 ## Expected Agent Handling
 
 An implementation must be able to:
 
-1. Detect `type: frame` in the frontmatter.
-2. Read the remaining frontmatter as lightweight metadata.
-3. Read the Markdown body as contextual guidance for work.
+1. Detect that an artifact is a Frame by reading its `type` field.
+2. Read the remaining metadata fields as lightweight metadata.
+3. Read the body as contextual guidance for work.
 4. Apply that guidance when the Frame is made active by a user or system.
 
-That is the whole requirement. An implementation that can do those four things with a single Markdown file conforms to `v0.2`.
+That is the whole requirement. An implementation that can do those four things for at least one conforming serialization, and documents which it reads, conforms.
 
-Beyond that, an implementation should resolve parent Frames when `inherits` is present, combining their guidance with the child's. This is a strong recommendation rather than a requirement, because resolving parents means locating other files, which depends on how a given tool stores and addresses Frames. Implementations should disclose whether they resolve `inherits`, so authors know whether a layered set of Frames will behave as written.
+Beyond that, an implementation should:
 
-`v0.2` does not require more advanced behavior such as transitive inheritance resolution, provenance validation, or canonical-source lookup.
+- read the reference serialization, since that is what authors reach for by default and what arrives from outside
+- resolve parent Frames when `inherits` is present, combining their guidance with the child's
+
+Resolving parents is a strong recommendation rather than a requirement, because it means locating other artifacts, which depends on how a given tool stores and addresses Frames. Implementations should disclose whether they resolve `inherits`, so authors know whether a layered set of Frames will behave as written.
+
+The spec does not require more advanced behavior such as transitive inheritance resolution, provenance validation, or canonical-source lookup.
 
 ## Relationship To Future Work
 
-This document is the current adopt-now spec.
+This document is the working draft. The released spec is [v0.2.md](v0.2.md).
 
 Future ideas such as richer identity, packaging, layering semantics, and application integration are tracked separately in the discussion docs.

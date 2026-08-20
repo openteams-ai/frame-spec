@@ -13,7 +13,7 @@ A Frame is a reusable contextual artifact that helps people and AI assistants un
 
 This Frame is for work between my organization and a customer, so it should capture the shared context that will help both people and AI assistants work well across the engagement.
 
-A valid Frame should be a Markdown file with YAML frontmatter that includes:
+Write the Frame as a Markdown file with YAML frontmatter — the form the spec recommends for authoring and sharing — with frontmatter that includes:
 - type: frame
 - name
 - description
