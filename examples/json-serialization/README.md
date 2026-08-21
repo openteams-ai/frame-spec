@@ -6,9 +6,11 @@ Same four required fields, same body text, same meaning. The only difference is 
 
 ## Why This Example Exists
 
-To make the draft's central point concrete: a Frame is metadata plus a body, not a file format. Compare the two files side by side and the shape is identical — which is the argument for defining the shape rather than the medium.
+To make the draft's central point concrete: a Frame is metadata plus a body, not a file format. Compare the files side by side and the shape is identical — which is the argument for defining the shape rather than the medium.
 
-It also shows the tradeoff honestly. The body here is one escaped string with `\n` for every line break. That is fine for a program reading it out of an API response or a database column, and unpleasant for a person editing it by hand. Markdown remains the reference serialization for exactly that reason.
+It also shows the tradeoff honestly. The body here is one escaped string with `\n` for every line break. That is fine for a program reading it out of an API response or a database column, and unpleasant for a person editing it by hand. Markdown remains the reference serialization for exactly that reason, and [../yaml-serialization/](../yaml-serialization/) is the same Frame in the form that keeps the body readable while still carrying it as data.
+
+Parse this file and the YAML one and you get the same object, key for key.
 
 ## Draft, Not v0.2
 
@@ -25,7 +27,7 @@ python ../../tools/validate_frames.py frame.json
 Or against the schema directly, from the repository root:
 
 ```bash
-pipx run check-jsonschema --schemafile spec/schema/frame.schema.json examples/json-serialization/frame.json
+pipx run check-jsonschema --schemafile spec/schema/frame-document.schema.json examples/json-serialization/frame.json
 ```
 
-See [../../spec/schema/README.md](../../spec/schema/README.md) for both schemas.
+See [../../spec/schema/README.md](../../spec/schema/README.md) for both schemas. One document schema covers YAML and JSON alike, since they parse into the same data model.

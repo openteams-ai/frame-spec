@@ -16,11 +16,11 @@ Released snapshots are the normative reference for implementers. Changes between
 
 At the moment of a release the working draft and the newest snapshot are identical. Between releases the working draft may drift ahead; edits to it are not normative until they land in a released snapshot.
 
-The draft has now drifted ahead of `v0.2.0` in one substantive way: it defines a Frame as metadata plus a body rather than as a Markdown file, and treats Markdown with YAML frontmatter as the reference serialization alongside JSON. Because that widens what counts as a Frame instead of narrowing it, every valid `v0.2` Frame is still valid, and the draft targets `v0.3`.
+The draft has now drifted ahead of `v0.2.0` in one substantive way: it defines a Frame as metadata plus a body rather than as a Markdown file, and treats Markdown with YAML frontmatter as the reference serialization alongside YAML and JSON. Because that widens what counts as a Frame instead of narrowing it, every valid `v0.2` Frame is still valid, and the draft targets `v0.3`.
 
 ## Schemas
 
-- [schema/](schema/README.md) holds machine-readable schemas for the two serializations the draft defines: the frontmatter of a Markdown Frame, and a JSON Frame.
+- [schema/](schema/README.md) holds machine-readable schemas for the serializations the draft defines: one for the frontmatter of a Markdown Frame, one for a whole YAML or JSON document. Two schemas for three serializations, because YAML and JSON parse into the same data model.
 
 They describe fields, types, and what is required — not body structure, which the spec deliberately leaves free-form. They are as normative as the draft they describe, which is to say not yet.
 

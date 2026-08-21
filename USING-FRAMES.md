@@ -12,7 +12,7 @@ A Frame is a small document that carries context for work.
 
 In everyday use that means a Markdown file with a few fields at the top — `type`, `name`, `description`, and `visibility` — and the context itself written below. That is the form this guide uses throughout, and the form to send when you share a Frame with someone else.
 
-The spec itself defines the fields and the body rather than the file format, so a tool may also hold a Frame as JSON or as a record in its own storage. That matters if you are building something; it does not change how you write one. Write the Markdown file.
+The spec itself defines the fields and the body rather than the file format, so a tool may also hold a Frame as YAML, as JSON, or as a record in its own storage. That matters if you are building something; it does not change how you write one. Write the Markdown file.
 
 That context might include:
 

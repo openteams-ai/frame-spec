@@ -18,7 +18,10 @@ A reminder as you read them: `v0.2` requires four frontmatter fields and nothing
 
 These follow the [working draft](../spec/frame-spec.md) rather than released `v0.2`. The draft defines a Frame as metadata plus a body instead of as a Markdown file, so it permits serializations `v0.2` did not.
 
-- [json-serialization/](json-serialization/) — the `code-review-norms` Frame, unchanged, written as JSON instead of Markdown with frontmatter. Read the two side by side to see that the shape is what a Frame is.
+Both are the same Frame as [code-review-norms/](code-review-norms/), field for field. Read the three together — that equivalence *is* the change.
+
+- [yaml-serialization/](yaml-serialization/) — as a YAML document, with the body as a literal block scalar. The only defined form that carries the body as data and keeps it readable.
+- [json-serialization/](json-serialization/) — as JSON, with the body as an escaped string. Machine-friendly, and unpleasant to hand-edit.
 
 ## Illustrative Working Examples
 
@@ -37,10 +40,17 @@ These explore ideas beyond v0.2, such as packaging and distribution. They are il
 
 ## Validating
 
-Check any Frame against the required fields — in either serialization — with:
+Check any Frame against the required fields — in any of the three serializations — with:
 
 ```bash
 python tools/validate_frames.py examples
 ```
 
-For the field-by-field schemas, see [../spec/schema/README.md](../spec/schema/README.md).
+That needs nothing installed. For the fuller check against the schemas, which also catches YAML type coercion:
+
+```bash
+python -m pip install jsonschema pyyaml
+python tools/schema_check.py examples
+```
+
+CI runs both. For the field-by-field schemas, see [../spec/schema/README.md](../spec/schema/README.md).

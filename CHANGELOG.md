@@ -18,11 +18,15 @@ Working draft: [spec/frame-spec.md](spec/frame-spec.md). Not normative. The rele
 
 ### Added
 
+- **A YAML serialization**: metadata as keys of a top-level mapping, the body as the `body` key, conventionally a literal block scalar (`body: |`). The only defined serialization that carries the body as data while keeping it readable, since a block scalar needs no escaping.
 - **A JSON serialization**: metadata as members of a top-level object, the body as the `body` string.
-- **Machine-readable schemas** in [spec/schema/](spec/schema/README.md) — one for Markdown frontmatter, one for JSON — covering required and recommended fields, their types, and what is deliberately left unconstrained (`visibility` values, `version` scheme, extension fields, body content).
+- A note on YAML's type coercion, which applies to frontmatter as much as to the YAML document form: every field the spec defines is a string, so authors should quote anything YAML would coerce (`version: "1.2"`, `visibility: "yes"`), and implementations should reject a wrongly typed field rather than stringifying it.
+- **Machine-readable schemas** in [spec/schema/](spec/schema/README.md) — `frame-frontmatter.schema.json` for Markdown frontmatter, `frame-document.schema.json` for a whole YAML or JSON document. Two schemas for three serializations, because YAML and JSON parse into the same data model and duplicated normative files drift.
 - A round-tripping rule: converting between conforming serializations must preserve the required fields and the body text.
-- [examples/json-serialization/](examples/json-serialization/) — an existing Frame written as JSON, unchanged in shape.
-- `tools/validate_frames.py` now validates JSON Frames alongside Markdown ones, including JSON field types.
+- [examples/yaml-serialization/](examples/yaml-serialization/) and [examples/json-serialization/](examples/json-serialization/) — the `code-review-norms` Frame in each document form, unchanged in shape. Parse either and you get the same object; the YAML body matches the Markdown body character for character.
+- `tools/validate_frames.py` now validates YAML and JSON Frames alongside Markdown ones, including block scalars in the lightweight YAML parser and JSON field types. Files whose `type` does not claim Frame-hood are skipped, so package manifests and CI config in the tree do not break the run.
+- `tools/schema_check.py` — the fuller check: a real JSON Schema validator and a real YAML parser. Confirms both schemas are valid draft 2020-12 and validates every Frame against the right one. Catches what the lightweight check cannot, such as `version: 1.2` arriving as a number.
+- CI gained a second job, `validate-schemas`, which installs `jsonschema` and `pyyaml` and runs the schema check. The existing job stays dependency-free, which keeps the standard-library promise honest.
 
 ### Compatibility
 

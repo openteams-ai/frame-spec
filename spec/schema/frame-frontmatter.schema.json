@@ -24,13 +24,13 @@
       "minLength": 1
     },
     "visibility": {
-      "$comment": "Required. Not a closed set: the spec suggests these four values but does not restrict the field to them, so this is 'examples' rather than 'enum'.",
+      "$comment": "Required. Not a closed set: the spec suggests these four values but does not restrict the field to them, so this is 'examples' rather than 'enum'. Because frontmatter is YAML, an unquoted 'yes' or 'no' parses as a boolean and fails this string constraint.",
       "type": "string",
       "minLength": 1,
       "examples": ["private", "internal", "shared", "public"]
     },
     "version": {
-      "$comment": "Recommended. The Frame's own revision, not the spec version. The spec does not mandate a versioning scheme, so no pattern is enforced.",
+      "$comment": "Recommended. The Frame's own revision, not the spec version. The spec does not mandate a versioning scheme, so no pattern is enforced. Quote it: frontmatter is YAML, so an unquoted 'version: 1.2' parses as a number and fails this string constraint.",
       "type": "string",
       "minLength": 1,
       "examples": ["0.1.0", "1.2.0", "2026-08-20"]

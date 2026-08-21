@@ -24,8 +24,8 @@ If you want to use Frames in day-to-day AI work:
 If you want to implement or adopt the spec:
 
 - Read [spec/v0.2.md](spec/v0.2.md), the released `v0.2.0` snapshot. It is the normative reference, and it is small: four required frontmatter fields and a free-form Markdown body.
-- Read [spec/frame-spec.md](spec/frame-spec.md) if you are implementing now. It is the working draft, which may drift ahead between releases; it currently separates the shape of a Frame — metadata plus a body — from the medium that carries it, and defines JSON alongside Markdown as a serialization.
-- Check [spec/schema/](spec/schema/README.md) for machine-readable schemas of both serializations, with required fields, types, and what is deliberately left unconstrained.
+- Read [spec/frame-spec.md](spec/frame-spec.md) if you are implementing now. It is the working draft, which may drift ahead between releases; it currently separates the shape of a Frame — metadata plus a body — from the medium that carries it, and defines YAML and JSON alongside Markdown as serializations.
+- Check [spec/schema/](spec/schema/README.md) for machine-readable schemas, with required fields, types, and what is deliberately left unconstrained.
 
 If you want background or future discussion:
 
@@ -44,7 +44,8 @@ This is the fuller toolkit for people who are actively writing Frames.
 - Use [tools/frame-authoring-assistant-prompt.md](tools/frame-authoring-assistant-prompt.md) when someone would rather create a Frame through an AI-guided conversation.
 - Use [tools/customer-shared-frame-prompt.md](tools/customer-shared-frame-prompt.md) when creating a shared Frame between your organization and an external partner or customer.
 - Use [share/frame-builder-kit/README.md](share/frame-builder-kit/README.md) for the standalone distribution copy of the builder.
-- Run [tools/validate_frames.py](tools/validate_frames.py) as a preflight check that a Frame has the required fields, in either the Markdown or the JSON serialization.
+- Run [tools/validate_frames.py](tools/validate_frames.py) as a preflight check that a Frame has the required fields, in any of the three serializations. It needs nothing installed.
+- Run [tools/schema_check.py](tools/schema_check.py) for the fuller check against the schemas themselves. It needs `jsonschema` and `pyyaml`, and it catches what the lightweight check cannot — such as YAML coercing an unquoted `version: 1.2` into a number.
 
 ## Tools And Aids
 
@@ -84,7 +85,7 @@ spec/
   schema/
     README.md
     frame-frontmatter.schema.json   # Markdown serialization (frontmatter)
-    frame.schema.json               # JSON serialization
+    frame-document.schema.json      # YAML and JSON serializations
 CHANGELOG.md
 USING-FRAMES.md
 examples/
@@ -92,6 +93,7 @@ examples/
   minimal/
   code-review-norms/
   with-suggested-fields/
+  yaml-serialization/
   json-serialization/
   minimal-self-frame/
   spec-stewardship-frame/
@@ -122,6 +124,7 @@ tools/
   README.md
   frame-builder.html
   validate_frames.py
+  schema_check.py
   frame-authoring-assistant-prompt.md
   customer-shared-frame-prompt.md
   frame-authoring-assistant/

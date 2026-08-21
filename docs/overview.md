@@ -60,9 +60,9 @@ These are examples of what a Frame *can* carry, not a structure it *should* have
 
 A Frame has two parts: a small set of named metadata fields, and a body of guidance. That is the shape.
 
-The medium is a separate question. Markdown with YAML frontmatter is the recommended way to write and exchange a Frame, and it is what nearly every author should use — it is readable, diffable, and needs no tooling. But a Frame stored as JSON in an API response, a row in a database, or a field in an existing config file is the same Frame, provided the fields and the body survive intact.
+The medium is a separate question. Markdown with YAML frontmatter is the recommended way to write and exchange a Frame, and it is what nearly every author should use — it is readable, diffable, and needs no tooling. But a Frame held as a YAML document, as JSON in an API response, as a row in a database, or as a field in an existing config file is the same Frame, provided the fields and the body survive intact.
 
-Released `v0.2` required Markdown. The [working draft](../spec/frame-spec.md) separates the shape from the medium and defines JSON as a second serialization, with schemas for both in [../spec/schema/](../spec/schema/README.md). The reason is not format variety for its own sake: it is that a system which already has somewhere to keep structured text should not have to imitate a filesystem in order to hold a Frame.
+Released `v0.2` required Markdown. The [working draft](../spec/frame-spec.md) separates the shape from the medium and defines YAML and JSON as further serializations, with schemas in [../spec/schema/](../spec/schema/README.md). The reason is not format variety for its own sake: it is that a system which already has somewhere to keep structured text should not have to imitate a filesystem in order to hold a Frame.
 
 ## Scope And Hierarchy
 

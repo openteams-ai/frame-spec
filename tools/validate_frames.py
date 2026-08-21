@@ -5,10 +5,12 @@ A Frame is metadata plus a body. The spec requires these metadata fields:
 
     type, name, description, visibility
 
-This script checks both serializations the spec defines:
+This script checks the three serializations the spec defines:
 
   * Markdown with YAML frontmatter (the reference serialization). Metadata is
     the frontmatter mapping; the body is everything after the closing `---`.
+  * YAML. Metadata fields are keys of the top-level mapping; the body is the
+    optional `body` key, conventionally a literal block scalar.
   * JSON. Metadata fields are members of the top-level object; the body is the
     optional `body` string.
 
@@ -28,17 +30,20 @@ spec, for example when a new required field is added but the examples are
 not updated.
 
 This script uses only the Python standard library, so there is nothing to
-install. Note the tradeoff for Markdown Frames: it does a lightweight
-structural check rather than full YAML parsing, so it reliably catches
-missing or empty required fields, but it will not catch every possible YAML
-syntax error. The machine-readable schemas in `spec/schema/` are the fuller
-check, for anyone who wants to run a real validator.
+install. Note the tradeoff wherever YAML is involved — frontmatter and YAML
+Frames alike: it does a lightweight structural check rather than full YAML
+parsing, so it reliably catches missing or empty required fields, but it will
+not catch every possible YAML syntax error, and it does not model YAML's type
+coercion (an unquoted `version: 1.2` is a number to a real parser, and this
+script sees text). `tools/schema_check.py` is the fuller check and does catch
+those; it validates against the schemas in `spec/schema/` and needs
+`jsonschema` and `pyyaml` installed.
 
 Usage:
 
-    python validate_frames.py                 # checks ./examples
-    python validate_frames.py path/to/dir     # checks a directory
-    python validate_frames.py a.md b.json     # checks specific files
+    python validate_frames.py                     # checks ./examples
+    python validate_frames.py path/to/dir         # checks a directory
+    python validate_frames.py a.md b.yaml c.json  # checks specific files
 
 Exit code is 0 if everything passes and 1 if any Frame fails, so this can
 be wired into a GitHub Action later without changes.
@@ -80,18 +85,28 @@ def split_frontmatter(text):
     return None, "frontmatter opening '---' has no closing '---'"
 
 
-def parse_frontmatter(fm_lines):
-    """Parse simple top-level `key: value` frontmatter into a dict.
+# YAML block scalar indicators, with optional chomping and indentation hints
+# (`|`, `|-`, `>2`, and so on). A Frame body written as `body: |` uses these.
+BLOCK_SCALAR = re.compile(r"^[|>][+-]?\d*$|^[|>]\d*[+-]?$")
+
+
+def parse_mapping(fm_lines):
+    """Parse simple top-level `key: value` YAML into a dict.
 
     Returns (data, problems). This is a lightweight parser, not a full YAML
     parser. It understands top-level scalar keys, list items under a key,
-    comments, and blank lines, which covers the shape Frames use.
+    literal and folded block scalars, comments, and blank lines, which covers
+    the shape Frames use — as frontmatter and as a whole YAML document.
     """
     data = {}
     problems = []
     last_key = None
+    lines = list(fm_lines)
+    index = 0
 
-    for raw in fm_lines:
+    while index < len(lines):
+        raw = lines[index]
+        index += 1
         line = raw.rstrip()
 
         # Blank lines and comments are fine.
@@ -124,6 +139,25 @@ def parse_frontmatter(fm_lines):
                         f"value for '{key}' looks like an unterminated string: {value}"
                     )
 
+            # A block scalar (`body: |`) owns every following line that is
+            # indented under it. Consume them here so they are not mistaken
+            # for unparseable lines, and keep the text as the key's value.
+            if BLOCK_SCALAR.match(value):
+                folded = value.startswith(">")
+                block = []
+                while index < len(lines):
+                    nxt = lines[index]
+                    if nxt.strip() == "":
+                        block.append("")
+                        index += 1
+                        continue
+                    if not nxt.startswith((" ", "\t")):
+                        break
+                    block.append(nxt.strip())
+                    index += 1
+                data[key] = (" " if folded else "\n").join(block).strip() or None
+                continue
+
             data[key] = value if value != "" else None
             continue
 
@@ -131,6 +165,11 @@ def parse_frontmatter(fm_lines):
         problems.append(f"could not parse frontmatter line: {line.strip()}")
 
     return data, problems
+
+
+# The frontmatter of a Markdown Frame is the same YAML shape as a whole YAML
+# Frame, so both go through parse_mapping. The old name is kept as an alias.
+parse_frontmatter = parse_mapping
 
 
 def check_metadata(data):
@@ -205,7 +244,26 @@ def validate_markdown_frame(path):
         # No frontmatter at all. Not a Frame, so nothing to validate.
         return []
 
-    data, problems = parse_frontmatter(fm_lines)
+    data, problems = parse_mapping(fm_lines)
+
+    return problems + check_metadata(data)
+
+
+def validate_yaml_frame(path):
+    """Validate a whole-document YAML Frame. Empty list means valid."""
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as error:
+        return [f"could not read file: {error}"]
+
+    lines = text.splitlines()
+
+    # A leading `---` is a legal YAML document start. Skip it so a YAML Frame
+    # that opens with one is not read as empty frontmatter.
+    if lines and lines[0].strip() == "---":
+        lines = lines[1:]
+
+    data, problems = parse_mapping(lines)
 
     return problems + check_metadata(data)
 
@@ -232,6 +290,8 @@ def validate_frame(path):
     """Return a list of problem strings for one file. Empty list means valid."""
     if is_json(path):
         return validate_json_frame(path)
+    if is_yaml(path):
+        return validate_yaml_frame(path)
     return validate_markdown_frame(path)
 
 
@@ -243,6 +303,10 @@ def is_json(path):
     return path.suffix.lower() == ".json"
 
 
+def is_yaml(path):
+    return path.suffix.lower() in {".yaml", ".yml"}
+
+
 def has_frontmatter(path):
     try:
         with path.open(encoding="utf-8", errors="replace") as handle:
@@ -252,11 +316,19 @@ def has_frontmatter(path):
         return False
 
 
+def claims_to_be_a_frame(type_value):
+    """True if a `type` value claims Frame-hood, well spelled or not.
+
+    A misspelled claim such as 'framework' still counts, so the `type` grammar
+    gets a chance to reject it instead of the file being silently skipped.
+    """
+    return isinstance(type_value, str) and type_value.strip().lower().startswith("frame")
+
+
 def looks_like_json_frame(path):
-    """A JSON file is treated as a Frame if it is an object with a `type` that
-    claims to be a Frame. Other JSON in the tree (package manifests, config)
-    is skipped rather than failed. A misspelled claim such as 'framework'
-    still gets picked up, so the `type` grammar can reject it."""
+    """A JSON file is treated as a Frame if it is an object whose `type` claims
+    Frame-hood. Other JSON in the tree (package manifests, config) is skipped
+    rather than failed."""
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, UnicodeDecodeError, json.JSONDecodeError):
@@ -265,8 +337,29 @@ def looks_like_json_frame(path):
     if not isinstance(data, dict):
         return False
 
-    type_value = data.get("type")
-    return isinstance(type_value, str) and type_value.strip().lower().startswith("frame")
+    return claims_to_be_a_frame(data.get("type"))
+
+
+def looks_like_yaml_frame(path):
+    """A YAML file is treated as a Frame if a top-level `type` key claims
+    Frame-hood. Package manifests and CI config are skipped rather than
+    failed. This reads only the first few lines, so it stays cheap on a tree
+    full of unrelated YAML."""
+    try:
+        with path.open(encoding="utf-8", errors="replace") as handle:
+            for _ in range(40):
+                line = handle.readline()
+                if line == "":
+                    break
+                if line.startswith((" ", "\t", "#")) or line.strip() in {"", "---"}:
+                    continue
+                key, sep, value = line.partition(":")
+                if sep and key.strip() == "type":
+                    return claims_to_be_a_frame(value.strip())
+    except OSError:
+        return False
+
+    return False
 
 
 def is_frame_candidate(path):
@@ -275,6 +368,8 @@ def is_frame_candidate(path):
         return has_frontmatter(path)
     if is_json(path):
         return looks_like_json_frame(path)
+    if is_yaml(path):
+        return looks_like_yaml_frame(path)
     return False
 
 
@@ -287,7 +382,7 @@ def collect_files(targets):
             files.extend(
                 p
                 for p in path.rglob("*")
-                if p.is_file() and (is_markdown(p) or is_json(p))
+                if p.is_file() and (is_markdown(p) or is_json(p) or is_yaml(p))
             )
         elif path.is_file():
             files.append(path)
@@ -312,7 +407,7 @@ def main(argv=None):
     files = collect_files(targets)
 
     if not files:
-        print("No Markdown or JSON files found to check.")
+        print("No Markdown, YAML, or JSON files found to check.")
         return 0
 
     checked = 0

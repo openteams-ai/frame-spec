@@ -54,22 +54,46 @@ Run it on a single file or a directory:
 
 ```
 python validate_frames.py path/to/frame.md
+python validate_frames.py path/to/frame.yaml
 python validate_frames.py path/to/frame.json
 python validate_frames.py examples
 ```
 
-It checks that a Frame has the required fields (`type`, `name`, `description`, `visibility`) and that its metadata is present and readable. Both serializations are covered: Markdown with YAML frontmatter, and JSON. A Markdown file with no frontmatter, or a JSON file whose `type` does not claim to be a Frame, is skipped rather than failed. It exits with a non-zero status if any Frame fails, so it can run in CI.
-
-For the fuller, schema-based check, see [../spec/schema/README.md](../spec/schema/README.md).
+It checks that a Frame has the required fields (`type`, `name`, `description`, `visibility`) and that its metadata is present and readable. All three serializations are covered: Markdown with YAML frontmatter, YAML, and JSON. A Markdown file with no frontmatter, or a YAML or JSON file whose `type` does not claim to be a Frame, is skipped rather than failed — so a package manifest or a CI config in the tree does not break the run. It exits with a non-zero status if any Frame fails, so it can run in CI.
 
 ### Scope
 
 The scope of this validator is limited to lightweight Frame metadata checks for authoring and repository example hygiene. It does not:
 
 - validate full YAML
+- model YAML's type coercion
 - check anything about body content
 - certify Frame quality or correctness
 - define runtime behavior
 - enforce Collab, registry, or deployment behavior
 - replace human review
+
+## Schema Check
+
+Use [schema_check.py](schema_check.py) for the fuller check: a real JSON Schema validator and a real YAML parser, run against the schemas in [../spec/schema/](../spec/schema/README.md).
+
+```
+python -m pip install jsonschema pyyaml
+python schema_check.py ../examples
+```
+
+It picks the schema by serialization — frontmatter for Markdown Frames, the document schema for YAML and JSON — and it also confirms the schemas themselves are valid draft 2020-12, so a typo in a schema fails loudly rather than passing everything.
+
+The two checks are complementary, which is why CI runs both:
+
+| | `validate_frames.py` | `schema_check.py` |
+| --- | --- | --- |
+| Dependencies | none | `jsonschema`, `pyyaml` |
+| Missing or empty required field | caught | caught |
+| Malformed `type` token | caught | caught |
+| YAML coercion, e.g. `version: 1.2` | missed — it reads text | caught |
+| Malformed YAML | mostly missed | caught |
+| Wrong shape, e.g. `inherits: [4]` | missed | caught |
+
+Neither one certifies that a Frame is any good. A Frame can validate perfectly and still be vague, stale, or too long to read.
 

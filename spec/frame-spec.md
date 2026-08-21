@@ -4,7 +4,7 @@
 
 This is the working draft. It is **not normative**. The normative reference is the released snapshot, [v0.2.md](v0.2.md).
 
-This draft makes one substantive change to `v0.2`: it separates the *shape* of a Frame from the *medium* a Frame is written in. `v0.2` defined a Frame as a Markdown file. This draft defines a Frame as metadata plus a body, and defines Markdown-with-frontmatter as one serialization of that shape — the recommended one — alongside JSON.
+This draft makes one substantive change to `v0.2`: it separates the *shape* of a Frame from the *medium* a Frame is written in. `v0.2` defined a Frame as a Markdown file. This draft defines a Frame as metadata plus a body, and defines Markdown-with-frontmatter as one serialization of that shape — the recommended one — alongside YAML and JSON.
 
 Because that widens what counts as a Frame rather than narrowing it, it is a minor-version change and targets `v0.3`. See [Relationship To v0.2](#relationship-to-v02).
 
@@ -83,11 +83,11 @@ That is the whole data model. Everything else in this document either describes 
 
 The body is optional in the sense that an empty body still conforms. It is also the part that carries the value, so a Frame with an empty body is valid and pointless.
 
-Machine-readable schemas for both defined serializations are in [schema/](schema/README.md).
+Machine-readable schemas for the defined serializations are in [schema/](schema/README.md).
 
 ## Serializations
 
-A serialization is a way of writing the Frame shape down. This draft defines two, and permits others that meet the serialization conformance rules above.
+A serialization is a way of writing the Frame shape down. This draft defines three, and permits others that meet the serialization conformance rules above.
 
 ### Markdown with YAML frontmatter (reference serialization)
 
@@ -99,21 +99,31 @@ This intentionally follows the general shape that Skills (reusable instruction f
 
 This is the **reference serialization**: when a Frame crosses a tool or organizational boundary, and nothing else has been agreed, write it this way. It is the form every conforming implementation should be able to read, and the form the rest of this document uses for examples.
 
+### YAML
+
+- Metadata fields are keys of a single top-level YAML mapping.
+- The body is the value of the `body` key, a string. Authors should write it as a literal block scalar (`body: |`) so it stays readable and its line breaks are preserved verbatim.
+- Conventional file name: `frame.yaml`.
+
+YAML suits the places that already speak YAML — a CI configuration, a Helm value, a package manifest, a tool that reads its whole config as one YAML document. It is also the only defined serialization that carries the body as data *and* keeps it readable, since a block scalar needs no escaping.
+
+One hazard is specific to YAML: an unquoted scalar is coerced by type. `version: 1.2` parses as a number, not the string `"1.2"`; `visibility: yes` parses as a boolean in YAML 1.1 parsers. Every field defined by this spec is a string, so authors should quote any value that YAML would otherwise coerce, and implementations should reject a field that arrives as the wrong type rather than stringifying it. The same hazard applies to frontmatter, which is also YAML.
+
 ### JSON
 
 - Metadata fields are members of a single top-level JSON object.
 - The body is the value of the `body` member, a string.
 - Conventional file name: `frame.json`.
 
-JSON exists for the cases where Markdown is the wrong container: an API response, a database column, a tool's own configuration file, a Frame generated or consumed programmatically.
+JSON exists for the cases where neither Markdown nor YAML is the right container: an API response, a database column, a Frame generated or consumed programmatically. The cost is the body, which becomes a single escaped string.
 
 ### Other serializations
 
-A Frame may also be carried by any other format that satisfies the serialization conformance rules — a YAML document, a TOML file, a row in a table, a field in an existing config file, a record in a content system.
+A Frame may also be carried by any other format that satisfies the serialization conformance rules — a TOML file, a row in a table, a field in an existing config file, a record in a content system.
 
 The spec does not enumerate these and does not need to. What it requires is that the required fields and the body survive the trip, and that `type` is among them so that whatever reads the artifact next can still tell it is a Frame.
 
-Authors should not invent a serialization when one of the two defined ones will do. The reason to define the shape independently of the medium is not to encourage variety — it is so that a system which already has a place to put structured text does not have to pretend to be a filesystem in order to hold a Frame.
+Authors should not invent a serialization when one of the three defined ones will do. The reason to define the shape independently of the medium is not to encourage variety — it is so that a system which already has a place to put structured text does not have to pretend to be a filesystem in order to hold a Frame.
 
 ### Body Text Format
 
@@ -123,13 +133,13 @@ The body is human-readable text. Markdown formatting is conventional and is what
 
 Converting a Frame between conforming serializations must preserve the required fields and the body text. Extension fields and comments may be lost. Field order and whitespace may change.
 
-The two defined serializations map onto each other directly: each frontmatter field becomes a member of the JSON object, and the Markdown body becomes the `body` string.
+The three defined serializations map onto each other directly: each frontmatter field becomes a key of the YAML mapping or a member of the JSON object, and the Markdown body becomes the `body` string. Only the body's presentation changes — a block scalar in YAML, an escaped string in JSON.
 
 ### Directory Form
 
 The canonical form of a Frame is a single artifact.
 
-Future versions may also support a directory form with a canonical entry file such as `frame.md` or `frame.json` plus optional supporting assets. That future shape is intentionally left open for later, since it is more closely tied to implementation and distribution concerns than to the minimum adopt-now definition.
+Future versions may also support a directory form with a canonical entry file such as `frame.md`, `frame.yaml`, or `frame.json` plus optional supporting assets. That future shape is intentionally left open for later, since it is more closely tied to implementation and distribution concerns than to the minimum adopt-now definition.
 
 ## Required Fields
 
@@ -298,6 +308,33 @@ visibility: shared
 
 This example is intentionally minimal. It uses only the required fields.
 
+## The Same Frame In YAML
+
+```yaml
+type: frame [0.3]
+name: Editorial Style Guide
+description: Shared guidance for clear, consistent external writing.
+visibility: shared
+body: |
+  # Editorial Style Guide
+
+  ## Goals
+
+  - Be clear, direct, and credible.
+  - Avoid hype and overclaiming.
+
+  ## Terminology
+
+  - Prefer "Frame" over "alignment file".
+
+  ## Style
+
+  - Use calm, explanatory language.
+  - Make important assumptions explicit.
+```
+
+The same four fields, and a body that is still readable because the block scalar carries it without escaping. What changes from the Markdown form is that the body is now a *value* rather than the remainder of the file, which is what makes it addressable by a tool that reads the whole artifact as one mapping.
+
 ## The Same Frame In JSON
 
 ```json
@@ -310,9 +347,9 @@ This example is intentionally minimal. It uses only the required fields.
 }
 ```
 
-This is the same Frame. Same fields, same body, same meaning, different container. An implementation that reads both must treat them identically.
+This is the same Frame again. Same fields, same body, same meaning, different container. An implementation that reads more than one serialization must treat them identically.
 
-Note what the JSON form costs: the body is a single escaped string, which is fine for a program and unpleasant for a person. That is why Markdown is the reference serialization and JSON is the alternative, rather than the other way around.
+Note what the JSON form costs: the body is a single escaped string, which is fine for a program and unpleasant for a person. That is why Markdown is the reference serialization and the document forms are alternatives, rather than the other way around.
 
 ## Example With Suggested Fields
 
@@ -353,7 +390,7 @@ What changes:
 | --- | --- | --- |
 | What a Frame is | a Markdown file | metadata plus a body |
 | Markdown with frontmatter | required | the reference serialization, recommended for interchange |
-| JSON | undefined | a defined serialization |
+| YAML and JSON | undefined | defined serializations |
 | Other formats | not conformant | conformant if the required fields and body survive |
 | Implementation duty | read Markdown Frames | read at least one conforming serialization, and document which |
 
