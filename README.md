@@ -23,7 +23,7 @@ If you want to use Frames in day-to-day AI work:
 
 If you want to implement or adopt the spec:
 
-- Read [spec/v0.2.md](spec/v0.2.md), the released `v0.2.0` snapshot. It is the normative reference. ([spec/frame-spec.md](spec/frame-spec.md) is the working draft, which may drift ahead between releases.)
+- Read [spec/v0.2.md](spec/v0.2.md), the released `v0.2.0` snapshot. It is the normative reference, and it is small: four required frontmatter fields and a free-form Markdown body. ([spec/frame-spec.md](spec/frame-spec.md) is the working draft, which may drift ahead between releases.)
 
 If you want background or future discussion:
 
@@ -83,7 +83,8 @@ USING-FRAMES.md
 examples/
   README.md              # index of all examples
   minimal/
-  complete/
+  code-review-norms/
+  with-suggested-fields/
   minimal-self-frame/
   spec-stewardship-frame/
   sow-review/

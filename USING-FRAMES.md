@@ -4,7 +4,7 @@ This guide is for people who want to use Frames in everyday AI work.
 
 It is intentionally practical.
 
-It does not require special OpenTeams infrastructure.
+It does not require any special infrastructure.
 
 ## What A Frame Is
 
@@ -19,6 +19,8 @@ That context might include:
 - style guidance
 - process expectations
 - customer or partner context
+
+Include only what applies to you. The spec requires four frontmatter fields and nothing more, so there are no sections you have to fill in and no minimum length. One clear rule in the body is a perfectly good Frame.
 
 Think of a Frame as a reusable context document that helps an AI tool work in the right way for your team, company, customer, or project.
 

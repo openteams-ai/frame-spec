@@ -13,4 +13,4 @@ It is intentionally simple:
 
 Use this example when you want the smallest thing that can reasonably be called a Frame today.
 
-If you want a fuller example with suggested metadata and inheritance, see [../complete/README.md](../complete/README.md).
+If you want a fuller example with suggested metadata and inheritance, see [../with-suggested-fields/README.md](../with-suggested-fields/README.md).
