@@ -1,5 +1,7 @@
 # Canonical Identity Proposal
 
+> Status note: partially adopted. The v0.3 working draft ([../spec/frame-spec.md](../spec/frame-spec.md)) carries `identifier`, `canonicalSource`, `derivedFrom`, and `maintainer` in place of the `identity` block proposed here; `authority.status` and `lineage` remain proposals.
+
 This document is a future proposal for later spec versions.
 
 It is not part of the minimum `v0.2` definition.

@@ -6,4 +6,4 @@ This example illustrates one possible way to use Nebi metadata to describe and d
 
 It is inspired by the pattern of extending Nebi metadata through structured keys in `pixi.toml`.
 
-This example is illustrative only and is not part of the minimum `v0.2` adopt-now spec.
+This example is illustrative only and is not part of the minimum `v0.2` adopt-now spec. The Frame documents under `frame/` follow the earlier spec sketch, not the YAML encoding of the v0.3 working draft.

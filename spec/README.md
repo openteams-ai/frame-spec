@@ -29,11 +29,6 @@ As the format stabilizes through real usage, this directory may also hold:
 For future-facing discussion, see [../docs/future-directions.md](../docs/future-directions.md).
 For a proposed enhancement-track process that separates exploratory ideas from active spec proposals, see [../docs/spec-enhancement-process.md](../docs/spec-enhancement-process.md).
 
-Areas that now look important to formalize include:
+Of the areas identified earlier as important to formalize, the working draft addresses scope and inheritance (composition rules), canonical identity (`identifier`, `canonicalSource`), and provenance (`derivedFrom`, `previousVersion`), and publishes the element set as a profile. Still open after the draft: sharing semantics beyond a declared `visibility`, review workflow beyond a `status` value, validation examples, and a namespace for the Frame-native terms (see the draft's Appendix A).
 
-- scope and inheritance
-- canonical identity and authoritative-source metadata
-- sharing and review semantics
-- provenance and validation examples
-
-The current spec intentionally stops short of committing to a final schema because it still needs more real examples.
+The released spec intentionally stops short of committing to a final schema; the working draft is where that schema is being worked out.

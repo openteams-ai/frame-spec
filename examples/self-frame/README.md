@@ -1,6 +1,6 @@
 # Self Frame Example
 
-This example represents the richer future spec sketch as a Frame package.
+This example represents the richer future spec sketch as a Frame package. Its YAML follows that sketch and is not the YAML encoding defined by the v0.3 working draft ([../../spec/frame-spec.md](../../spec/frame-spec.md), Section 6.3), which uses different keys.
 
 It is intentionally self-referential:
 

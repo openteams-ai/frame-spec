@@ -21,7 +21,7 @@ The following text captures the current working definition that motivated this s
 > Architecture descriptions — relevant software and system context that orients the work
 > Business process details — the procedural backbone that the work follows
 
-That definition describes what Frames are *for*. It is deliberately broader than the released spec, which defines only the four required frontmatter fields and leaves the body entirely free-form — see [../spec/v0.2.md](../spec/v0.2.md).
+That definition describes what Frames are *for*. It is deliberately broader than the released spec, which defines only the four required frontmatter fields and leaves the body entirely free-form (see [../spec/v0.2.md](../spec/v0.2.md)). The v0.3 working draft ([../spec/frame-spec.md](../spec/frame-spec.md)) adopts the ten categories listed above as optional refinements of the body (its Section 4.4), keeping the body free-form for anyone who does not use them.
 
 ## Why Frames Matter
 
@@ -54,7 +54,7 @@ Frames aim to make that context:
 
 The body of a Frame is free-form Markdown, so it can carry whatever context matters: rules, terminology, goals, style, norms, skills, tool specifications, prompts, architecture descriptions, or business process details.
 
-These are examples of what a Frame *can* carry, not a structure it *should* have. The spec defines no sections at all — see [Body Content](../spec/v0.2.md#body-content). Most Frames need only one or two of these, and a short Frame that carries a single rule well is a good Frame.
+These are examples of what a Frame *can* carry, not a structure it *should* have. The released spec defines no sections at all (see [Body Content](../spec/v0.2.md#body-content)); the working draft recognizes these ten as optional labeled sections and requires none. Most Frames need only one or two of these, and a short Frame that carries a single rule well is a good Frame.
 
 ## Scope And Hierarchy
 
@@ -77,7 +77,7 @@ The general idea is:
 
 Frames should also remain self-describing when copied or shared.
 
-That implies the spec should carry structured identity metadata for:
+That implies the spec should carry structured identity metadata (the v0.3 working draft does, as `identifier`, `version`, `maintainer`, and `canonicalSource`) for:
 
 - what logical Frame an artifact is
 - which version it represents

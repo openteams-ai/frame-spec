@@ -20,8 +20,10 @@ A valid Frame should be a Markdown file with YAML frontmatter that includes:
 - visibility
 
 It may also include:
+- version
 - scope
 - maintainer
+- inherits
 
 The rest of the file should be normal Markdown containing useful contextual guidance.
 

@@ -1,5 +1,7 @@
 # Frame-To-Cog Contract
 
+> Status note: the minimum contract listed in this note is now carried by elements of the v0.3 working draft ([../spec/frame-spec.md](../spec/frame-spec.md)), and its Section 5.3 defines the reference form a Cog or Op uses to name a Frame.
+
 This note is future-facing.
 
 It is written from the Frame side.

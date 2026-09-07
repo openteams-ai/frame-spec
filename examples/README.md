@@ -16,7 +16,7 @@ A reminder as you read them: `v0.2` requires four frontmatter fields and nothing
 
 ## Illustrative Working Examples
 
-Real-world-shaped Frames contributed from practice. They are valid v0.2 Frames and may also use extra fields that the spec permits but does not define.
+Real-world-shaped Frames contributed from practice. They are valid v0.2 Frames and may also use extra fields that v0.2 permits but does not define; the working draft defines some of them (for example `status`) and preserves the rest.
 
 - [sow-review/](sow-review/) — a set of review-lens Frames for evaluating a Statement of Work.
 - [risk-identification-norms/](risk-identification-norms/) — norms a delivery organization uses to spot engagement risk.

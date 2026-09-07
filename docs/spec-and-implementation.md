@@ -1,5 +1,7 @@
 # Spec And Implementation
 
+> Status note: the v0.3 working draft ([../spec/frame-spec.md](../spec/frame-spec.md)) states this boundary formally in its conformance model (Section 3.3) and conformance profiles (Section 7).
+
 This note clarifies the boundary between the Frame spec and systems that use Frames.
 
 ## Spec
@@ -13,12 +15,13 @@ The spec should define:
 
 Examples:
 
+- `type`
 - `name`
 - `description`
 - `visibility`
 - optional `scope`
 
-Later versions may define richer concepts such as identity, provenance, or inheritance.
+Frame Spec v0.2 defines inheritance. The v0.3 working draft adds identity (`identifier`, `canonicalSource`) and provenance (`derivedFrom`, `previousVersion`).
 
 ## Implementation
 
@@ -48,7 +51,7 @@ For example, layering may need:
 - a small spec surface for portable meaning
 - implementation-specific logic for actual runtime realization
 
-That means the spec may eventually define a small amount of relationship or precedence metadata without trying to define the full management system.
+That means the spec may define a small amount of relationship or precedence metadata (the v0.3 working draft does, in its Section 5) without trying to define the full management system.
 
 ## Current Position
 
