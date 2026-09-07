@@ -23,7 +23,7 @@ If you want to use Frames in day-to-day AI work:
 
 If you want to implement or adopt the spec:
 
-- Read [spec/v0.2.md](spec/v0.2.md), the released `v0.2.0` snapshot. It is the normative reference, and it is small: four required frontmatter fields and a free-form Markdown body. ([spec/frame-spec.md](spec/frame-spec.md) is the working draft, which may drift ahead between releases.)
+- Read [spec/v0.2.md](spec/v0.2.md), the released `v0.2.0` snapshot. It is the normative reference, and it is small: four required frontmatter fields and a free-form Markdown body. ([spec/frame-spec.md](spec/frame-spec.md) is the working draft, which may drift ahead between releases; it currently carries the proposed v0.3, described in [spec/README.md](spec/README.md).)
 
 If you want background or future discussion:
 
@@ -152,3 +152,7 @@ The intended boundary is:
 - Frames are the semantic artifacts
 - Nebi may package, version, and distribute Frames as its scope expands beyond computational environments
 - Collab applies Frames on the desktop and may become a discovery, import, export, and sharing surface for them through its hub
+
+## License
+
+This repository is licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE).

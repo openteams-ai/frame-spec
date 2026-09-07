@@ -1,0 +1,31 @@
+propertyID,propertyLabel,mandatory,repeatable,valueNodeType,valueDataType,valueConstraint,valueConstraintType,mapsTo,refines,note
+identifier,Identifier,true,false,literal,xsd:string,,,dcterms:identifier,,Frame-level; defaults to retrieval location
+guidance,Guidance,true,true,literal,xsd:string,,,,,Frame-native; may be empty
+title,Title,false,false,literal,xsd:string,,,dcterms:title,,MUST NOT be slug-constrained
+description,Description,false,false,literal,xsd:string,,,dcterms:description,,
+version,Version,false,false,literal,xsd:string,,,dcat:version,,SemVer recommended
+versionNotes,Version Notes,false,true,literal,xsd:string,,,adms:versionNotes,,
+status,Status,false,false,literal,xsd:string,draft review approved deprecated revoked,picklist,schema:creativeWorkStatus,,registry
+maintainer,Maintainer,false,true,literal,xsd:string,,,schema:maintainer,,accountable party
+scope,Scope,false,false,literal,xsd:string,,,dcterms:audience,,partial mapping
+visibility,Visibility,false,false,literal,xsd:string,private internal shared public,picklist,dcterms:accessRights,,not an access control
+license,License,false,false,IRI,,,,dcterms:license,,
+issued,Issued,false,false,literal,xsd:dateTime,,,dcterms:issued,,RFC 3339
+canonicalSource,Canonical Source,false,false,IRI,,,,schema:sameAs,,
+rules,Rules,false,true,literal,xsd:string,,,,guidance,
+terminology,Terminology,false,true,literal,xsd:string,,,,guidance,structured form is skos:Concept
+goals,Goals,false,true,literal,xsd:string,,,,guidance,
+style,Style,false,true,literal,xsd:string,,,,guidance,
+norms,Norms,false,true,literal,xsd:string,,,,guidance,
+skills,Skills,false,true,literal,xsd:string,,,,guidance,
+toolSpecs,Tool Specifications,false,true,literal,xsd:string,,,,guidance,typically references to spec files
+prompts,Prompts,false,true,literal,xsd:string,,,,guidance,
+architecture,Architecture,false,true,literal,xsd:string,,,,guidance,
+businessProcess,Business Process,false,true,literal,xsd:string,,,,guidance,
+composition,Composition,false,true,literal,xsd:string,frame-ref,pattern,,,Frame-native; ordered
+derivedFrom,Derived From,false,true,literal,xsd:string,frame-ref,pattern,prov:wasDerivedFrom,,
+previousVersion,Previous Version,false,false,literal,xsd:string,,,dcat:previousVersion,,
+guards,Guards,false,true,literal,xsd:string,frame-ref,pattern,dcterms:requires,,composes by accumulation
+mediaType,Media Type,false,false,literal,xsd:string,,,dcat:mediaType,,Representation level
+checksum,Checksum,false,false,literal,xsd:string,,,spdx:checksum,,Representation level
+byteSize,Byte Size,false,false,literal,xsd:integer,,,dcat:byteSize,,Representation level

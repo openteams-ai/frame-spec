@@ -4,6 +4,14 @@ This changelog tracks released versions of the Frame Spec.
 
 Each released version is frozen as a snapshot in `spec/` (for example, [spec/v0.2.md](spec/v0.2.md)). The working draft between releases is [spec/frame-spec.md](spec/frame-spec.md); it is not normative until it is released.
 
+## Unreleased
+
+Working draft only; nothing here is normative until released.
+
+- The working draft [spec/frame-spec.md](spec/frame-spec.md) now carries the proposed v0.3, written in the structure of an IETF Internet-Draft. It adds a data model independent of any encoding, a definition and obligation for every element (two mandatory: `identifier` and `guidance`), ten optional content refinements with a dumb-down rule, composition rules, a reference grammar, identity rules, `status`, `license`, `issued`, `canonicalSource`, `versionNotes`, `derivedFrom`, `previousVersion` and `guards` elements, YAML and JSON encodings, media types, conformance profiles, and security considerations. The v0.2 file format is preserved unchanged as the Markdown encoding; every valid v0.2 Frame is a valid v0.3 Frame.
+- Added [spec/profile/frame-core.csv](spec/profile/frame-core.csv), the element set as a DCTAP-style machine-readable profile.
+- Added [LICENSE](LICENSE): the repository is licensed under the Apache License, Version 2.0.
+
 ## v0.2.0 — 2026-08-18
 
 First official release of the Frame Spec.
