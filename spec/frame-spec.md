@@ -227,7 +227,7 @@ A distribution mechanism may assign its own artifact identity at the envelope la
 
 Conformance is defined at two levels.
 
-A *document* conforms to an encoding of this specification if it satisfies that encoding's requirements ([Section 6](#encodings)). A document does not conform to "the Frame Specification" in the abstract; it conforms to the Markdown, YAML, or JSON encoding.
+A *document* conforms to an encoding of this specification if it satisfies that encoding's requirements ([Section 6](#encodings)). A document does not conform to "the Frame Specification" in the abstract; it conforms to the Markdown, YAML, or JSON encoding. The registered value vocabularies of [Section 4](#elements) are RECOMMENDED for documents; a value that is not registered does not make a document non-conformant, and readers preserve it.
 
 An *implementation* conforms to this specification if it satisfies the requirements of [Section 4](#elements), [Section 5](#composition), and [Section 3.2](#identity) for the encodings it supports, and publishes a conformance profile ([Section 7](#profiles)) declaring its choices among the behaviors this specification leaves optional.
 
@@ -332,7 +332,7 @@ The following elements describe the Frame or a version of it. None is mandatory 
 - **Obligation:** MAY
 - **Repeatable:** No
 - **Maps to:** `schema:creativeWorkStatus` [[SCHEMA-ORG]](#ref-SCHEMA-ORG)
-- **Comment:** The value MUST be one of the values in the Frame Status Values registry ([Section 10.3](#iana-status)). The initial values are `draft`, `review`, `approved`, `deprecated`, and `revoked`. Readers MUST NOT treat these as interchangeable.
+- **Comment:** The value SHOULD be one of the values in the Frame Status Values registry ([Section 10.3](#iana-status)); the initial values are `draft`, `review`, `approved`, `deprecated`, and `revoked`. A reader MUST preserve a value that is not registered and MUST NOT reject a Frame for carrying one; it MAY warn. Frame Spec v0.2 did not define this element, and Frames written to it carry values such as `stable` that predate the registry. Readers MUST NOT treat registered values as interchangeable.
 
 <a id="el-maintainer"></a>
 
@@ -365,7 +365,7 @@ The following elements describe the Frame or a version of it. None is mandatory 
 - **Obligation:** MAY
 - **Repeatable:** No
 - **Maps to:** `dcterms:accessRights` [[DCTERMS]](#ref-DCTERMS); `schema:conditionsOfAccess` [[SCHEMA-ORG]](#ref-SCHEMA-ORG)
-- **Comment:** The value MUST be one of the values in the Frame Visibility Values registry ([Section 10.4](#iana-visibility)). The initial values are `private`, `internal`, `shared`, and `public`. Visibility is declared intent and travels with the Frame. It is not an access control, and readers MUST NOT treat it as one; who may read a Frame is decided by the system that holds it. See [Section 9](#security).
+- **Comment:** The value SHOULD be one of the values in the Frame Visibility Values registry ([Section 10.4](#iana-visibility)); the initial values are `private`, `internal`, `shared`, and `public`, which Frame Spec v0.2 listed as suggested values. A reader MUST preserve a value that is not registered and MUST NOT reject a Frame for carrying one; it MAY warn. Visibility is declared intent and travels with the Frame. It is not an access control, and readers MUST NOT treat it as one; who may read a Frame is decided by the system that holds it. See [Section 9](#security).
 
 <a id="el-license"></a>
 
@@ -1208,10 +1208,10 @@ title,Title,false,false,literal,xsd:string,,,dcterms:title,,MUST NOT be slug-con
 description,Description,false,false,literal,xsd:string,,,dcterms:description,,
 version,Version,false,false,literal,xsd:string,,,dcat:version,,SemVer recommended
 versionNotes,Version Notes,false,true,literal,xsd:string,,,adms:versionNotes,,
-status,Status,false,false,literal,xsd:string,draft review approved deprecated revoked,picklist,schema:creativeWorkStatus,,registry
+status,Status,false,false,literal,xsd:string,draft review approved deprecated revoked,picklist,schema:creativeWorkStatus,,registry; recommended values; others preserved
 maintainer,Maintainer,false,true,literal,xsd:string,,,schema:maintainer,,accountable party
 scope,Scope,false,false,literal,xsd:string,,,dcterms:audience,,partial mapping
-visibility,Visibility,false,false,literal,xsd:string,private internal shared public,picklist,dcterms:accessRights,,not an access control
+visibility,Visibility,false,false,literal,xsd:string,private internal shared public,picklist,dcterms:accessRights,,not an access control; recommended values; others preserved
 license,License,false,false,IRI,,,,dcterms:license,,
 issued,Issued,false,false,literal,xsd:dateTime,,,dcterms:issued,,RFC 3339
 canonicalSource,Canonical Source,false,false,IRI,,,,schema:sameAs,,
@@ -1292,6 +1292,7 @@ This specification adds to [[FRAME-V02]](#ref-FRAME-V02); it does not remove or 
 - Separation of identity (`identifier`) from display (`title`).
 - Ten optional refinements of the body with the dumb-down rule ([Section 4.4](#refinements)).
 - The `status`, `license`, `issued`, `canonicalSource`, `versionNotes`, `derivedFrom`, `previousVersion`, and `guards` elements.
+- Registries for `status` and `visibility` values ([Section 10](#iana)). Registered values are RECOMMENDED; unregistered values are preserved, so Frames written before the registries existed remain valid.
 - Composition rules 5 through 9 ([Section 5.1](#composition-rules)), session composition ([Section 5.4](#session)), and a reference grammar ([Section 5.3](#ref-syntax)).
 - Identity rules ([Section 3.2](#identity)).
 - The extensibility rule and the `x-` prefix ([Section 4.7](#extensions)).

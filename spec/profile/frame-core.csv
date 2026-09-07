@@ -5,10 +5,10 @@ title,Title,false,false,literal,xsd:string,,,dcterms:title,,MUST NOT be slug-con
 description,Description,false,false,literal,xsd:string,,,dcterms:description,,
 version,Version,false,false,literal,xsd:string,,,dcat:version,,SemVer recommended
 versionNotes,Version Notes,false,true,literal,xsd:string,,,adms:versionNotes,,
-status,Status,false,false,literal,xsd:string,draft review approved deprecated revoked,picklist,schema:creativeWorkStatus,,registry
+status,Status,false,false,literal,xsd:string,draft review approved deprecated revoked,picklist,schema:creativeWorkStatus,,registry; recommended values; others preserved
 maintainer,Maintainer,false,true,literal,xsd:string,,,schema:maintainer,,accountable party
 scope,Scope,false,false,literal,xsd:string,,,dcterms:audience,,partial mapping
-visibility,Visibility,false,false,literal,xsd:string,private internal shared public,picklist,dcterms:accessRights,,not an access control
+visibility,Visibility,false,false,literal,xsd:string,private internal shared public,picklist,dcterms:accessRights,,not an access control; recommended values; others preserved
 license,License,false,false,IRI,,,,dcterms:license,,
 issued,Issued,false,false,literal,xsd:dateTime,,,dcterms:issued,,RFC 3339
 canonicalSource,Canonical Source,false,false,IRI,,,,schema:sameAs,,
