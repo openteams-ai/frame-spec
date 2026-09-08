@@ -9,6 +9,11 @@ class FindingsTests(unittest.TestCase):
         self.assertFalse(has_errors([Finding("info", "x", "m"), Finding("warning", "y", "m")]))
         self.assertTrue(has_errors([Finding("error", "z", "m")]))
 
+    def test_an_unknown_level_is_rejected_at_construction(self):
+        """A typo such as "eror" would be invisible to has_errors."""
+        with self.assertRaises(ValueError):
+            Finding("eror", "x", "m")
+
 
 class NormalizeTests(unittest.TestCase):
     def setUp(self):
@@ -39,6 +44,14 @@ class NormalizeTests(unittest.TestCase):
         f = Frame({"identifier": "a/b", "guidance": [""]}, "json")
         self.assertIsNone(f.location)
         self.assertEqual(f.extras, {})
+
+    def test_guidance_branch_survives_a_non_repeatable_profile(self):
+        """A string must never be iterated character by character."""
+        class NotRepeatable:
+            def is_repeatable(self, name):
+                return False
+        out = normalize({"guidance": "Be plain.\n"}, NotRepeatable())
+        self.assertEqual(out["guidance"], ["Be plain."])
 
 
 if __name__ == "__main__":

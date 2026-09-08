@@ -10,7 +10,11 @@ class Finding:
     level: str
     code: str
     message: str
-    location: str = None
+    location: str | None = None
+
+    def __post_init__(self):
+        if self.level not in LEVELS:
+            raise ValueError(f"unknown finding level {self.level!r}, expected one of {', '.join(LEVELS)}")
 
     def __str__(self):
         where = f" ({self.location})" if self.location else ""
