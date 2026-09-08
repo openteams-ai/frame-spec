@@ -85,7 +85,9 @@ python tools/validate_frame.py --compose A.frame.json B.frame.json C.frame.json
 
 It never rejects a Frame for an unrecognized element, an unregistered
 `status` or `visibility` value, an unrecognized heading, or the form of a
-reference; those are warnings or information, as the draft requires. PyYAML
-is optional: without it, Markdown front matter is parsed by the same
+reference. The first two and the last are reported as a warning or as
+information; an unrecognized heading is reported not at all, because its
+content simply becomes `guidance`, which is what section 6.2.2 says it is.
+PyYAML is optional: without it, Markdown front matter is parsed by the same
 line-based parser `validate_frames.py` uses, and the YAML encoding cannot be
 read. `validate_frames.py` remains the check for the released v0.2 format.

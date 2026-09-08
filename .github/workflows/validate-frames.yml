@@ -2,11 +2,9 @@ name: Validate Frames
 
 on:
   pull_request:
-  # Every push, not just main: a branch pushed without a pull request (as this
-  # one is, to prove the checks below out before opening one) still gets a run
-  # to watch. Restricting this to main would leave nothing for `gh run watch`
-  # to find.
   push:
+    branches:
+      - main
 
 jobs:
   validate-frames:
