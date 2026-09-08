@@ -16,6 +16,7 @@ line-based parser and the YAML encoding cannot be read.
 """
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -35,6 +36,10 @@ def build_parser():
                         help="re-encode each Frame through json, yaml, and markdown and report differing elements")
     parser.add_argument("--self-check", action="store_true",
                         help="check spec/profile/frame-core.csv against the element definitions in spec/frame-spec.md")
+    parser.add_argument("--compose", action="store_true",
+                        help="resolve composition over PATHS given lowest precedence first; print the result as JSON")
+    parser.add_argument("--conformance-profile",
+                        help="YAML or JSON conformance profile to apply while composing")
     return parser
 
 
@@ -117,6 +122,53 @@ def round_trip_paths(paths, encoding, profile, out=sys.stdout):
     return 1 if failures else 0
 
 
+def compose_paths(paths, encoding, profile, conformance_path=None, out=sys.stdout, err=sys.stderr):
+    """Resolve composition over PATHS and print the resolved elements as JSON.
+
+    The paths are the composed set in precedence order, lowest first (draft section 5.1
+    rules 2 and 3, and section 5.4). This mode resolves no references, so a Frame's own
+    composition element is reported rather than followed. stdout carries the resolved
+    Frame and nothing else, so that CI can diff it against an expected file.
+    """
+    from framespec import compose as compose_mod
+    frames = []
+    for raw in paths:
+        enc = frame_io.detect_encoding(raw, encoding)
+        frame, findings = frame_io.read_frame(raw, enc, profile) if enc else (None, None)
+        if frame is None:
+            # A path that cannot be read is the whole composed set failing, not one
+            # Frame missing from it: resolving the rest would answer a question the
+            # user did not ask, with an exit code that said it went well.
+            print(f"COMPOSE FAIL  {raw}", file=err)
+            for finding in findings or []:
+                print(f"        - {finding}", file=err)
+            if not findings:
+                print(f"        - {_not_a_frame(raw)}", file=err)
+            return 1
+        frames.append((raw, frame))
+    for raw, frame in frames:
+        declared = frame.elements.get("composition") or []
+        for reference in (declared if isinstance(declared, list) else [declared]):
+            # Rule 7: a reader that resolves composition MUST NOT silently ignore a
+            # reference it did not resolve. This mode resolves none.
+            print(Finding("info", "composition-unresolved",
+                          f"'composition' reference {reference!r} was not resolved; the composed "
+                          "set is the paths given, lowest precedence first", str(raw)), file=err)
+    conformance = compose_mod.load_conformance(conformance_path) if conformance_path else None
+    resolved = compose_mod.compose([frame for _, frame in frames], profile, conformance)
+    print(json.dumps(resolved.elements, indent=2, sort_keys=True, ensure_ascii=False), file=out)
+    return 0
+
+
+def _not_a_frame(raw):
+    """Why a path that exists yielded no Frame, as a finding."""
+    where = Path(raw).resolve().as_uri()
+    if Path(raw).is_dir():
+        return Finding("error", "not-a-frame",
+                       "a directory: --compose takes the Frames of the composed set, in order", where)
+    return Finding("error", "not-a-frame", "not a Frame, or not an encoding this tool reads", where)
+
+
 def main(argv=None):
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -132,6 +184,17 @@ def main(argv=None):
             print(finding)
         return 1 if has_errors(findings) else 0
     profile = Profile.load(args.profile)
+    if args.conformance_profile and not args.compose:
+        # A flag that silently did nothing would leave the user believing a narrowing
+        # had been applied to a run that never read it.
+        parser.error("--conformance-profile applies to --compose")
+    if args.compose:
+        # With the other modes, before the paths guard below, so that the usage error
+        # names this mode rather than answering with the whole help text.
+        if not args.paths:
+            parser.error("--compose needs at least one path: the Frames of the composed set, "
+                         "lowest precedence first")
+        return compose_paths(args.paths, args.encoding, profile, args.conformance_profile)
     if not args.paths:
         parser.print_help()
         return 2

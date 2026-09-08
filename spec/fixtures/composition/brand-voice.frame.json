@@ -1,0 +1,10 @@
+{
+  "identifier": "acme/brand-voice",
+  "title": "Brand Voice",
+  "description": "How we sound.",
+  "visibility": "internal",
+  "composition": ["acme/company-core"],
+  "guidance": "Sound like us.",
+  "rules": ["no hype"],
+  "style": ["plain"]
+}
