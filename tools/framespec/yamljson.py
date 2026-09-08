@@ -52,7 +52,11 @@ def _from_mapping(data, encoding, profile, location):
 
 
 def _to_mapping(frame, profile):
-    out = {k: v for k, v in frame.extras.items() if k in ("@context", "@type")}
+    # Reuse EXTRA_KEYS, the same set _from_mapping used to pull these out of the
+    # elements, so an encoding-level key that was preserved into extras (an
+    # optional "type" token, section 6.3, included) is actually written back
+    # rather than dropped.
+    out = {k: v for k, v in frame.extras.items() if k in EXTRA_KEYS}
     skip = {"identifier"} if frame.extras.get(markdown.DEFAULTED) else set()
     for name in profile.order:
         if name in frame.elements and name not in skip:
