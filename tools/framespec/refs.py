@@ -24,11 +24,11 @@ def classify(ref):
     text = ref.strip()
     if not text:
         raise ValueError("empty reference")
-    if text.startswith(_PATH_PREFIXES):
-        return PATH
+    if any(text.startswith(prefix) and len(text) > len(prefix) for prefix in _PATH_PREFIXES):
+        return PATH          # the grammar requires content after the prefix, so a bare "/" is a name
     if "@" in text:
         left, _, version = text.rpartition("@")
-        if version and " " not in version and _QUALIFIED.match(left):
+        if version and not any(ch.isspace() for ch in version) and _QUALIFIED.match(left):
             return PINNED
     if _QUALIFIED.match(text):
         return QUALIFIED

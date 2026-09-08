@@ -28,6 +28,11 @@ class ClassifyTests(unittest.TestCase):
     def test_surrounding_whitespace_is_trimmed(self):
         self.assertEqual(refs.classify("  acme/brand-voice@1.0.0  "), refs.PINNED)
 
+    def test_bare_prefixes_are_names_because_the_grammar_needs_content(self):
+        self.assertEqual(refs.classify("/"), refs.NAME)
+        self.assertEqual(refs.classify("./"), refs.NAME)
+        self.assertEqual(refs.classify("../"), refs.NAME)
+
     def test_empty_is_the_only_error(self):
         with self.assertRaises(ValueError):
             refs.classify("   ")
