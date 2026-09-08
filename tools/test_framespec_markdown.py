@@ -125,6 +125,21 @@ class DefectRegressionTests(unittest.TestCase):
         again, findings = markdown.parse(text, self.p, None)
         self.assertEqual(again.elements["description"], long)
 
+    def test_a_defaulted_identifier_is_not_written_into_the_document(self):
+        """The identifier is derived from the location, so emitting it would bake
+        one machine's file path into a shared artifact as its identity."""
+        location = "file:///srv/frames/minimal/frame.md"
+        frame, _ = markdown.parse(MINIMAL_V02, self.p, location)
+        self.assertEqual(frame.elements["identifier"], location)
+        text = markdown.write(frame, self.p)
+        self.assertNotIn("identifier:", text)
+        again, _ = markdown.parse(text, self.p, location)
+        self.assertEqual(again.elements["identifier"], location)
+
+    def test_a_stated_identifier_is_written(self):
+        frame, _ = markdown.parse(SPEC_EXAMPLE, self.p, "file:///x/b.frame.md")
+        self.assertIn("identifier: acme/brand-voice", markdown.write(frame, self.p))
+
     def test_a_non_string_refinement_value_does_not_crash_the_writer(self):
         frame, _ = markdown.parse(MINIMAL_V02, self.p, None)
         frame.elements["rules"] = [5]
