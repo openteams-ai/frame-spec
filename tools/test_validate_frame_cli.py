@@ -1,6 +1,6 @@
-import os
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -55,6 +55,32 @@ class CliTests(unittest.TestCase):
         result = run("examples/minimal/frame.md", "examples/still-does-not-exist.frame.md")
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn("path-not-found", result.stdout)
+        self.assertIn("Frames checked: 2   passed: 1   failed: 1   skipped: 0", result.stdout)
+
+    def test_an_undecodable_file_reports_a_finding_instead_of_crashing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            bad = Path(tmp) / "undecodable.frame.md"
+            bad.write_bytes(b"\xff\xfe\x00\x01not valid utf-8")
+            result = run(str(bad))
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("file-unreadable", result.stdout)
+        self.assertIn("Frames checked: 1   passed: 0   failed: 1   skipped: 0", result.stdout)
+
+    def test_directory_scan_with_an_unreadable_file_still_checks_the_valid_frame(self):
+        # Named so the undecodable file sorts before the valid one: before the fix,
+        # an unhandled UnicodeDecodeError on the first file would crash the whole
+        # process and the second file, along with the summary line, would never
+        # be reached at all.
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            (tmp_path / "aaa-undecodable.frame.md").write_bytes(b"\xff\xfe\x00\x01not valid utf-8")
+            (tmp_path / "zzz-good.frame.md").write_text(
+                "---\ntype: frame [0.3]\nname: Good\ndescription: D\nvisibility: internal\n---\nbody\n",
+                encoding="utf-8",
+            )
+            result = run(str(tmp_path))
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("file-unreadable", result.stdout)
         self.assertIn("Frames checked: 2   passed: 1   failed: 1   skipped: 0", result.stdout)
 
 

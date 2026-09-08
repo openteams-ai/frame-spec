@@ -36,7 +36,7 @@ def build_parser():
 
 def validate_paths(paths, encoding, profile, quiet, out=sys.stdout):
     checked = failed = skipped = 0
-    for raw in paths:
+    for raw in dict.fromkeys(paths):     # a repeated argument is one path, as collect() treats it
         # collect() silently drops anything that is neither a directory nor a
         # file, which would otherwise let a typo'd or missing path pass with
         # no finding at all and an exit code of 0: a false green. Report it
@@ -46,8 +46,9 @@ def validate_paths(paths, encoding, profile, quiet, out=sys.stdout):
             continue
         checked += 1
         failed += 1
+        where = path.resolve().as_uri()      # same location shape every other finding uses
         print(f"FAIL  {path}", file=out)
-        print(f"        - {Finding('error', 'path-not-found', 'no such file or directory', str(path))}", file=out)
+        print(f"        - {Finding('error', 'path-not-found', 'no such file or directory', where)}", file=out)
     for path in frame_io.collect(paths):
         enc = frame_io.detect_encoding(path, encoding)
         frame, findings = frame_io.read_frame(path, enc, profile) if enc else (None, None)

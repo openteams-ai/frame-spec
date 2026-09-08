@@ -3,6 +3,7 @@
 from pathlib import Path
 
 from . import markdown, yamljson
+from .findings import Finding
 
 PARSERS = {"markdown": markdown.parse, "yaml": yamljson.parse_yaml, "json": yamljson.parse_json}
 WRITERS = {"markdown": markdown.write, "yaml": yamljson.write_yaml, "json": yamljson.write_json}
@@ -30,7 +31,13 @@ def collect(paths):
 
 def read_frame(path, encoding, profile):
     """Parse one file. (None, None) means the file is not a Frame and was skipped."""
-    text = Path(path).read_text(encoding="utf-8")
+    location = Path(path).resolve().as_uri()
+    try:
+        text = Path(path).read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as error:
+        # An unreadable file is a finding, not a crash. A crash prints no summary
+        # line at all and silently truncates the rest of the scan.
+        return None, [Finding("error", "file-unreadable", str(error), location)]
     if encoding == "markdown":
         first = text.splitlines()[0].strip() if text.strip() else ""
         if first != "---":          # the same rule tools/validate_frames.py applies
@@ -38,4 +45,4 @@ def read_frame(path, encoding, profile):
     parser = PARSERS.get(encoding)
     if parser is None:
         return None, None
-    return parser(text, profile, Path(path).resolve().as_uri())
+    return parser(text, profile, location)
