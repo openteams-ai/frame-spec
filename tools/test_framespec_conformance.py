@@ -64,6 +64,17 @@ class ConformanceTests(unittest.TestCase):
         codes = [f.code for f in conformance.check_profile(odd, self.p) if f.level == "warning"]
         self.assertIn("profile-forms-without-resolution", codes)
 
+    def test_narrowings_without_resolution_is_a_warning(self):
+        # Rule 6's narrowings (non_repeatable and rule6_narrowings) only matter when
+        # composition is actually resolved and merged, the same way reference_forms
+        # only matters when something is resolved to classify a reference for. Declaring
+        # a narrowing while resolves_composition is 'none' is the same shape of leftover,
+        # unexercised declaration, so it earns the same warning by the same reasoning.
+        # reference_forms is emptied here to isolate this condition from the other one.
+        odd = dict(GOOD, resolves_composition="none", reference_forms=[])
+        codes = [f.code for f in conformance.check_profile(odd, self.p) if f.level == "warning"]
+        self.assertIn("profile-forms-without-resolution", codes)
+
     @unittest.skipUnless(HAVE_YAML, "PyYAML not installed")
     def test_both_repository_profiles_validate_and_differ(self):
         from framespec.compose import load_conformance
@@ -105,11 +116,52 @@ class ConformanceTests(unittest.TestCase):
         # no such token. The checker must also recognize the token when it is written
         # as a one-item list, since framespec.compose._names() treats dedup: all-repeatable
         # and dedup: [all-repeatable] identically.
+        # "all-repeatable" is not itself an element, so under replace_by_key (where the
+        # token has no meaning) it is reported as an unknown element, not as an element
+        # that merely fails to be repeatable.
         bad_key = dict(GOOD, rule6_narrowings={"replace_by_key": "all-repeatable"})
         codes = [f.code for f in conformance.check_profile(bad_key, self.p) if f.level == "error"]
-        self.assertIn("profile-narrowing-not-content", codes)
+        self.assertIn("profile-unknown-element", codes)
         as_list = dict(GOOD, rule6_narrowings={"dedup": ["all-repeatable"]})
         self.assertFalse(has_errors(conformance.check_profile(as_list, self.p)))
+
+    def test_an_unknown_narrowing_element_is_reported_as_unknown_not_non_repeatable(self):
+        # profile.is_repeatable() returns False both for a real element that is simply
+        # not repeatable (e.g. 'title') and for a name that is not an element at all.
+        # additionally_required already distinguishes the two with profile-unknown-element;
+        # rule6_narrowings must say the same thing about a name that does not exist,
+        # rather than implying it exists but fails a repeatability test.
+        unknown = dict(GOOD, rule6_narrowings={"dedup": ["not-a-real-element"]})
+        codes = [f.code for f in conformance.check_profile(unknown, self.p) if f.level == "error"]
+        self.assertIn("profile-unknown-element", codes)
+        self.assertNotIn("profile-narrowing-not-content", codes)
+        # 'title' exists but is not repeatable even at the model level: still the
+        # narrowing-not-content code, since the name is real.
+        not_repeatable = dict(GOOD, rule6_narrowings={"dedup": ["title"]})
+        codes = [f.code for f in conformance.check_profile(not_repeatable, self.p) if f.level == "error"]
+        self.assertIn("profile-narrowing-not-content", codes)
+        self.assertNotIn("profile-unknown-element", codes)
+
+    def test_a_non_string_scalar_field_value_is_a_finding_not_a_crash(self):
+        # Appendix C's template spells "Resolves composition" as <no | yes, ...>. A
+        # profile author extending that "no" convention to reference_forms writes
+        # "reference_forms: no", which YAML reads as the Python bool False, not a
+        # string or a list. _as_list() must wrap a value like this as one bad entry so
+        # it reaches the ordinary vocabulary check, instead of crashing on list(False)
+        # (TypeError: 'bool' object is not iterable) or, as the brief's draft did for
+        # every list-shaped field before _as_list() existed, silently vanishing under
+        # a bare `data.get(key) or []`.
+        odd = dict(GOOD, reference_forms=False)
+        findings = conformance.check_profile(odd, self.p)
+        codes = [f.code for f in findings if f.level == "error"]
+        self.assertIn("profile-bad-reference-form", codes)
+
+    def test_as_list_wraps_a_non_iterable_scalar_instead_of_raising(self):
+        self.assertEqual(conformance._as_list(None), [])
+        self.assertEqual(conformance._as_list("style"), ["style"])
+        self.assertEqual(conformance._as_list(["a", "b"]), ["a", "b"])
+        self.assertEqual(conformance._as_list(False), [False])
+        self.assertEqual(conformance._as_list(5), [5])
 
 
 class CheckProfileCliTests(unittest.TestCase):
@@ -175,6 +227,23 @@ class CheckProfileCliTests(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("pyyaml-required", out.getvalue())
         self.assertNotIn("Traceback", out.getvalue())
+
+
+class NebariFramesProfileCompositionTests(unittest.TestCase):
+    # Task 13's continuous integration workflow composes spec/fixtures/composition/
+    # under this profile and diffs the result against expected-style-non-repeatable.json
+    # byte for byte; that fixture lives entirely outside this task's file list, and so
+    # does the workflow that will check it, but nothing stops a change to the profile or
+    # to the resolver from being noticed here first, before that CI exists to catch it.
+    @unittest.skipUnless(HAVE_YAML, "PyYAML not installed")
+    def test_reproduces_the_composition_fixture_byte_for_byte(self):
+        order = ["company-core.frame.json", "brand-voice.frame.json", "q4-playbook.frame.json"]
+        result = run("--compose", "--conformance-profile", "spec/profiles/nebari-frames.yaml",
+                     *[f"spec/fixtures/composition/{name}" for name in order])
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        expected = (REPO / "spec" / "fixtures" / "composition" /
+                    "expected-style-non-repeatable.json").read_text(encoding="utf-8")
+        self.assertEqual(result.stdout, expected)
 
 
 if __name__ == "__main__":
