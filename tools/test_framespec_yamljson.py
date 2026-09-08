@@ -70,11 +70,18 @@ class JsonTests(unittest.TestCase):
         md, _ = markdown.parse(open_spec_example(), self.p, "file:///x/b.frame.md")
         self.assertEqual(frame.elements, md.elements)
 
-    def test_missing_guidance_is_an_error_and_object_required(self):
+    def test_missing_guidance_is_reported_once_by_the_checker(self):
+        """The parser does not duplicate the mandatory check; framespec.check owns it."""
+        from framespec.check import check
         frame, findings = yamljson.parse_json('{"identifier": "a/b"}', self.p, None)
-        self.assertIn("missing-mandatory", [f.code for f in findings])
+        self.assertEqual([f.code for f in findings if f.code == "missing-mandatory"], [])
+        codes = [f.code for f in check(frame, self.p)]
+        self.assertEqual(codes.count("missing-mandatory"), 1)
+
+    def test_a_json_document_must_be_an_object(self):
         frame, findings = yamljson.parse_json('[1, 2]', self.p, None)
         self.assertIsNone(frame)
+        self.assertEqual(findings[0].code, "not-an-object")
 
     def test_write_json_round_trips(self):
         frame, _ = yamljson.parse_json(JSON_EXAMPLE, self.p, "file:///x/b.frame.json")

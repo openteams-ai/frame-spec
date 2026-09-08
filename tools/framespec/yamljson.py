@@ -46,8 +46,8 @@ def _from_mapping(data, encoding, profile, location):
         elements["identifier"] = location
         extras[markdown.DEFAULTED] = True    # derived, not stated: writers must not emit it
         findings.append(Finding("info", "identifier-default", "identifier defaulted to the retrieval location", location))
-    if "guidance" not in elements:
-        findings.append(Finding("error", "missing-mandatory", "guidance must be present (it may be empty)", location))
+    # Mandatory elements are not checked here: framespec.check owns that, driven by
+    # the profile, so one absence is reported once rather than by every layer that notices.
     return Frame(normalize(elements, profile), encoding, location, extras), findings
 
 
