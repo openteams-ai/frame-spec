@@ -39,6 +39,16 @@ GOOD = {
     "identifier_minting": "not performed", "visibility": "declared intent only; not an access control",
 }
 
+# Shapes that are wrong for every list-shaped field and for the one scalar field
+# (resolves_composition): none of these is a string, a list, or None, so each is a
+# distinct way _as_list()/_as_name() could in principle fail to protect a call site.
+BAD_SHAPES = {
+    "boolean": False,
+    "integer": 5,
+    "mapping": {"a": 1},
+    "nested list": [["x"]],
+}
+
 
 class ConformanceTests(unittest.TestCase):
     def setUp(self):
@@ -198,27 +208,69 @@ class ConformanceTests(unittest.TestCase):
         findings = conformance.check_profile(odd, self.p)
         self.assertTrue(has_errors(findings), [str(f) for f in findings])
 
-    def test_every_unguarded_field_reports_a_finding_for_every_bad_shape(self):
-        # The matrix the round 2 review named: encodings_read, encodings_written,
-        # reference_forms, and additionally_required are the four fields nothing
-        # upstream of check_profile() validates (unlike non_repeatable and the two
-        # rule6_narrowings keys, which load_conformance() validates at load time), so
-        # _as_list() alone is what stands between a hand-authored profile's mistake and
-        # a crash for these four. Each of a boolean, an integer, a mapping, and a
-        # nested list must produce an ordinary error finding, never an exception.
-        fields = ["encodings_read", "encodings_written", "reference_forms", "additionally_required"]
-        shapes = {
-            "boolean": False,
-            "integer": 5,
-            "mapping": {"a": 1},
-            "nested list": [["x"]],
-        }
+    def test_every_list_shaped_field_reports_a_finding_for_every_bad_shape(self):
+        # Every field check_profile() reads as a list of names, not just the four
+        # round 2 found unguarded (encodings_read, encodings_written, reference_forms,
+        # additionally_required): non_repeatable is included too, both because
+        # _as_list() protects it the same way and because a value reaching
+        # check_profile() directly bypasses load_conformance()'s own validation of it.
+        # Each of a boolean, an integer, a mapping, and a nested list must produce an
+        # ordinary error finding, never an exception.
+        fields = ["encodings_read", "encodings_written", "reference_forms",
+                 "non_repeatable", "additionally_required"]
         for field in fields:
-            for shape_name, shape in shapes.items():
+            for shape_name, shape in BAD_SHAPES.items():
                 with self.subTest(field=field, shape=shape_name):
                     odd = dict(GOOD, **{field: shape})
                     findings = conformance.check_profile(odd, self.p)
                     self.assertTrue(has_errors(findings), [str(f) for f in findings])
+
+    def test_the_scalar_field_reports_a_finding_for_every_bad_shape(self):
+        # resolves_composition is the one field this module compares to a vocabulary
+        # as a single scalar rather than a list: the field _as_list() never touched,
+        # and the one the round 3 review reproduced through the shipped flag
+        # (resolves_composition: [transitive] raised TypeError: cannot use 'list' as
+        # a set element). _as_name() must give it the same protection _as_list()
+        # gives every list-shaped field.
+        for shape_name, shape in BAD_SHAPES.items():
+            with self.subTest(shape=shape_name):
+                odd = dict(GOOD, resolves_composition=shape)
+                findings = conformance.check_profile(odd, self.p)
+                codes = [f.code for f in findings if f.level == "error"]
+                self.assertIn("profile-bad-resolution", codes)
+
+    def test_rule6_narrowings_top_level_shape_reports_a_finding_for_every_bad_shape(self):
+        # rule6_narrowings itself, not one of its per-key values: must be a mapping.
+        # Blocked at the shipped tool, where load_conformance() already validates this
+        # before check_profile() ever sees it, so reachable only by calling
+        # check_profile() directly; fixed anyway, in the same discipline as every
+        # other site. A falsy value (0, "", [], {}, False, None) is not exercised here:
+        # `... or {}` already absorbs it harmlessly, as it did before this fix, and it
+        # is the mapping's own {} that is the correct shape, so neither belongs in a
+        # table of shapes that must produce an error.
+        shapes = {"boolean-true": True, "integer": 5, "string": "dedup", "nested list": [["a"]]}
+        for shape_name, shape in shapes.items():
+            with self.subTest(shape=shape_name):
+                odd = dict(GOOD, rule6_narrowings=shape)
+                findings = conformance.check_profile(odd, self.p)
+                self.assertTrue(has_errors(findings), [str(f) for f in findings])
+
+    def test_rule6_narrowings_sub_key_values_report_a_finding_for_every_bad_shape(self):
+        # The values under rule6_narrowings.dedup and .replace_by_key, which _as_list()
+        # already protects the same way as any other list-shaped field's value.
+        for narrowing_key in ("dedup", "replace_by_key"):
+            for shape_name, shape in BAD_SHAPES.items():
+                with self.subTest(narrowing_key=narrowing_key, shape=shape_name):
+                    odd = dict(GOOD, rule6_narrowings={narrowing_key: shape})
+                    findings = conformance.check_profile(odd, self.p)
+                    self.assertTrue(has_errors(findings), [str(f) for f in findings])
+
+    def test_every_field_still_accepts_its_correctly_shaped_form(self):
+        # The matrix above proves every wrong shape is a finding; this proves the fix
+        # did not, in the process, start rejecting any field's correct shape. GOOD
+        # already exercises every field this module checks against a vocabulary.
+        findings = conformance.check_profile(GOOD, self.p)
+        self.assertFalse(has_errors(findings), [str(f) for f in findings])
 
     def test_a_profile_written_entirely_in_scalar_shorthand_is_still_accepted(self):
         # Every list-shaped field written as a bare scalar rather than a one-item list,
@@ -299,6 +351,22 @@ class CheckProfileCliTests(unittest.TestCase):
             code = validate_frame.check_profile_paths(["spec/profiles/nebari-frames.yaml"], Profile.load(), out=out)
         self.assertEqual(code, 1)
         self.assertIn("pyyaml-required", out.getvalue())
+        self.assertNotIn("Traceback", out.getvalue())
+
+    def test_check_profile_paths_reports_a_finding_when_check_profile_itself_raises(self):
+        # Item 2's defense in depth, proved independently of item 1: patches
+        # conformance.check_profile() itself to raise a plain RuntimeError, standing
+        # in for any exception no amount of shape-routing anticipated (not one of the
+        # shapes _as_list()/_as_name() handle, which is item 1's concern and is tested
+        # separately in ConformanceTests). Confirms check_profile_paths()'s own
+        # try/except reports a finding and exits 1 rather than letting the exception
+        # escape as a traceback, regardless of whether the routing above it is sound.
+        out = io.StringIO()
+        with mock.patch("framespec.conformance.check_profile", side_effect=RuntimeError("boom")):
+            code = validate_frame.check_profile_paths(["spec/profiles/nebari-frames.yaml"], Profile.load(), out=out)
+        self.assertEqual(code, 1)
+        self.assertIn("profile-check-failed", out.getvalue())
+        self.assertIn("boom", out.getvalue())
         self.assertNotIn("Traceback", out.getvalue())
 
 

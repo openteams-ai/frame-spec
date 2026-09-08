@@ -205,6 +205,13 @@ def check_profile_paths(paths, profile, out=sys.stdout):
     readable profile (bad syntax, not a mapping, a narrowing that cannot be read, or a
     YAML profile with no PyYAML installed) is a finding here too, not an unhandled
     exception that would crash the run and print nothing for the paths after it.
+
+    conformance.check_profile() itself is also called under a broad except, as defense
+    in depth rather than a substitute for that module routing every value's shape
+    through _as_list()/_as_name() before comparing it to a vocabulary: the routing is
+    what turns a known bad shape into an accurate, specific finding, and this net
+    exists only to catch whatever shape that routing does not yet anticipate, so a
+    profile no one has written yet degrades to a finding here instead of a traceback.
     """
     from framespec import conformance
     from framespec.compose import load_conformance
@@ -225,7 +232,14 @@ def check_profile_paths(paths, profile, out=sys.stdout):
             print(f"FAIL  {raw}", file=out)
             print(f"        - {Finding('error', 'conformance-profile-unreadable', str(error), str(raw))}", file=out)
             continue
-        findings = conformance.check_profile(data, profile, raw)
+        try:
+            findings = conformance.check_profile(data, profile, raw)
+        except Exception as error:  # noqa: BLE001 - deliberate: see the docstring's "defense in depth"
+            failures += 1
+            print(f"FAIL  {raw}", file=out)
+            message = f"{type(error).__name__}: {error}"
+            print(f"        - {Finding('error', 'profile-check-failed', message, str(raw))}", file=out)
+            continue
         bad = has_errors(findings)
         failures += bad
         print(f"{'FAIL' if bad else 'OK  '}  {raw}", file=out)
