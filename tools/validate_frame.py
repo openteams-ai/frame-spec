@@ -36,21 +36,29 @@ def build_parser():
     return parser
 
 
-def validate_paths(paths, encoding, profile, quiet, out=sys.stdout):
-    checked = failed = skipped = 0
+def report_missing(paths, label, out=sys.stdout):
+    """Print one failure per path that is neither a file nor a directory, and count them.
+
+    collect() drops such a path, so without this a typo would produce no finding
+    and exit 0: a false green. Every mode that scans paths needs it.
+    """
+    missing = 0
     for raw in dict.fromkeys(paths):     # a repeated argument is one path, as collect() treats it
-        # collect() silently drops anything that is neither a directory nor a
-        # file, which would otherwise let a typo'd or missing path pass with
-        # no finding at all and an exit code of 0: a false green. Report it
-        # as a checked, failed entry instead of leaving it uncounted.
         path = Path(raw)
         if path.is_dir() or path.is_file():
             continue
-        checked += 1
-        failed += 1
+        missing += 1
         where = path.resolve().as_uri()      # same location shape every other finding uses
-        print(f"FAIL  {path}", file=out)
+        print(f"{label}  {path}", file=out)
         print(f"        - {Finding('error', 'path-not-found', 'no such file or directory', where)}", file=out)
+    return missing
+
+
+def validate_paths(paths, encoding, profile, quiet, out=sys.stdout):
+    checked = failed = skipped = 0
+    missing = report_missing(paths, "FAIL", out)
+    checked += missing
+    failed += missing
     for path in frame_io.collect(paths):
         enc = frame_io.detect_encoding(path, encoding)
         frame, findings = frame_io.read_frame(path, enc, profile) if enc else (None, None)
@@ -74,7 +82,7 @@ def validate_paths(paths, encoding, profile, quiet, out=sys.stdout):
 def round_trip_paths(paths, encoding, profile, out=sys.stdout):
     """Re-encode each Frame through json, yaml, and markdown; report differing elements."""
     from framespec import roundtrip
-    failures = 0
+    failures = report_missing(paths, "ROUND-TRIP FAIL   ", out)
     for path in frame_io.collect(paths):
         enc = frame_io.detect_encoding(path, encoding)
         frame, findings = frame_io.read_frame(path, enc, profile) if enc else (None, None)
@@ -89,7 +97,14 @@ def round_trip_paths(paths, encoding, profile, out=sys.stdout):
             for finding in findings:
                 print(f"        - {finding}", file=out)
             continue
-        final, diffs = roundtrip.round_trip(frame, profile)
+        try:
+            final, diffs = roundtrip.round_trip(frame, profile)
+        except ImportError as error:
+            # The yaml leg needs PyYAML. Say so rather than raising a traceback.
+            failures += 1
+            print(f"ROUND-TRIP FAIL     {path}", file=out)
+            print(f"        - {Finding('error', 'pyyaml-required', str(error), str(path))}", file=out)
+            continue
         if diffs:
             failures += 1
             print(f"ROUND-TRIP DIFFERS  {path}", file=out)

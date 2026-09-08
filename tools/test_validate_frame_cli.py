@@ -1,11 +1,18 @@
+import io
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 TOOLS = Path(__file__).resolve().parent
 REPO = TOOLS.parent
+
+sys.path.insert(0, str(TOOLS))
+
+import validate_frame  # noqa: E402 - needs the sys.path insert above
+from framespec.profile import Profile  # noqa: E402 - same reason
 
 
 def run(*args):
@@ -102,6 +109,37 @@ class CliTests(unittest.TestCase):
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn("file-unreadable", result.stdout)
         self.assertIn("ROUND-TRIP FAIL", result.stdout)
+
+    def test_round_trip_reports_path_not_found_for_a_typod_path(self):
+        # report_missing() is shared with validate_paths(); --round-trip must
+        # get the same false-green protection for a path collect() would
+        # otherwise silently drop.
+        result = run("--round-trip", "examples/this-path-does-not-exist.frame.md")
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("path-not-found", result.stdout)
+        self.assertIn("ROUND-TRIP FAIL", result.stdout)
+
+    def test_round_trip_reports_pyyaml_required_instead_of_crashing(self):
+        # Simulate PyYAML being absent without uninstalling it: a None
+        # sentinel in sys.modules for "yaml" makes Python's import system
+        # raise ImportError for any "import yaml" statement, exactly as if
+        # the package were not installed, and the patch restores cleanly
+        # afterward. This has to run in-process, not through the run()
+        # subprocess helper, since the sentinel only exists in the process
+        # that sets it.
+        profile = Profile.load()
+        with tempfile.TemporaryDirectory() as tmp:
+            good = Path(tmp) / "good.frame.md"
+            good.write_text(
+                "---\ntype: frame [0.3]\nname: Good\ndescription: D\nvisibility: internal\n---\nbody\n",
+                encoding="utf-8",
+            )
+            out = io.StringIO()
+            with mock.patch.dict(sys.modules, {"yaml": None}):
+                result = validate_frame.round_trip_paths([str(good)], "auto", profile, out=out)
+        self.assertEqual(result, 1)
+        self.assertIn("pyyaml-required", out.getvalue())
+        self.assertIn("ROUND-TRIP FAIL", out.getvalue())
 
 
 if __name__ == "__main__":
