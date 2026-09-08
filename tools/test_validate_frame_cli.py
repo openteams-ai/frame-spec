@@ -83,6 +83,26 @@ class CliTests(unittest.TestCase):
         self.assertIn("file-unreadable", result.stdout)
         self.assertIn("Frames checked: 2   passed: 1   failed: 1   skipped: 0", result.stdout)
 
+    def test_round_trip_reports_ok_for_the_full_fixture(self):
+        result = run("--round-trip", "spec/fixtures/roundtrip/full.frame.md")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("ROUND-TRIP OK", result.stdout)
+
+    def test_round_trip_reports_a_failure_for_an_unreadable_file_instead_of_a_silent_skip(self):
+        # round_trip_paths() must tell read_frame()'s two None-returning cases
+        # apart: (None, None) is a file that is not a Frame and is skipped on
+        # purpose, but (None, [finding]) is a file that could not be read at
+        # all. Treating both the same way would let an unreadable file exit 0
+        # having checked nothing, the same false-green validate_paths already
+        # guards against for its own scan.
+        with tempfile.TemporaryDirectory() as tmp:
+            bad = Path(tmp) / "undecodable.frame.md"
+            bad.write_bytes(b"\xff\xfe\x00\x01not valid utf-8")
+            result = run("--round-trip", str(bad))
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("file-unreadable", result.stdout)
+        self.assertIn("ROUND-TRIP FAIL", result.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()

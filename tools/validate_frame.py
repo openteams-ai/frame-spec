@@ -31,6 +31,8 @@ def build_parser():
     parser.add_argument("--encoding", default="auto", choices=["auto", "markdown", "yaml", "json"])
     parser.add_argument("--profile", default=str(DEFAULT_PROFILE_PATH), help="path to frame-core.csv")
     parser.add_argument("--quiet", action="store_true", help="print only failures and the summary")
+    parser.add_argument("--round-trip", action="store_true",
+                        help="re-encode each Frame through json, yaml, and markdown and report differing elements")
     return parser
 
 
@@ -69,12 +71,43 @@ def validate_paths(paths, encoding, profile, quiet, out=sys.stdout):
     return 1 if failed else 0
 
 
+def round_trip_paths(paths, encoding, profile, out=sys.stdout):
+    """Re-encode each Frame through json, yaml, and markdown; report differing elements."""
+    from framespec import roundtrip
+    failures = 0
+    for path in frame_io.collect(paths):
+        enc = frame_io.detect_encoding(path, encoding)
+        frame, findings = frame_io.read_frame(path, enc, profile) if enc else (None, None)
+        if findings is None:
+            continue          # not a Frame: read_frame already agreed to skip it
+        if frame is None:
+            # findings is a non-empty list here: the file could not be read at
+            # all (see read_frame's contract). Report it rather than silently
+            # continuing, which would otherwise exit 0 having checked nothing.
+            failures += 1
+            print(f"ROUND-TRIP FAIL     {path}", file=out)
+            for finding in findings:
+                print(f"        - {finding}", file=out)
+            continue
+        final, diffs = roundtrip.round_trip(frame, profile)
+        if diffs:
+            failures += 1
+            print(f"ROUND-TRIP DIFFERS  {path}", file=out)
+            for name, before, after in diffs:
+                print(f"        - {name}: {before!r} -> {after!r}", file=out)
+        else:
+            print(f"ROUND-TRIP OK       {path}", file=out)
+    return 1 if failures else 0
+
+
 def main(argv=None):
     args = build_parser().parse_args(argv)
     profile = Profile.load(args.profile)
     if not args.paths:
         build_parser().print_help()
         return 2
+    if args.round_trip:
+        return round_trip_paths(args.paths, args.encoding, profile)
     return validate_paths(args.paths, args.encoding, profile, args.quiet)
 
 
