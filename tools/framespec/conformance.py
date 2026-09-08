@@ -13,32 +13,27 @@ NARROWING_KEYS = {"dedup", "replace_by_key"}
 
 
 def _as_list(value):
-    """A field's value as a list of names: a bare scalar, a sequence, or absent.
+    """A field's value as a list of names.
 
-    Appendix C's list-shaped fields accept a single name written as a bare scalar, the
-    same shorthand framespec.compose._names() accepts for non_repeatable and the two
-    rule6_narrowings keys. A string is one name, not an iterable of characters, so it is
-    wrapped rather than iterated: without this, a profile that used the shorthand would
-    have its one name iterated letter by letter and checked against the element
-    vocabulary, turning a valid declaration into a handful of unrelated findings.
-
-    Anything else that is not already an iterable sequence is wrapped the same way. This
-    matters for a value like the Python bool a YAML "no" becomes: Appendix C's own
-    template spells "Resolves composition" as <no | yes, ...>, so a profile author
-    extending that wording to a list field such as reference_forms plausibly writes
-    "reference_forms: no", which is a bare scalar, not a string and not a sequence.
-    Wrapping it lets it reach the ordinary vocabulary check as one bad value, rather
-    than raising out of list() (a crash) or vanishing under a bare `... or []` (the
-    brief's original false green, which this replaces rather than repeats).
+    A shape that cannot be a list of names becomes one unusable name, so the caller's
+    own vocabulary check reports it as an ordinary finding. Nothing here may return a
+    value that is not a string: every call site tests membership against a set or a
+    dict's keys, and an unhashable value (a list, a set, a dict) would crash there
+    rather than produce a finding, whether it arrives as the field's own value
+    (reference_forms: no, which YAML reads as the bool False, extending Appendix C's
+    own "Resolves composition: no" wording to a list field) or buried inside an
+    already-list-shaped one (reference_forms: [[pinned-ref]], a block list item that is
+    itself a flow list). A bare scalar remains the shorthand framespec.compose._names()
+    already accepts for non_repeatable and the two rule6_narrowings keys; a string is
+    one name, not an iterable of characters, so it is wrapped rather than iterated.
     """
     if value is None:
         return []
     if isinstance(value, str):
         return [value]
-    try:
-        return list(value)
-    except TypeError:
-        return [value]
+    if isinstance(value, (list, tuple, set)):
+        return [v if isinstance(v, str) else repr(v) for v in value]
+    return [repr(value)]
 
 
 def check_profile(data, profile, where=None):

@@ -157,11 +157,84 @@ class ConformanceTests(unittest.TestCase):
         self.assertIn("profile-bad-reference-form", codes)
 
     def test_as_list_wraps_a_non_iterable_scalar_instead_of_raising(self):
+        # Every element _as_list() returns must be a string: call sites test set or
+        # dict-key membership, which raises on an unhashable value rather than
+        # producing a finding. A non-string scalar becomes its repr, a string; a
+        # non-string element inside an already-list-shaped value becomes its repr too,
+        # rather than passing an unhashable list, set, or dict through unexamined.
         self.assertEqual(conformance._as_list(None), [])
         self.assertEqual(conformance._as_list("style"), ["style"])
         self.assertEqual(conformance._as_list(["a", "b"]), ["a", "b"])
-        self.assertEqual(conformance._as_list(False), [False])
-        self.assertEqual(conformance._as_list(5), [5])
+        self.assertEqual(conformance._as_list(False), ["False"])
+        self.assertEqual(conformance._as_list(5), ["5"])
+        self.assertEqual(conformance._as_list({"style": True}), ["{'style': True}"])
+        self.assertEqual(conformance._as_list([["pinned-ref"]]), ["['pinned-ref']"])
+        self.assertEqual(conformance._as_list(["pinned-ref", 5, ["nested"]]),
+                         ["pinned-ref", "5", "['nested']"])
+
+    def test_a_nested_list_element_is_a_finding_not_a_crash(self):
+        # Reproduces the exact shape reported against the shipped --check-profile flag:
+        # reference_forms: [[pinned-ref]] is a block list whose one item is itself a
+        # flow list, an easy YAML slip. Before this, the inner list reached FORMS's `not
+        # in` set-membership test unexamined and crashed with TypeError: cannot use
+        # 'list' as a set element (unhashable type: 'list').
+        odd = dict(GOOD, reference_forms=[["pinned-ref"]])
+        findings = conformance.check_profile(odd, self.p)
+        codes = [f.code for f in findings if f.level == "error"]
+        self.assertIn("profile-bad-reference-form", codes)
+
+    def test_a_mapping_value_is_a_finding_not_a_silent_decomposition_into_keys(self):
+        # Reachable only through the library, calling check_profile() directly with a
+        # raw mapping: through the shipped --check-profile flag, load_conformance()
+        # validates non_repeatable and rule6_narrowings at load time and refuses
+        # {"style": True} before check_profile() ever sees it (a clean
+        # conformance-profile-unreadable finding, not a crash and not this test's
+        # concern). Called directly, before this fix _as_list()'s bare list(value)
+        # decomposed a mapping into its keys (list({"style": True}) == ["style"]),
+        # which happened to be a real, repeatable content element and so validated as
+        # profile-ok with zero findings: a false green for a value that was never a
+        # list of names at all. Now the whole mapping becomes one unusable name.
+        odd = dict(GOOD, non_repeatable={"style": True})
+        findings = conformance.check_profile(odd, self.p)
+        self.assertTrue(has_errors(findings), [str(f) for f in findings])
+
+    def test_every_unguarded_field_reports_a_finding_for_every_bad_shape(self):
+        # The matrix the round 2 review named: encodings_read, encodings_written,
+        # reference_forms, and additionally_required are the four fields nothing
+        # upstream of check_profile() validates (unlike non_repeatable and the two
+        # rule6_narrowings keys, which load_conformance() validates at load time), so
+        # _as_list() alone is what stands between a hand-authored profile's mistake and
+        # a crash for these four. Each of a boolean, an integer, a mapping, and a
+        # nested list must produce an ordinary error finding, never an exception.
+        fields = ["encodings_read", "encodings_written", "reference_forms", "additionally_required"]
+        shapes = {
+            "boolean": False,
+            "integer": 5,
+            "mapping": {"a": 1},
+            "nested list": [["x"]],
+        }
+        for field in fields:
+            for shape_name, shape in shapes.items():
+                with self.subTest(field=field, shape=shape_name):
+                    odd = dict(GOOD, **{field: shape})
+                    findings = conformance.check_profile(odd, self.p)
+                    self.assertTrue(has_errors(findings), [str(f) for f in findings])
+
+    def test_a_profile_written_entirely_in_scalar_shorthand_is_still_accepted(self):
+        # Every list-shaped field written as a bare scalar rather than a one-item list,
+        # confirming _as_list()'s new total coercion did not, in closing the crash and
+        # false-green holes, also start rejecting the shorthand round 1 added it to
+        # accept in the first place.
+        shorthand = {
+            "implementation": "X", "version": "1", "specification": "draft-mcandrew-frame-spec-00",
+            "encodings_read": "markdown", "encodings_written": "json",
+            "resolves_composition": "transitive", "reference_forms": "pinned-ref",
+            "rule6_narrowings": {"dedup": "all-repeatable", "replace_by_key": "terminology"},
+            "non_repeatable": "style", "additionally_required": "version",
+            "identifier_minting": "not performed", "visibility": "declared intent only; not an access control",
+        }
+        findings = conformance.check_profile(shorthand, self.p)
+        self.assertFalse(has_errors(findings), [str(f) for f in findings])
 
 
 class CheckProfileCliTests(unittest.TestCase):
