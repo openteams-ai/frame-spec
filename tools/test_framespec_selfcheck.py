@@ -180,6 +180,44 @@ class SelfCheckTests(unittest.TestCase):
             "title,Title,false,false,literal,xsd:string,,,dcterms:title,,",
             "title,Title,false,false,literal,xsd:string,,,,,"))
 
+    def test_the_appendix_copy_of_the_profile_is_the_csv_it_claims_to_be(self):
+        # Appendix B republishes the profile and says the companion file "is
+        # identical to the block below". Two hand-maintained copies of the
+        # normative element set is the drift this module exists to catch.
+        text = selfcheck.DEFAULT_SPEC_PATH.read_text(encoding="utf-8")
+        block = selfcheck.read_appendix_profile(text)
+        self.assertIsNotNone(block)
+        # Anchored on the heading, so this is the profile fence and not the
+        # Markdown example that follows the phrase "Appendix B" in the contents
+        # list, nor the one after section 5.3's citation of RFC 5234's Appendix B.
+        self.assertTrue(block.startswith("propertyID,propertyLabel,mandatory,"), block[:60])
+        self.assertEqual(len(block.rstrip().split("\n")), 31)      # header plus the thirty elements
+        self.assertEqual(block.rstrip(), DEFAULT_PROFILE_PATH.read_text(encoding="utf-8").rstrip())
+        codes = [f.code for f in selfcheck.self_check()]
+        self.assertNotIn("appendix-mismatch", codes)
+        self.assertNotIn("appendix-not-found", codes)
+
+    def test_an_appendix_block_that_drifted_from_the_csv_is_reported(self):
+        self.assertIn("appendix-mismatch", self.edited_draft_codes(
+            "mediaType,Media Type,false,false,literal,xsd:string,,,dcat:mediaType,,Representation level",
+            "mediaType,Media Type,false,true,literal,xsd:string,,,dcat:mediaType,,Representation level"))
+
+    def test_a_final_newline_is_not_an_appendix_disagreement(self):
+        # The comparison is about the element set, not about how either file ends.
+        for ending in ("\n\n\n", ""):
+            with tempfile.TemporaryDirectory() as tmp:
+                text = DEFAULT_PROFILE_PATH.read_text(encoding="utf-8").rstrip("\n") + ending
+                findings = selfcheck.self_check(profile_path=write(tmp, "frame-core.csv", text))
+            self.assertEqual([f.code for f in findings], ["self-check-ok"], [str(f) for f in findings])
+
+    def test_an_appendix_block_that_cannot_be_found_is_an_error_not_a_pass(self):
+        # Both ways it can go missing: the heading renamed, and the block gone
+        # from under a heading that is still there. The second must not be
+        # answered with the next appendix's fenced template.
+        self.assertIn("appendix-not-found", self.edited_draft_codes(
+            "## Appendix B. Machine-Readable Profile", "## Appendix B. Profile"))
+        self.assertIn("appendix-not-found", self.edited_draft_codes("```csv\n", ""))
+
     def test_a_crosswalk_term_the_draft_does_not_state_is_reported(self):
         self.assertIn("maps-to-mismatch", self.codes(
             "identifier,Identifier,true,false,literal,xsd:string,,,dcterms:identifier,,",

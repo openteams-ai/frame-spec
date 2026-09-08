@@ -9,6 +9,7 @@ is the only one here whose subject is the specification rather than a Frame.
 """
 
 import re
+from itertools import zip_longest
 
 from .findings import Finding
 from .profile import DEFAULT_PROFILE_PATH, REPO_ROOT, Profile
@@ -40,11 +41,69 @@ REFINEMENT = "refinement"               # 4.4 content refinements
 REPRESENTATION = "representation"       # 4.6 representation-level elements
 EXPECTED_SHAPES = {SECTION: 17, REFINEMENT: 10, REPRESENTATION: 3}
 
+# Appendix B republishes the profile inside the draft and states that the
+# companion frame-core.csv "is identical to the block below", so the element set
+# exists a third time. The heading is what anchors the search: the phrase
+# "Appendix B" also appears in the table of contents and in section 5.3, which
+# cites RFC 5234's own Appendix B, and the first fenced block after either of
+# those is some other example entirely.
+APPENDIX_HEADING = "## Appendix B. Machine-Readable Profile"
+TOP_HEADING_RE = re.compile(r"^## ", re.M)
+FENCE_RE = re.compile(r"^```[^\n]*\n(.*?)^```", re.M | re.S)
+
 
 def _obligation(value):
     """The requirement keyword an Obligation bullet states, or the raw text if it states none."""
     match = KEYWORD_RE.search(value)
     return match.group(1) if match else value.strip()
+
+
+def read_appendix_profile(text):
+    """The fenced block under Appendix B, or None when the heading or the block is absent.
+
+    The search is bounded by the next top-level heading, so a missing block is
+    reported as missing rather than quietly answered with Appendix C's template.
+    """
+    start = text.find(APPENDIX_HEADING)
+    if start < 0:
+        return None
+    body = start + len(APPENDIX_HEADING)
+    next_heading = TOP_HEADING_RE.search(text, body)
+    end = next_heading.start() if next_heading else len(text)
+    match = FENCE_RE.search(text, body, end)
+    return match.group(1) if match else None
+
+
+def _clip(line, width=60):
+    """One line of either copy, short enough to sit inside a finding's message."""
+    if line is None:
+        return "(no such line)"
+    return repr(line if len(line) <= width else line[:width] + "...")
+
+
+def _appendix_findings(text, profile_path, where):
+    """Compare the draft's own copy of the profile against the CSV it claims to be identical to."""
+    block = read_appendix_profile(text)
+    if block is None:
+        return [Finding("error", "appendix-not-found",
+                        f"no fenced block under '{APPENDIX_HEADING}' in the draft, so the copy of the "
+                        "profile it publishes went unchecked", where)]
+    with open(profile_path, encoding="utf-8") as handle:
+        csv_text = handle.read()
+    # Trailing whitespace off each side: a stray final newline in either file is
+    # not a disagreement about the element set.
+    appendix_lines, csv_lines = block.rstrip().split("\n"), csv_text.rstrip().split("\n")
+    if appendix_lines == csv_lines:
+        return []
+    # Equal lists returned above, so the two differ at some line and next() always finds it.
+    pairs = list(zip_longest(appendix_lines, csv_lines))
+    line = next(number for number, (a, b) in enumerate(pairs, start=1) if a != b)
+    left, right = pairs[line - 1]
+    return [Finding("error", "appendix-mismatch",
+                    f"the fenced block under '{APPENDIX_HEADING}' and {profile_path} are not identical, "
+                    f"though the draft says they are: {len(appendix_lines)} lines in the appendix and "
+                    f"{len(csv_lines)} in the CSV, first differing at line {line}, "
+                    f"appendix {_clip(left)} against CSV {_clip(right)}", where)]
 
 
 def read_spec_elements(text):
@@ -106,6 +165,7 @@ def self_check(spec_path=DEFAULT_SPEC_PATH, profile_path=DEFAULT_PROFILE_PATH):
                                     f"{expected}; either the pattern that reads them no longer matches or the draft "
                                     "dropped elements, so the comparisons that follow have verified less than they appear to",
                                     where))
+    findings.extend(_appendix_findings(text, profile_path, where))
     for name in profile.order:
         if name not in spec:
             findings.append(Finding("error", "spec-missing-element",
