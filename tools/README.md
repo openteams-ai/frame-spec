@@ -69,3 +69,23 @@ The scope of this validator is limited to lightweight `v0.2` Frame frontmatter c
 - enforce Collab, registry, or deployment behavior
 - replace human review
 
+## Validating against the working draft
+
+[validate_frame.py](validate_frame.py) checks Frames against the v0.3 working
+draft in all three encodings, driven from
+[../spec/profile/frame-core.csv](../spec/profile/frame-core.csv):
+
+```bash
+python tools/validate_frame.py examples spec/fixtures          # validate files or directories
+python tools/validate_frame.py --round-trip spec/fixtures/roundtrip/full.frame.md
+python tools/validate_frame.py --self-check                     # CSV versus the draft's prose
+python tools/validate_frame.py --check-profile spec/profiles/*.yaml
+python tools/validate_frame.py --compose A.frame.json B.frame.json C.frame.json
+```
+
+It never rejects a Frame for an unrecognized element, an unregistered
+`status` or `visibility` value, an unrecognized heading, or the form of a
+reference; those are warnings or information, as the draft requires. PyYAML
+is optional: without it, Markdown front matter is parsed by the same
+line-based parser `validate_frames.py` uses, and the YAML encoding cannot be
+read. `validate_frames.py` remains the check for the released v0.2 format.

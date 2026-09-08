@@ -73,7 +73,7 @@ If you want to implement or adopt the specification:
 
 - Read [spec/frame-spec.md](spec/frame-spec.md), the working draft. Sections 3, 4, and 5 are the model, the elements, and composition; section 6 is the three encodings; section 7 describes the conformance profile every implementation publishes to state which optional behaviors it performs.
 - Read [spec/v0.2.md](spec/v0.2.md) for the released requirements of the Markdown encoding.
-- Run [tools/validate_frames.py](tools/validate_frames.py) to check that a Markdown Frame carries the required v0.2 fields. A validator for the working draft, covering all three encodings, is planned.
+- Run [tools/validate_frame.py](tools/validate_frame.py) to check a Frame in any of the three encodings against the working draft, and [tools/validate_frames.py](tools/validate_frames.py) to check that a Markdown Frame carries the required v0.2 fields.
 
 If you want background or future discussion:
 
