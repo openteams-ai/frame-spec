@@ -105,6 +105,49 @@ class ParseTests(unittest.TestCase):
         self.assertEqual(findings[0].code, "front-matter")
 
 
+class DefectRegressionTests(unittest.TestCase):
+    """One test per defect found while implementing this task."""
+
+    def setUp(self):
+        self.p = Profile.load()
+
+    def test_malformed_yaml_returns_a_finding_rather_than_crashing(self):
+        frame, findings = markdown.parse("---\nname: [unclosed\n---\nbody\n", self.p, None)
+        self.assertIsNone(frame)
+        self.assertEqual(findings[0].code, "front-matter")
+
+    def test_a_long_description_is_not_folded_by_the_writer(self):
+        long = "A description long enough that PyYAML would fold it at column eighty by default."
+        frame, _ = markdown.parse(MINIMAL_V02, self.p, None)
+        frame.elements["description"] = long
+        text = markdown.write(frame, self.p)
+        self.assertIn(f"description: {long}", text)
+        again, findings = markdown.parse(text, self.p, None)
+        self.assertEqual(again.elements["description"], long)
+
+    def test_a_non_string_refinement_value_does_not_crash_the_writer(self):
+        frame, _ = markdown.parse(MINIMAL_V02, self.p, None)
+        frame.elements["rules"] = [5]
+        self.assertIn("- 5", markdown.write(frame, self.p))
+
+    def test_alternative_labels_survive_the_markdown_writer(self):
+        frame, _ = markdown.parse(MINIMAL_V02, self.p, None)
+        frame.elements["terminology"] = [
+            {"term": "Hub", "definition": "a deployed instance.", "altTerms": ["instance", "deployment"]}]
+        text = markdown.write(frame, self.p)
+        self.assertIn("instance, deployment", text)
+        again, _ = markdown.parse(text, self.p, None)
+        self.assertIn("instance, deployment", again.elements["terminology"][0]["definition"])
+
+    def test_a_fenced_block_does_not_end_a_refinement_section(self):
+        text = ("---\ntype: frame\nname: N\ndescription: D\nvisibility: internal\n---\n\n"
+                "## Rules\n\n- real bullet\n\n```\n## Not A Heading\n- not a bullet\n```\n")
+        frame, findings = markdown.parse(text, self.p, None)
+        self.assertEqual(frame.elements["guidance"], [""])
+        self.assertEqual(frame.elements["rules"][0], "real bullet")
+        self.assertIn("## Not A Heading", frame.elements["rules"][1])
+
+
 class WriteTests(unittest.TestCase):
     def test_write_then_parse_preserves_element_values(self):
         p = Profile.load()

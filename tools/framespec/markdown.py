@@ -57,9 +57,11 @@ def parse(text, profile, location=None):
 def _split_body(body, profile):
     """One guidance string plus a values list per recognized refinement section."""
     labels = profile.labels()
-    guidance_lines, sections, current = [], {}, None
+    guidance_lines, sections, current, in_fence = [], {}, None, False
     for line in body.splitlines():
-        match = HEADING_RE.match(line)
+        if line.lstrip().startswith("```"):
+            in_fence = not in_fence
+        match = None if in_fence else HEADING_RE.match(line)
         if match:
             label = match.group(1).strip().lower()
             if label in labels:
@@ -74,7 +76,7 @@ def _split_body(body, profile):
 
 def _items(name, lines):
     """Top-level bullets are values; other paragraphs are values; terminology bullets may be concepts."""
-    values, paragraph = [], []
+    values, paragraph, in_fence = [], [], False
 
     def flush():
         if paragraph:
@@ -82,6 +84,13 @@ def _items(name, lines):
             paragraph.clear()
 
     for line in lines:
+        if line.lstrip().startswith("```"):
+            in_fence = not in_fence
+            paragraph.append(line)
+            continue
+        if in_fence:                      # a bullet inside a fence is code, not a value
+            paragraph.append(line)
+            continue
         bullet = BULLET_RE.match(line)
         if bullet:
             flush()
@@ -119,9 +128,24 @@ def write(frame, profile, spec_version="0.3"):
         parts.append(f"\n## {element.label}\n\n")
         for value in values:
             if isinstance(value, dict):
-                parts.append(f"- **{value.get('term', '')}**: {value.get('definition', '')}\n")
+                parts.append(_concept(value))
             elif isinstance(value, str) and "\n" in value:
                 parts.append(f"{value}\n\n")
             else:
                 parts.append(f"- {value}\n")
     return "".join(parts)
+
+
+def _concept(value):
+    """One terminology bullet. Section 6.2.3 has no syntax for alternative labels,
+    so section 4.4.1's dumb-down rule applies: keep the content, lose the structure."""
+    line = f"- **{value.get('term', '')}**: {value.get('definition', '')}"
+    extra = {k: v for k, v in value.items() if k not in ("term", "definition")}
+    if extra:
+        kept = "; ".join(f"{k}: {_flat(v)}" for k, v in sorted(extra.items()))
+        line += f" ({kept})"
+    return line + "\n"
+
+
+def _flat(value):
+    return ", ".join(str(v) for v in value) if isinstance(value, list) else str(value)
