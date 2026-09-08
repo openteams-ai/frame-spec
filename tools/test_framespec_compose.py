@@ -1,16 +1,21 @@
+import datetime
+import io
 import json
 import re
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 TOOLS = Path(__file__).resolve().parent
 REPO = TOOLS.parent
 
 sys.path.insert(0, str(TOOLS))
 
-from framespec import compose, io as frame_io  # noqa: E402 - needs the sys.path insert above
+import validate_frame                          # noqa: E402 - needs the sys.path insert above
+from framespec import compose, io as frame_io  # noqa: E402 - same reason
 from framespec.compose import ALL_REPEATABLE   # noqa: E402 - same reason
 from framespec.model import Frame              # noqa: E402 - same reason
 from framespec.profile import Profile          # noqa: E402 - same reason
@@ -236,26 +241,106 @@ class Rule6Tests(unittest.TestCase):
             compose.compose([], Profile.load())
 
 
+class NarrowingFormTests(unittest.TestCase):
+    """A profile writes a narrowing as one name or as a list, and both must be read."""
+
+    def test_a_non_repeatable_narrowing_written_as_one_name_is_honored(self):
+        # non_repeatable: style is YAML's natural form for a single value. Iterating the
+        # string would take it apart into letters, and the resolved Frame would
+        # contradict the profile it was resolved under.
+        p, frames = load_frames()
+        self.assertEqual(compose.compose(frames, p, {"non_repeatable": "style"}).elements["style"],
+                         "plain")
+        self.assertEqual(compose.compose(frames, p, {"non_repeatable": ["style"]}).elements["style"],
+                         "plain")
+
+    def test_a_replace_by_key_narrowing_written_as_one_name_is_honored(self):
+        p = Profile.load()
+        a = Frame({"identifier": "a", "guidance": [""],
+                   "terminology": [{"term": "Hub", "definition": "old"}]}, "json")
+        b = Frame({"identifier": "b", "guidance": [""],
+                   "terminology": [{"term": "Hub", "definition": "new"}]}, "json")
+        for declared in ("terminology", ["terminology"]):
+            with self.subTest(declared=declared):
+                result = compose.compose([a, b], p, {"rule6_narrowings": {"replace_by_key": declared}})
+                self.assertEqual(result.elements["terminology"], [{"term": "Hub", "definition": "new"}])
+
+    def test_the_dedup_token_is_read_in_either_form(self):
+        p = Profile.load()
+        a = Frame({"identifier": "a", "guidance": [""], "rules": ["x"]}, "json")
+        b = Frame({"identifier": "b", "guidance": [""], "rules": ["x"]}, "json")
+        for declared in (ALL_REPEATABLE, [ALL_REPEATABLE]):
+            with self.subTest(declared=declared):
+                result = compose.compose([a, b], p, {"rule6_narrowings": {"dedup": declared}})
+                self.assertEqual(result.elements["rules"], ["x"])
+
+    def test_a_narrowing_that_is_not_element_names_is_an_error_naming_the_key(self):
+        # A malformed declaration must not resolve as though the profile had declared
+        # nothing, and must not reach the user as a TypeError traceback either.
+        p, frames = load_frames()
+        cases = [
+            ("non_repeatable", {"non_repeatable": 5}),
+            ("non_repeatable", {"non_repeatable": ["style", 5]}),
+            ("rule6_narrowings.dedup", {"rule6_narrowings": {"dedup": 5}}),
+            ("rule6_narrowings.replace_by_key", {"rule6_narrowings": {"replace_by_key": 5}}),
+            ("rule6_narrowings", {"rule6_narrowings": 5}),
+        ]
+        for key, conformance in cases:
+            with self.subTest(conformance=conformance):
+                with self.assertRaises(ValueError) as caught:
+                    compose.compose(frames, p, conformance)
+                self.assertIn(key, str(caught.exception))
+        with self.assertRaises(ValueError):
+            compose.compose(frames, p, ["style"])          # not a mapping at all
+
+
+class StableKeyTests(unittest.TestCase):
+    def test_a_number_and_its_string_are_not_the_same_value(self):
+        # Deduplication drops values that share a key, and rule 6 forbids dropping
+        # values that are not identical, so 1 and "1" must not share one.
+        self.assertNotEqual(compose._stable_key(1), compose._stable_key("1"))
+        p = Profile.load()
+        a = Frame({"identifier": "a", "guidance": [""], "rules": [1]}, "json")
+        b = Frame({"identifier": "b", "guidance": [""], "rules": ["1"]}, "json")
+        result = compose.compose([a, b], p, {"rule6_narrowings": {"dedup": ALL_REPEATABLE}})
+        self.assertEqual(result.elements["rules"], [1, "1"])
+
+    def test_a_value_json_cannot_serialize_still_gets_a_key(self):
+        # normalize() turns dates into text, so this is defensive: the fallback keeps
+        # deduplication working on a value json.dumps refuses rather than raising.
+        day = datetime.date(2026, 9, 8)
+        self.assertEqual(compose._stable_key(day), compose._stable_key(datetime.date(2026, 9, 8)))
+        self.assertNotEqual(compose._stable_key(day), compose._stable_key("2026-09-08"))
+
+
 class LoadConformanceTests(unittest.TestCase):
     @unittest.skipUnless(HAVE_YAML, "PyYAML needed to read a profile written as YAML")
     def test_yaml_and_json_profiles_load_the_same_way(self):
         loaded = compose.load_conformance(NARROWING)
         self.assertEqual(loaded["non_repeatable"], ["style"])
-        as_json = REPO / "tools" / "_compose_conformance.json"
-        as_json.write_text(json.dumps(loaded), encoding="utf-8")
-        try:
+        with tempfile.TemporaryDirectory() as tmp:
+            as_json = Path(tmp) / "profile.json"
+            as_json.write_text(json.dumps(loaded), encoding="utf-8")
             self.assertEqual(compose.load_conformance(as_json), loaded)
-        finally:
-            as_json.unlink()
 
     def test_a_profile_that_is_not_a_mapping_is_refused(self):
-        path = REPO / "tools" / "_compose_conformance_bad.json"
-        path.write_text('["style"]', encoding="utf-8")
-        try:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "profile.json"
+            path.write_text('["style"]', encoding="utf-8")
             with self.assertRaises(ValueError):
                 compose.load_conformance(path)
-        finally:
-            path.unlink()
+
+    def test_a_profile_whose_narrowing_cannot_be_read_is_refused_by_name(self):
+        # Reading the file is where the file's name is known, so the check belongs here
+        # as well as in compose(), rather than resolving a set under a profile whose
+        # declarations were dropped.
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "profile.json"
+            path.write_text('{"non_repeatable": 5}', encoding="utf-8")
+            with self.assertRaises(ValueError) as caught:
+                compose.load_conformance(path)
+            self.assertIn("non_repeatable", str(caught.exception))
+            self.assertIn(str(path), str(caught.exception))
 
 
 class ComposeCliTests(unittest.TestCase):
@@ -292,10 +377,65 @@ class ComposeCliTests(unittest.TestCase):
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn("not a Frame", result.stderr)
 
+    def test_a_path_that_is_not_there_is_reported_as_missing_not_as_no_frame(self):
+        # An unknown suffix reaches the message directly, so the message must not tell
+        # a user their nonexistent file is not a Frame.
+        result = run("--compose", "spec/fixtures/composition/does-not-exist.txt")
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("path-not-found", result.stderr)
+        self.assertNotIn("not a Frame", result.stderr)
+
     def test_compose_without_paths_reports_the_usage_error_instead_of_crashing(self):
         result = run("--compose")
         self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
         self.assertIn("--compose", result.stderr)
+
+    def test_a_conformance_profile_without_compose_is_a_usage_error_in_every_mode(self):
+        # --self-check takes no paths and returned 0 with the flag silently ignored
+        # until the guard moved above it.
+        profile = str(NARROWING.relative_to(REPO))
+        frame = "spec/fixtures/composition/q4-playbook.frame.json"
+        cases = [["--self-check", "--conformance-profile", profile],
+                 ["--round-trip", "--conformance-profile", profile, frame],
+                 ["--conformance-profile", profile, frame]]
+        for args in cases:
+            with self.subTest(args=args):
+                result = run(*args)
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                self.assertIn("--conformance-profile applies to --compose", result.stderr)
+
+    def test_a_conformance_profile_that_is_not_there_is_a_finding_not_a_traceback(self):
+        result = run("--compose", "--conformance-profile", "spec/profiles/not-yet-written.yaml",
+                     *[f"spec/fixtures/composition/{name}" for name in ORDER])
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("conformance-profile-unreadable", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+        self.assertEqual(result.stdout, "")
+
+    def test_a_yaml_profile_without_pyyaml_is_a_finding_not_a_traceback(self):
+        # The sentinel trick tools/test_validate_frame_cli.py uses: a None in sys.modules
+        # makes "import yaml" raise ImportError as though PyYAML were not installed. It
+        # has to run in-process, since the sentinel lives only in this process.
+        out, err = io.StringIO(), io.StringIO()
+        with mock.patch.dict(sys.modules, {"yaml": None}):
+            code = validate_frame.compose_paths([str(DIR / name) for name in ORDER], "auto",
+                                                Profile.load(), conformance_path=str(NARROWING),
+                                                out=out, err=err)
+        self.assertEqual(code, 1)
+        self.assertIn("pyyaml-required", err.getvalue())
+        self.assertEqual(out.getvalue(), "")
+
+    def test_a_conformance_profile_with_a_bad_narrowing_is_a_finding_not_a_traceback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "profile.json"
+            path.write_text('{"non_repeatable": 5}', encoding="utf-8")
+            result = run("--compose", "--conformance-profile", str(path),
+                         *[f"spec/fixtures/composition/{name}" for name in ORDER])
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("conformance-profile-unreadable", result.stderr)
+        self.assertIn("non_repeatable", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+        self.assertEqual(result.stdout, "")
 
 
 if __name__ == "__main__":

@@ -36,17 +36,28 @@ def composing_elements(profile):
 
 
 def load_conformance(path):
-    """A conformance profile as a mapping, from YAML (PyYAML) or JSON by suffix."""
+    """A conformance profile as a mapping, from YAML (PyYAML) or JSON by suffix.
+
+    The narrowings are parsed here as well as in compose(), so a profile whose
+    declarations cannot be read fails when the file is read and names the file, rather
+    than resolving a composed set as though the profile had declared nothing.
+    """
     text = Path(path).read_text(encoding="utf-8")
     if str(path).lower().endswith(".json"):
         data = json.loads(text)
     else:
         import yaml
-        data = yaml.safe_load(text)
+        try:
+            data = yaml.safe_load(text)
+        except yaml.YAMLError as error:
+            # A ValueError like the JSON leg's, so a caller need not import yaml to
+            # catch a syntax error in a profile.
+            raise ValueError(f"{path}: {error}") from error
     if not isinstance(data, dict):
         # Say what is wrong with the file rather than raising AttributeError on the
         # first .get() of a profile that turned out to be a list or a bare string.
         raise ValueError(f"{path}: a conformance profile must be a mapping of keys to values")
+    _narrowings(data, where=path)
     return data
 
 
@@ -55,21 +66,18 @@ def compose(frames, profile, conformance=None):
 
     frames are ordered lowest precedence first, so the last is the declaring Frame and
     has the highest precedence (rules 2 and 3). conformance is a loaded conformance
-    profile; the keys read here are `non_repeatable` and `rule6_narrowings`.
+    profile; the keys read here are `non_repeatable` and `rule6_narrowings`, each of
+    which a profile may write as one name or as a list of names.
     """
     if not frames:
         raise ValueError("compose() needs at least one Frame: the declaring Frame")
-    conformance = conformance or {}
-    content = set(profile.content_elements())
+    non_repeatable, dedup_all, dedup_names, replace_by_key = _narrowings(conformance or {})
     # Rule 6 narrows content elements only, so a non-repeatable declaration that names
     # guards is ignored: rule 5 accumulates guards without qualification, and taking one
     # Frame's value in place of the others would drop a Guard the composed set declares,
     # which is the compliance failure rule 5 exists to prevent. Deduplication may still
     # reach guards, since collapsing two identical references drops no Guard.
-    non_repeatable = {n for n in (conformance.get("non_repeatable") or ()) if n in content}
-    narrowings = conformance.get("rule6_narrowings") or {}
-    dedup_all, dedup_names = _dedup_narrowing(narrowings.get("dedup"))
-    replace_by_key = set(narrowings.get("replace_by_key") or ())
+    non_repeatable &= set(profile.content_elements())
     declaring = frames[-1]
     composing = composing_elements(profile)
     # Rule 5: only content elements and guards compose, so every other element on the
@@ -147,18 +155,48 @@ def _highest_present(frames, name):
     return _ABSENT
 
 
-def _dedup_narrowing(dedup):
-    """Rule 6's dedup narrowing as (applies to every repeatable element, named elements).
+def _narrowings(conformance, where=None):
+    """A conformance profile's declarations, as (non_repeatable, dedup_all, dedup, replace).
 
-    A profile writes either the token "all-repeatable" or a list of element names. A
-    bare string that is not the token names one element; it is never matched as a
-    substring, which is what testing `name in dedup` against a string would do.
+    The three declarations are read the same way, by one helper, because a profile writes
+    each of them in the same three forms and getting one of them right is no use.
     """
-    if dedup == ALL_REPEATABLE:
-        return True, set()
-    if isinstance(dedup, str):
-        return False, {dedup}
-    return False, set(dedup or ())
+    if not isinstance(conformance, dict):
+        raise ValueError(_bad_narrowing("a conformance profile", conformance, where,
+                                        "a mapping of keys to values"))
+    non_repeatable = _names(conformance.get("non_repeatable"), "non_repeatable", where)
+    declared = conformance.get("rule6_narrowings") or {}
+    if not isinstance(declared, dict):
+        raise ValueError(_bad_narrowing("rule6_narrowings", declared, where,
+                                        "a mapping of narrowing names to their values"))
+    dedup = _names(declared.get("dedup"), "rule6_narrowings.dedup", where)
+    replace_by_key = _names(declared.get("replace_by_key"), "rule6_narrowings.replace_by_key", where)
+    # "all-repeatable" is a token rather than an element name, in whichever of the forms
+    # the profile wrote it, and what remains is the elements the narrowing names.
+    return non_repeatable, ALL_REPEATABLE in dedup, dedup - {ALL_REPEATABLE}, replace_by_key
+
+
+def _names(value, key, where=None):
+    """The element names a narrowing declares: a list of names, one bare name, or nothing.
+
+    YAML's natural form for a single value is a scalar, so `non_repeatable: style` names
+    the one element, exactly as `non_repeatable: [style]` does. Iterating the string
+    instead would take it apart into letters, and since no letter is an element name the
+    narrowing would be dropped and the resolved Frame would contradict the profile it
+    was resolved under, with nothing said and an exit code of 0.
+    """
+    if value is None:
+        return set()
+    if isinstance(value, str):
+        return {value}
+    if isinstance(value, (list, tuple, set)) and all(isinstance(v, str) for v in value):
+        return set(value)
+    raise ValueError(_bad_narrowing(key, value, where, "an element name or a list of element names"))
+
+
+def _bad_narrowing(key, value, where, expected):
+    at = f"{where}: " if where else ""
+    return f"{at}{key} must be {expected}, not {value!r}"
 
 
 def _stable_key(value):

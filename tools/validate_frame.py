@@ -131,6 +131,21 @@ def compose_paths(paths, encoding, profile, conformance_path=None, out=sys.stdou
     Frame and nothing else, so that CI can diff it against an expected file.
     """
     from framespec import compose as compose_mod
+    conformance = None
+    if conformance_path:
+        # Before the Frames are read: a profile that cannot be read is the run failing,
+        # and saying so first costs the user nothing.
+        try:
+            conformance = compose_mod.load_conformance(conformance_path)
+        except ImportError as error:
+            return _conformance_failure(conformance_path, "pyyaml-required",
+                                        "a conformance profile written as YAML cannot be read "
+                                        f"without PyYAML ({error})", err)
+        except (OSError, ValueError) as error:
+            # A missing file, a syntax error, or a declaration that cannot be read is a
+            # finding like any other, not a traceback.
+            return _conformance_failure(conformance_path, "conformance-profile-unreadable",
+                                        str(error), err)
     frames = []
     for raw in paths:
         enc = frame_io.detect_encoding(raw, encoding)
@@ -154,16 +169,27 @@ def compose_paths(paths, encoding, profile, conformance_path=None, out=sys.stdou
             print(Finding("info", "composition-unresolved",
                           f"'composition' reference {reference!r} was not resolved; the composed "
                           "set is the paths given, lowest precedence first", str(raw)), file=err)
-    conformance = compose_mod.load_conformance(conformance_path) if conformance_path else None
     resolved = compose_mod.compose([frame for _, frame in frames], profile, conformance)
     print(json.dumps(resolved.elements, indent=2, sort_keys=True, ensure_ascii=False), file=out)
     return 0
 
 
+def _conformance_failure(path, code, message, err):
+    """Report an unusable conformance profile and fail the run."""
+    print(f"COMPOSE FAIL  {path}", file=err)
+    print(f"        - {Finding('error', code, message, Path(path).resolve().as_uri())}", file=err)
+    return 1
+
+
 def _not_a_frame(raw):
-    """Why a path that exists yielded no Frame, as a finding."""
-    where = Path(raw).resolve().as_uri()
-    if Path(raw).is_dir():
+    """Why a path yielded no Frame, as a finding."""
+    path = Path(raw)
+    where = path.resolve().as_uri()
+    if not path.exists():
+        # The same code report_missing() uses, since it is the same mistake: a path that
+        # is not there must not be reported as a file whose contents were the problem.
+        return Finding("error", "path-not-found", "no such file or directory", where)
+    if path.is_dir():
         return Finding("error", "not-a-frame",
                        "a directory: --compose takes the Frames of the composed set, in order", where)
     return Finding("error", "not-a-frame", "not a Frame, or not an encoding this tool reads", where)
@@ -172,6 +198,11 @@ def _not_a_frame(raw):
 def main(argv=None):
     parser = build_parser()
     args = parser.parse_args(argv)
+    if args.conformance_profile and not args.compose:
+        # Above every mode, since only --compose reads this file: a flag that silently
+        # did nothing would leave the user believing a narrowing had been applied to a
+        # run that never read it, whichever mode ran instead.
+        parser.error("--conformance-profile applies to --compose")
     if args.self_check:
         # Before the paths guard: this mode checks the specification itself and takes no paths.
         # Paths given anyway are refused rather than dropped, which would leave a
@@ -184,10 +215,6 @@ def main(argv=None):
             print(finding)
         return 1 if has_errors(findings) else 0
     profile = Profile.load(args.profile)
-    if args.conformance_profile and not args.compose:
-        # A flag that silently did nothing would leave the user believing a narrowing
-        # had been applied to a run that never read it.
-        parser.error("--conformance-profile applies to --compose")
     if args.compose:
         # With the other modes, before the paths guard below, so that the usage error
         # names this mode rather than answering with the whole help text.
