@@ -1,0 +1,19 @@
+implementation: Collab
+version: unknown
+specification: draft-mcandrew-frame-spec-00
+encodings_read: [markdown]
+encodings_written: []
+resolves_composition: none
+reference_forms: []
+rule6_narrowings: {}
+non_repeatable: []
+additionally_required: []
+identifier_minting: not performed
+visibility: declared intent only; not an access control
+notes: >-
+  Observed behavior, not a declaration by the implementation's maintainers.
+  An investigation recorded in this repository's issue 21 found that the
+  inherits field had no effect on resolution; parent content appeared only
+  when the parent was activated by hand. Rule 7 requires that an
+  implementation which resolves no composition declare so; this profile is
+  that declaration pending confirmation.

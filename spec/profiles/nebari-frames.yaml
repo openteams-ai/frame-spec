@@ -1,0 +1,20 @@
+implementation: Nebari Frames
+version: 0.1.x (beta)
+specification: draft-mcandrew-frame-spec-00
+encodings_read: [markdown]
+encodings_written: [markdown]
+resolves_composition: transitive
+reference_forms: [pinned-ref]
+rule6_narrowings:
+  dedup: all-repeatable
+  replace_by_key: [terminology]
+non_repeatable: [toolSpecs, goals, style, norms, architecture, businessProcess]
+additionally_required: [version]
+identifier_minting: slugified title; reject on collision
+visibility: declared intent only; not an access control
+notes: >-
+  Cycle detection on resolution. Internal storage is YAML but is not the YAML
+  encoding of the specification. At the time of writing the registry still
+  constrains title to an identifier syntax and rejects unrecognized headings,
+  unrecognized front matter keys, and unstructured terminology entries; those
+  behaviors do not conform and their removal is planned.

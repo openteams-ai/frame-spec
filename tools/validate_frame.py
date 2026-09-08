@@ -40,6 +40,8 @@ def build_parser():
                         help="resolve composition over PATHS given lowest precedence first; print the result as JSON")
     parser.add_argument("--conformance-profile",
                         help="YAML or JSON conformance profile to apply while composing")
+    parser.add_argument("--check-profile", action="store_true",
+                        help="check the PATHS as conformance profiles (YAML or JSON) against Appendix C")
     return parser
 
 
@@ -195,6 +197,43 @@ def _not_a_frame(raw):
     return Finding("error", "not-a-frame", "not a Frame, or not an encoding this tool reads", where)
 
 
+def check_profile_paths(paths, profile, out=sys.stdout):
+    """Check each path as a conformance profile (YAML or JSON) against Appendix C.
+
+    Mirrors validate_paths() and round_trip_paths(): report_missing() catches a typo'd
+    path before it reaches load_conformance(), and a path that exists but is not a
+    readable profile (bad syntax, not a mapping, a narrowing that cannot be read, or a
+    YAML profile with no PyYAML installed) is a finding here too, not an unhandled
+    exception that would crash the run and print nothing for the paths after it.
+    """
+    from framespec import conformance
+    from framespec.compose import load_conformance
+    failures = report_missing(paths, "FAIL", out)
+    for raw in paths:
+        path = Path(raw)
+        if not (path.is_file() or path.is_dir()):
+            continue      # already reported by report_missing above
+        try:
+            data = load_conformance(raw)
+        except ImportError as error:
+            failures += 1
+            print(f"FAIL  {raw}", file=out)
+            print(f"        - {Finding('error', 'pyyaml-required', str(error), str(raw))}", file=out)
+            continue
+        except (OSError, ValueError) as error:
+            failures += 1
+            print(f"FAIL  {raw}", file=out)
+            print(f"        - {Finding('error', 'conformance-profile-unreadable', str(error), str(raw))}", file=out)
+            continue
+        findings = conformance.check_profile(data, profile, raw)
+        bad = has_errors(findings)
+        failures += bad
+        print(f"{'FAIL' if bad else 'OK  '}  {raw}", file=out)
+        for finding in findings:
+            print(f"        - {finding}", file=out)
+    return 1 if failures else 0
+
+
 def main(argv=None):
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -222,6 +261,12 @@ def main(argv=None):
             parser.error("--compose needs at least one path: the Frames of the composed set, "
                          "lowest precedence first")
         return compose_paths(args.paths, args.encoding, profile, args.conformance_profile)
+    if args.check_profile:
+        # With --compose above, before the paths guard below, so the usage error names
+        # this mode rather than answering with the whole help text.
+        if not args.paths:
+            parser.error("--check-profile needs at least one path: the conformance profiles to check")
+        return check_profile_paths(args.paths, profile)
     if not args.paths:
         parser.print_help()
         return 2
