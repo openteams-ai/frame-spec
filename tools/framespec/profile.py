@@ -8,6 +8,9 @@ TOOLS_DIR = Path(__file__).resolve().parent.parent
 REPO_ROOT = TOOLS_DIR.parent
 DEFAULT_PROFILE_PATH = REPO_ROOT / "spec" / "profile" / "frame-core.csv"
 
+# The model's content root that the ten refinements refine (draft section 4.4).
+CONTENT_ROOT = "guidance"
+
 
 @dataclass(frozen=True)
 class ElementDef:
@@ -46,6 +49,8 @@ class Profile:
     def __init__(self, elements):
         self.elements = {e.name: e for e in elements}
         self.order = [e.name for e in elements]
+        if CONTENT_ROOT not in self.elements:
+            raise ValueError(f"profile is missing the content root element {CONTENT_ROOT!r}")
 
     @classmethod
     def load(cls, path=DEFAULT_PROFILE_PATH):
@@ -72,7 +77,7 @@ class Profile:
         return [n for n in self.order if self.elements[n].mandatory]
 
     def refinements(self):
-        return [self.elements[n] for n in self.order if self.elements[n].refines == "guidance"]
+        return [self.elements[n] for n in self.order if self.elements[n].refines == CONTENT_ROOT]
 
     def labels(self):
         """Lower-cased Markdown heading label to element name, for the ten refinements."""
@@ -84,4 +89,4 @@ class Profile:
 
     def content_elements(self):
         """guidance and the elements that refine it, in CSV order."""
-        return ["guidance"] + [e.name for e in self.refinements()]
+        return [CONTENT_ROOT] + [e.name for e in self.refinements()]

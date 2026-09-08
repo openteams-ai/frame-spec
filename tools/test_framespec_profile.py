@@ -1,5 +1,9 @@
+import csv
+import tempfile
 import unittest
-from framespec.profile import Profile, DEFAULT_PROFILE_PATH
+from pathlib import Path
+
+from framespec.profile import Profile, DEFAULT_PROFILE_PATH, CONTENT_ROOT
 
 
 class ProfileTests(unittest.TestCase):
@@ -18,8 +22,8 @@ class ProfileTests(unittest.TestCase):
         names = [e.name for e in self.p.refinements()]
         self.assertEqual(names, ["rules", "terminology", "goals", "style", "norms", "skills",
                                  "toolSpecs", "prompts", "architecture", "businessProcess"])
-        self.assertEqual(self.p.labels()["tool specifications"], "toolSpecs")
-        self.assertEqual(self.p.labels()["business process"], "businessProcess")
+        self.assertEqual(self.p.labels(),
+                         {e.label.lower(): e.name for e in self.p.refinements()})
 
     def test_picklists_and_references(self):
         self.assertEqual(self.p.elements["status"].picklist,
@@ -37,8 +41,21 @@ class ProfileTests(unittest.TestCase):
         self.assertFalse(self.p.is_repeatable("nonexistent"))
 
     def test_content_elements(self):
-        self.assertEqual(self.p.content_elements()[0], "guidance")
-        self.assertEqual(len(self.p.content_elements()), 11)
+        self.assertEqual(self.p.content_elements(),
+                         [CONTENT_ROOT] + [e.name for e in self.p.refinements()])
+
+    def test_missing_content_root_raises(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            csv_path = Path(tmp_dir) / "no-guidance.csv"
+            with open(csv_path, "w", newline="", encoding="utf-8") as handle:
+                writer = csv.writer(handle)
+                writer.writerow(["propertyID", "propertyLabel", "mandatory", "repeatable",
+                                 "valueNodeType", "valueDataType", "valueConstraint",
+                                 "valueConstraintType", "mapsTo", "refines", "note"])
+                writer.writerow(["identifier", "Identifier", "true", "false", "literal",
+                                 "xsd:string", "", "", "dcterms:identifier", "", ""])
+            with self.assertRaises(ValueError):
+                Profile.load(csv_path)
 
 
 if __name__ == "__main__":
