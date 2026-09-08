@@ -33,6 +33,8 @@ def build_parser():
     parser.add_argument("--quiet", action="store_true", help="print only failures and the summary")
     parser.add_argument("--round-trip", action="store_true",
                         help="re-encode each Frame through json, yaml, and markdown and report differing elements")
+    parser.add_argument("--self-check", action="store_true",
+                        help="check spec/profile/frame-core.csv against the element definitions in spec/frame-spec.md")
     return parser
 
 
@@ -116,10 +118,22 @@ def round_trip_paths(paths, encoding, profile, out=sys.stdout):
 
 
 def main(argv=None):
-    args = build_parser().parse_args(argv)
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    if args.self_check:
+        # Before the paths guard: this mode checks the specification itself and takes no paths.
+        # Paths given anyway are refused rather than dropped, which would leave a
+        # file the user asked about unchecked and the exit code at 0 regardless.
+        if args.paths:
+            parser.error("--self-check takes no paths: it checks the specification, not a Frame")
+        from framespec import selfcheck
+        findings = selfcheck.self_check(profile_path=args.profile)
+        for finding in findings:
+            print(finding)
+        return 1 if has_errors(findings) else 0
     profile = Profile.load(args.profile)
     if not args.paths:
-        build_parser().print_help()
+        parser.print_help()
         return 2
     if args.round_trip:
         return round_trip_paths(args.paths, args.encoding, profile)
