@@ -97,13 +97,44 @@ class ParseTests(unittest.TestCase):
         self.assertEqual(frame.elements["guidance"], ["## Review Norms\n\n- a"])
         self.assertEqual(frame.elements["rules"], ["### Hard rules", "b"])
 
-    def test_missing_required_key_and_bad_type_are_errors(self):
+    def test_missing_required_key_is_an_error_and_odd_version_token_only_warns(self):
         text = "---\ntype: frame [0.3.0]\ndescription: D\nvisibility: internal\n---\nbody\n"
         frame, findings = markdown.parse(text, self.p, None)
         codes = [f.code for f in findings]
         self.assertIn("missing-required-key", codes)
+        self.assertIn("nonstandard-type-version", codes)
+        warning = next(f for f in findings if f.code == "nonstandard-type-version")
+        self.assertEqual(warning.level, "warning")
+        self.assertTrue(has_errors(findings))
+
+    def test_type_not_beginning_with_frame_is_an_error(self):
+        text = "---\ntype: framework\nname: N\ndescription: D\nvisibility: internal\n---\nbody\n"
+        frame, findings = markdown.parse(text, self.p, None)
+        codes = [f.code for f in findings]
         self.assertIn("bad-type-token", codes)
         self.assertTrue(has_errors(findings))
+
+    def test_three_part_version_token_warns_but_is_accepted(self):
+        text = "---\ntype: frame [0.3.0]\nname: N\ndescription: D\nvisibility: internal\n---\nbody\n"
+        frame, findings = markdown.parse(text, self.p, None)
+        self.assertFalse(has_errors(findings), [str(f) for f in findings])
+        codes = [f.code for f in findings]
+        self.assertIn("nonstandard-type-version", codes)
+        self.assertNotIn("bad-type-token", codes)
+
+    def test_bare_frame_type_has_no_type_finding(self):
+        text = "---\ntype: frame\nname: N\ndescription: D\nvisibility: internal\n---\nbody\n"
+        frame, findings = markdown.parse(text, self.p, None)
+        codes = [f.code for f in findings]
+        self.assertNotIn("bad-type-token", codes)
+        self.assertNotIn("nonstandard-type-version", codes)
+
+    def test_ordinary_major_minor_type_has_no_type_finding(self):
+        text = "---\ntype: frame [0.3]\nname: N\ndescription: D\nvisibility: internal\n---\nbody\n"
+        frame, findings = markdown.parse(text, self.p, None)
+        codes = [f.code for f in findings]
+        self.assertNotIn("bad-type-token", codes)
+        self.assertNotIn("nonstandard-type-version", codes)
 
     def test_no_front_matter_is_an_error(self):
         frame, findings = markdown.parse("just text\n", self.p, None)

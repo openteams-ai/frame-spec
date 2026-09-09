@@ -10,6 +10,7 @@ REQUIRED_KEYS = ("type", "name", "description", "visibility")
 ALIASES = {"name": "title", "inherits": "composition"}
 REVERSE_ALIASES = {v: k for k, v in ALIASES.items()}
 TYPE_RE = re.compile(r"^frame(?: \[\d+\.\d+\])?$")
+TYPE_SENTINEL_RE = re.compile(r"^frame\b")
 HEADING_RE = re.compile(r"^## (.+?)\s*$")
 BULLET_RE = re.compile(r"^- (.*)$")
 TERM_RE = re.compile(r"^- \*\*(.+?)\*\*:\s*(.*)$")
@@ -35,9 +36,13 @@ def parse(text, profile, location=None):
             findings.append(Finding("error", "missing-required-key",
                                     f"the Markdown encoding requires front matter key '{key}'", location))
     type_token = str(fm.get("type", "")).strip()
-    if type_token and not TYPE_RE.match(type_token):
+    if type_token and not TYPE_SENTINEL_RE.match(type_token):
         findings.append(Finding("error", "bad-type-token",
-                                f"type must be 'frame' or 'frame [<major>.<minor>]', got {type_token!r}", location))
+                                f"type must begin with the word 'frame', got {type_token!r}", location))
+    elif type_token and not TYPE_RE.match(type_token):
+        findings.append(Finding("warning", "nonstandard-type-version",
+                                f"type {type_token!r} has a version token that is not '[<major>.<minor>]'; "
+                                "accepted as a Frame", location))
     extras = {"type": type_token} if type_token else {}
     elements = {ALIASES.get(k, k): v for k, v in fm.items() if k != "type"}
     defaulted = default_identifier(elements, extras, location)

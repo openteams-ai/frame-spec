@@ -60,7 +60,7 @@ class CliTests(unittest.TestCase):
             result = run(str(bad))
             self.assertEqual(result.returncode, 1)
             self.assertIn("missing-required-key", result.stdout)
-            self.assertIn("bad-type-token", result.stdout)
+            self.assertIn("nonstandard-type-version", result.stdout)
         finally:
             bad.unlink()
 
