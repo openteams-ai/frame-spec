@@ -195,6 +195,18 @@ class Rule6Tests(unittest.TestCase):
         result = compose.compose(frames, p, {"non_repeatable": ["style"]})
         self.assertEqual(result.elements["style"], "plain")
 
+    def test_the_replace_branch_keeps_the_first_value_on_non_conforming_input(self):
+        # Rule 6 does not say which value a reader takes when a single Frame supplies
+        # several values for an element the profile declares non-repeatable; that
+        # document does not conform to the profile in force. This module keeps the
+        # first, the same choice _dedup_keep_first makes for a dedup narrowing, so the
+        # two agree rather than picking oppositely for input that is already
+        # non-conforming either way.
+        p = Profile.load()
+        a = Frame({"identifier": "a", "guidance": [""], "style": ["first", "second"]}, "json")
+        result = compose.compose([a], p, {"non_repeatable": ["style"]})
+        self.assertEqual(result.elements["style"], "first")
+
     def test_the_concatenate_branch_leaves_out_an_empty_value(self):
         p, frames = load_frames()
         self.assertEqual(compose.compose(frames, p).elements["guidance"],

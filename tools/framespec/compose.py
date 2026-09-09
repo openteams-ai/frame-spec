@@ -147,9 +147,12 @@ def _highest_present(frames, name):
         if value:
             # The model stores a repeatable element as a list, so a single value arrives
             # wrapped. A Frame carrying several values for an element the profile in
-            # force declares non-repeatable does not conform to that profile; the last
-            # of its own values is the one kept.
-            return value[-1]
+            # force declares non-repeatable does not conform to that profile; rule 6
+            # does not say which of its values a reader takes. Either choice conforms;
+            # this keeps the first, the same choice _dedup_keep_first makes below, so
+            # the module is consistent about it rather than picking oppositely in two
+            # places for input that is already non-conforming.
+            return value[0]
         # Present with no values at all: there is nothing to replace the lower-precedence
         # values with, so precedence passes down.
     return _ABSENT
