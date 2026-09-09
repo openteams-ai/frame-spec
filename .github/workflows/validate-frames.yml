@@ -55,3 +55,16 @@ jobs:
         run: |
           python tools/validate_frame.py --compose --conformance-profile spec/profiles/nebari-frames.yaml spec/fixtures/composition/company-core.frame.json spec/fixtures/composition/brand-voice.frame.json spec/fixtures/composition/q4-playbook.frame.json > /tmp/profile.json
           diff /tmp/profile.json spec/fixtures/composition/expected-style-non-repeatable.json
+
+      # parent then child, lowest precedence first, listed explicitly rather than
+      # globbed for the same reason as the fixture set above: alphabetically, child
+      # sorts before parent, so a glob here would not just reorder the composed set,
+      # it would swap which Frame is declaring, and print a different, still
+      # plausible-looking result instead of failing loudly. Rule 6: a single empty
+      # value is present for the replace branch and clears the value it would
+      # otherwise inherit, which is only visible under a profile that narrows style
+      # to non-repeatable.
+      - name: Composition fixture, an empty value clears an inherited one
+        run: |
+          python tools/validate_frame.py --compose --conformance-profile spec/fixtures/composition/style-non-repeatable.conformance.yaml spec/fixtures/composition/style-clear-parent.frame.json spec/fixtures/composition/style-clear-child.frame.json > /tmp/style-cleared.json
+          diff /tmp/style-cleared.json spec/fixtures/composition/expected-style-cleared.json

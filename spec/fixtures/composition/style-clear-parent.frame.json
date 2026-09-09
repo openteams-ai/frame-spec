@@ -1,0 +1,7 @@
+{
+  "identifier": "acme/style-clear-parent",
+  "title": "Style Clear Parent",
+  "visibility": "internal",
+  "guidance": "Parent guidance.",
+  "style": ["formal"]
+}
