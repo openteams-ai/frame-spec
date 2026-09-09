@@ -135,7 +135,7 @@ class DefectRegressionTests(unittest.TestCase):
         """The identifier is derived from the retrieval location (section 6.1),
         not stated by the document, so no writer may emit it as though it were:
         that would bake one machine's filesystem path into a shared artifact
-        as its identity. Both parsers set markdown.DEFAULTED and both writers
+        as its identity. Both parsers set model.DEFAULTED and both writers
         skip on it, so the marker must survive a change of encoding too."""
         location = "file:///srv/frames/minimal/frame.json"
         frame, _ = yamljson.parse_json('{"guidance": ""}', self.p, location)

@@ -3,6 +3,10 @@
 import datetime
 from dataclasses import dataclass, field
 
+from .findings import Finding
+
+DEFAULTED = "identifier-defaulted"   # an extras marker, not an element
+
 
 @dataclass
 class Frame:
@@ -10,6 +14,33 @@ class Frame:
     encoding: str
     location: str | None = None
     extras: dict = field(default_factory=dict)
+
+
+def default_identifier(elements, extras, location):
+    """Apply section 6.1: a document that states no identifier is identified by where
+    it was retrieved from. Returns the finding to report, or None if nothing was done.
+
+    The rule lives here, beside Frame.extras, because it is a rule about the model
+    rather than about any one encoding: all three apply it identically, and the marker
+    it leaves in extras records that the value was derived and not stated. Each
+    encoding used to implement it and honor it for itself, which had the YAML and JSON
+    encoding import the Markdown encoding to reach a model-level marker.
+    """
+    if "identifier" in elements or not location:
+        return None
+    elements["identifier"] = location
+    extras[DEFAULTED] = True
+    return Finding("info", "identifier-default", "identifier defaulted to the retrieval location", location)
+
+
+def derived_names(frame):
+    """The elements a writer must not emit, because the model derived them.
+
+    Emitting a defaulted identifier would bake one machine's retrieval location into
+    a shared document as its identity. Only `identifier` can be derived today, and a
+    set keeps each writer's `name in skip` test unchanged if another value joins it.
+    """
+    return {"identifier"} if frame.extras.get(DEFAULTED) else set()
 
 
 def _plain(value):

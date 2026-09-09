@@ -2,9 +2,8 @@
 
 import json
 
-from . import markdown
 from .findings import Finding
-from .model import Frame, normalize
+from .model import Frame, default_identifier, derived_names, normalize
 
 EXTRA_KEYS = ("type", "@context", "@type")
 
@@ -42,10 +41,9 @@ def _from_mapping(data, encoding, profile, location):
             findings.append(Finding("info", "encoding-key-preserved", f"{key!r} is an encoding-level key; preserved", location))
             continue
         elements[key] = value
-    if "identifier" not in elements and location:
-        elements["identifier"] = location
-        extras[markdown.DEFAULTED] = True    # derived, not stated: writers must not emit it
-        findings.append(Finding("info", "identifier-default", "identifier defaulted to the retrieval location", location))
+    defaulted = default_identifier(elements, extras, location)
+    if defaulted:
+        findings.append(defaulted)
     # Mandatory elements are not checked here: framespec.check owns that, driven by
     # the profile, so one absence is reported once rather than by every layer that notices.
     return Frame(normalize(elements, profile), encoding, location, extras), findings
@@ -57,7 +55,7 @@ def _to_mapping(frame, profile):
     # optional "type" token, section 6.3, included) is actually written back
     # rather than dropped.
     out = {k: v for k, v in frame.extras.items() if k in EXTRA_KEYS}
-    skip = {"identifier"} if frame.extras.get(markdown.DEFAULTED) else set()
+    skip = derived_names(frame)
     for name in profile.order:
         if name in frame.elements and name not in skip:
             out[name] = _compact(name, frame.elements[name])

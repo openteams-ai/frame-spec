@@ -4,13 +4,12 @@ import re
 
 from . import frontmatter
 from .findings import Finding
-from .model import Frame, normalize
+from .model import Frame, default_identifier, derived_names, normalize
 
 REQUIRED_KEYS = ("type", "name", "description", "visibility")
 ALIASES = {"name": "title", "inherits": "composition"}
 REVERSE_ALIASES = {v: k for k, v in ALIASES.items()}
 TYPE_RE = re.compile(r"^frame(?: \[\d+\.\d+\])?$")
-DEFAULTED = "identifier-defaulted"   # extras marker, not an element
 HEADING_RE = re.compile(r"^## (.+?)\s*$")
 BULLET_RE = re.compile(r"^- (.*)$")
 TERM_RE = re.compile(r"^- \*\*(.+?)\*\*:\s*(.*)$")
@@ -41,10 +40,9 @@ def parse(text, profile, location=None):
                                 f"type must be 'frame' or 'frame [<major>.<minor>]', got {type_token!r}", location))
     extras = {"type": type_token} if type_token else {}
     elements = {ALIASES.get(k, k): v for k, v in fm.items() if k != "type"}
-    if "identifier" not in elements and location:
-        elements["identifier"] = location
-        extras[DEFAULTED] = True     # derived, so writers must not emit it as a stated value
-        findings.append(Finding("info", "identifier-default", "identifier defaulted to the retrieval location", location))
+    defaulted = default_identifier(elements, extras, location)
+    if defaulted:
+        findings.append(defaulted)
     guidance, sections = _split_body(body, profile)
     elements["guidance"] = guidance
     for name, values in sections.items():
@@ -113,7 +111,7 @@ def write(frame, profile, spec_version="0.3"):
     """Render a Frame in the Markdown encoding, v0.2-compatible front matter first."""
     content = set(profile.content_elements())
     fm = {"type": frame.extras.get("type") or f"frame [{spec_version}]"}
-    skip = {"identifier"} if frame.extras.get(DEFAULTED) else set()
+    skip = derived_names(frame)
     for name in profile.order:
         if name in content or name not in frame.elements or name in skip:
             continue
