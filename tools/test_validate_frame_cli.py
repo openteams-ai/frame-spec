@@ -14,6 +14,12 @@ sys.path.insert(0, str(TOOLS))
 import validate_frame  # noqa: E402 - needs the sys.path insert above
 from framespec.profile import Profile  # noqa: E402 - same reason
 
+try:
+    import yaml
+    HAVE_YAML = True
+except ImportError:
+    HAVE_YAML = False
+
 
 def run(*args):
     return subprocess.run([sys.executable, str(TOOLS / "validate_frame.py"), *args],
@@ -94,6 +100,22 @@ class CliTests(unittest.TestCase):
         result = run("--round-trip", "spec/fixtures/roundtrip/full.frame.md")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("ROUND-TRIP OK", result.stdout)
+
+    @unittest.skipUnless(HAVE_YAML, "the yaml leg needs PyYAML")
+    def test_round_trip_fails_when_a_leg_writes_a_document_that_cannot_be_read_back(self):
+        # A Frame carrying only the two elements section 4.2 makes mandatory writes a
+        # Markdown document that section 6.2.1 rejects, since that encoding makes four
+        # front matter keys REQUIRED. The element values survive, so comparing them
+        # alone reported ROUND-TRIP OK and exit 0 for a trip that produced an invalid
+        # document. The run must fail and name the leg and the finding.
+        with tempfile.TemporaryDirectory() as tmp:
+            bare = Path(tmp) / "bare.frame.json"
+            bare.write_text('{"identifier": "acme/bare", "guidance": "just guidance"}\n', encoding="utf-8")
+            result = run("--round-trip", str(bare))
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("the markdown leg", result.stdout)
+        self.assertEqual(result.stdout.count("missing-required-key"), 3, result.stdout)
+        self.assertNotIn("ROUND-TRIP OK", result.stdout)
 
     def test_round_trip_reports_a_failure_for_an_unreadable_file_instead_of_a_silent_skip(self):
         # round_trip_paths() must tell read_frame()'s two None-returning cases

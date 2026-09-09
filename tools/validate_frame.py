@@ -89,7 +89,11 @@ def validate_paths(paths, encoding, profile, quiet, out=sys.stdout):
 
 
 def round_trip_paths(paths, encoding, profile, out=sys.stdout):
-    """Re-encode each Frame through json, yaml, and markdown; report differing elements."""
+    """Re-encode each Frame through json, yaml, and markdown.
+
+    A path fails when an element value changed on the way round or when any leg wrote
+    a document that could not be read back without an error.
+    """
     from framespec import roundtrip
     failures = report_missing(paths, "ROUND-TRIP FAIL   ", out)
     for path in frame_io.collect(paths):
@@ -107,16 +111,38 @@ def round_trip_paths(paths, encoding, profile, out=sys.stdout):
                 print(f"        - {finding}", file=out)
             continue
         try:
-            final, diffs = roundtrip.round_trip(frame, profile)
+            final, diffs, legs = roundtrip.round_trip(frame, profile)
         except ImportError as error:
             # The yaml leg needs PyYAML. Say so rather than raising a traceback.
             failures += 1
             print(f"ROUND-TRIP FAIL     {path}", file=out)
             print(f"        - {Finding('error', 'pyyaml-required', str(error), str(path))}", file=out)
             continue
-        if diffs:
+        # An error-level finding from any leg fails the trip: that leg wrote a document
+        # this tool cannot read back, so the trip produced an invalid document however
+        # well the element values compare afterward. The comparison runs on the Frame
+        # the failing parse returned, which is why discarding these findings reported
+        # OK for a trip whose Markdown output carried three errors. Only errors are
+        # reported here; a leg's warnings and information are the same findings plain
+        # validation already reports for the document itself, while an error is about
+        # the trip.
+        #
+        # This is where two layers of the draft disagree, and the disagreement is
+        # reported rather than resolved. Section 4.2 makes exactly two elements
+        # mandatory at the model layer, `identifier` and `guidance`, while section
+        # 6.2.1 makes four front matter keys REQUIRED in the Markdown encoding: `type`,
+        # `name`, `description`, `visibility`. A Frame that is valid at the model layer
+        # and states none of the last three therefore has no valid Markdown form, and
+        # its markdown leg reports missing-required-key. This tool says which leg and
+        # which finding and stops there. It does not add the missing keys, and it does
+        # not decide which of the two layers gives way: that is the draft's to settle.
+        leg_errors = [(leg, f) for leg, leg_findings in legs for f in leg_findings if f.level == "error"]
+        if leg_errors or diffs:
             failures += 1
-            print(f"ROUND-TRIP DIFFERS  {path}", file=out)
+            status = "ROUND-TRIP FAIL   " if leg_errors else "ROUND-TRIP DIFFERS"
+            print(f"{status}  {path}", file=out)
+            for leg, finding in leg_errors:
+                print(f"        - the {leg} leg: {finding}", file=out)
             for name, before, after in diffs:
                 print(f"        - {name}: {before!r} -> {after!r}", file=out)
         else:

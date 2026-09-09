@@ -30,13 +30,15 @@ class RoundTripTests(unittest.TestCase):
             self.assertTrue(frame.elements.get(name.name), f"fixture must carry a non-empty {name.name}")
         self.assertEqual(frame.elements["x-nebari-excludes"], ["acme/legacy-tone"])
         self.assertEqual(frame.elements["guards"], ["acme/pii-guard"])
-        final, diffs = roundtrip.round_trip(frame, p)
+        final, diffs, legs = roundtrip.round_trip(frame, p)
         # A round_trip that forgot to reassign its working value on each pass
         # would hand back the original object and trivially agree with itself.
         # Guard against that specific shortcut, not just against its symptom.
         self.assertIsNot(final, frame, "round_trip must return a freshly re-parsed Frame, not the original")
         self.assertEqual(diffs, [], diffs)
         self.assertEqual(final.elements, frame.elements)
+        self.assertEqual([(leg, [str(f) for f in findings if f.level == "error"]) for leg, findings in legs],
+                         [("json", []), ("yaml", []), ("markdown", [])])
 
     def test_a_difference_is_reported(self):
         p = Profile.load()
@@ -62,9 +64,30 @@ class RoundTripTests(unittest.TestCase):
             return json.dumps(mapping, indent=2, ensure_ascii=False) + "\n"
 
         with mock.patch.dict(frame_io.WRITERS, {"json": broken_write_json}):
-            final, diffs = roundtrip.round_trip(frame, p, order=("json",))
+            final, diffs, legs = roundtrip.round_trip(frame, p, order=("json",))
         names = [d[0] for d in diffs]
         self.assertIn("guards", names, "a dropped element must show up as a difference")
+
+    def test_a_leg_that_writes_an_unreadable_document_does_not_report_a_clean_trip(self):
+        """The findings of each leg's own re-read are part of the result.
+
+        A Frame carrying only the two elements section 4.2 makes mandatory has no
+        valid Markdown form, because section 6.2.1 makes four front matter keys
+        REQUIRED in that encoding. The element values still survive the trip, so
+        comparing them alone reports OK for a trip that wrote a document with three
+        errors in it. That is the false green this asserts against: the diffs are
+        empty and the markdown leg's findings are not.
+        """
+        p = Profile.load()
+        frame, findings = frame_io.PARSERS["json"](
+            '{"identifier": "acme/bare", "guidance": "just guidance"}', p, "file:///x/bare.frame.json")
+        self.assertFalse(has_errors(findings), [str(f) for f in findings])
+        final, diffs, legs = roundtrip.round_trip(frame, p)
+        self.assertEqual(diffs, [], diffs)
+        codes = {leg: [f.code for f in leg_findings if f.level == "error"] for leg, leg_findings in legs}
+        self.assertEqual(codes["json"], [])
+        self.assertEqual(codes["yaml"], [])
+        self.assertEqual(codes["markdown"], ["missing-required-key"] * 3)
 
 
 if __name__ == "__main__":
