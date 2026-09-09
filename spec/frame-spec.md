@@ -309,7 +309,7 @@ The following elements describe the Frame or a version of it. None is mandatory 
 - **Obligation:** SHOULD
 - **Repeatable:** No
 - **Maps to:** `dcat:version` [[DCAT3]](#ref-DCAT3); `schema:version` [[SCHEMA-ORG]](#ref-SCHEMA-ORG)
-- **Comment:** Tracks the Frame's own revision history, not the version of this specification. Semantic Versioning [[SEMVER]](#ref-SEMVER) is RECOMMENDED. Registries SHOULD require `version` on publication even though the model does not require it on exchange.
+- **Comment:** Tracks the Frame's own revision history, not the version of this specification. Semantic Versioning [[SEMVER]](#ref-SEMVER) is RECOMMENDED. Registries SHOULD require `version` on publication even though the model does not require it on exchange. A Frame Version's content MUST NOT change once the Version has been issued: content that changes is a new Version. Without that, a `pinned-ref` would name nothing stable, and neither the version-selection policy of [Section 5.2](#declared-variation) nor the identical-precedence guarantee of that section would give an author a reproducible result. A system that cannot enforce this MUST say so in its conformance profile ([Section 7](#profiles)).
 
 <a id="el-versionnotes"></a>
 
@@ -428,6 +428,8 @@ The following rule is normative and is the mechanism by which a Frame with no re
 
 A reader that does not implement a refinement MUST treat its value as `guidance`. It MUST NOT discard the value.
 
+This rule binds a reader that can tell the name is a refinement. That knowledge comes from the element registry ([Section 10.2](#iana-elements)) as the reader knows it, never from the document, since no encoding marks an element as a refinement. A reader whose registry predates a refinement's registration cannot place the name, and treats it as an unknown element under [Section 4.6](#extensions): the value is preserved and re-emitted, but it is not presented as guidance. A writer that needs such a reader to see the content SHOULD write it as `guidance` instead of using a refinement registered later than the readers it must reach.
+
 A reader that implements a refinement but cannot extract the refinement's structured form from a value MUST keep the value as that refinement's content. It MUST NOT reject the Frame and MUST NOT demote the value to `guidance` on that account.
 
 This is the dumb-down principle of [[DC-USAGE]](#ref-DC-USAGE): "A client should be able to ignore any qualifier and use the value as if it were unqualified." Its consequence is that a reader which knows only `guidance` sees a plain body, a reader which knows the refinements sees typed sections, and no content is lost in either case.
@@ -499,6 +501,8 @@ An element name beginning with `x-` is an extension element and is reserved for 
 Readers MUST preserve elements they do not recognize, including extension elements, and MUST NOT reject a Frame for carrying them. Writers MUST emit preserved unknown elements when producing a Representation, so that round trips through a reader that does not understand an element are lossless.
 
 Unknown elements are metadata, not content. A reader MUST NOT present the value of an unrecognized element to an AI system as guidance. See [Section 9](#security).
+
+An unrecognized element is one whose name the reader cannot resolve to a registered element. This rule does not override [Section 4.4.1](#dumb-down) for a refinement the reader resolves but does not implement: that value is content, and the dumb-down rule governs it.
 
 <a id="element-summary"></a>
 
@@ -615,6 +619,8 @@ When an application combines Frames that do not declare each other, as when a us
 
 Three Frames: `acme/company-core`, composed by `acme/brand-voice`, composed by `acme/q4-playbook`. Each carries `rules` (repeatable), `style` (repeatable at the model layer), a `description`, and the first carries a `guards` reference.
 
+The result below assumes two things a profile declares rather than this specification: that the reader resolves composition transitively, since rule 4 makes that OPTIONAL and a non-transitive reader composes only `acme/brand-voice`, omitting `acme/company-core`'s rule and its Guard; and that its policy selects the Versions shown, since the references carry no version ([Section 5.2](#declared-variation)).
+
 ```
 acme/company-core            (lowest precedence)
   description: Company-wide context.
@@ -693,7 +699,11 @@ The front matter is a YAML mapping [[YAML12]](#ref-YAML12). Its keys are element
 
 A repeatable element MAY be written as a scalar or as a sequence; a scalar is exactly one value. A writer MUST emit a sequence, so that documents a tool produces carry one shape. A scalar is not split on any delimiter: `maintainer: Acme, Inc.` is one value, because two repeatable elements, `maintainer` and `versionNotes`, carry values in which a comma occurs literally.
 
-The key `type` is REQUIRED in this encoding. It is the only one: a key is mandatory here only where two systems cannot exchange the document without it ([[RFC2119]](#ref-RFC2119), Section 6), and `type` is the sentinel a reader needs to tell a Frame from any other Markdown file. `name`, `description` and `visibility` are REQUIRED by [[FRAME-V02]](#ref-FRAME-V02) and are SHOULD here; a reader MUST NOT reject a document for omitting one. A writer SHOULD emit all four, so that documents it produces remain readable by a v0.2 reader. Its value MUST begin with the word `frame`, matched case-sensitively; a value that does not means the document is not a Frame. The contrast with refinement labels, which match ignoring case ([Section 6.2.2](#md-body)), is deliberate: a label is prose an author writes and may capitalize as they please, while this value is a token a reader matches. The word MAY be followed by a bracketed version token, which SHOULD name a major and a minor version only: `frame [0.3]` denotes this document, and `frame [0.2]` denotes [[FRAME-V02]](#ref-FRAME-V02) and remains valid. Patch releases clarify wording without changing requirements, so the patch component does not appear in the token. A reader MUST NOT reject a document because its version token names a version the reader does not recognize or is not in that shape, and SHOULD warn; this is the rule of [Section 6.1](#enc-common) applied to this encoding. This key is specific to the Markdown encoding; the structured encodings need no sentinel.
+A front matter value MUST be a scalar or a sequence of scalars. This encoding defines no front matter syntax for a value with internal structure, such as a `terminology` concept ([Section 4.4.2](#terminology-form)); [Section 6.2.2](#md-body) carries such a value in the body instead. A reader that encounters a nested mapping or sequence MUST NOT reject the document: it MUST preserve the value, MUST NOT extract a structured form from it, and SHOULD warn.
+
+The key `type` is REQUIRED in this encoding. It is the only one: a key is mandatory here only where two systems cannot exchange the document without it ([[RFC2119]](#ref-RFC2119), Section 6), and `type` is the sentinel a reader needs to tell a Frame from any other Markdown file. `name`, `description` and `visibility` are REQUIRED by [[FRAME-V02]](#ref-FRAME-V02) and are SHOULD here; a reader MUST NOT reject a document for omitting one. A writer SHOULD emit all four, so that documents it produces remain readable by a v0.2 reader.
+
+The value of `type` MUST begin with the word `frame`, matched case-sensitively; a value that does not means the document is not a Frame. The contrast with refinement labels, which match ignoring case ([Section 6.2.2](#md-body)), is deliberate: a label is prose an author writes and may capitalize as they please, while this value is a token a reader matches. The word MAY be followed by a bracketed version token, which SHOULD name a major and a minor version only: `frame [0.3]` denotes this document, and `frame [0.2]` denotes [[FRAME-V02]](#ref-FRAME-V02) and remains valid. Patch releases clarify wording without changing requirements, so the patch component does not appear in the token. A reader MUST NOT reject a document because its version token names a version the reader does not recognize or is not in that shape, and SHOULD warn; this is the rule of [Section 6.1](#enc-common) applied to this encoding. This key is specific to the Markdown encoding; the structured encodings need no sentinel.
 
 <a id="md-body"></a>
 
@@ -717,7 +727,7 @@ A writer emits exactly one `guidance` value per document, containing all non-ref
 
 [Section 6.2.2](#md-body) makes each top-level list item in a Terminology section one value of `terminology`. A list item whose value, after its marker is removed, has the form `**term**: definition` is additionally a concept in the structured form of [Section 4.4.2](#terminology-form); the bold text is the preferred label and the remainder is the definition. The marker may be of either kind ([Section 6.2.2](#md-body)), so a numbered item carries a concept exactly as a bulleted one does. A list item of any other shape, and any content in the section that is not a top-level list item, is unstructured `terminology` content governed by [Section 4.4.1](#dumb-down). A reader MUST NOT fail on the shape of a list item.
 
-This encoding has no syntax for a concept's alternative labels, which [Section 4.4.2](#terminology-form) permits and which the YAML and JSON encodings carry as `altTerms`. A concept written here therefore has a preferred label and a definition and nothing else. A writer converting a concept that carries alternative labels MUST NOT discard them: [Section 4.4.1](#dumb-down) applies, so it keeps them as content by writing them into the item's text, which preserves the words and loses the structure. This is the one place where the model expresses something an encoding cannot, and a Frame whose alternative labels must survive a round trip SHOULD be held in the YAML or JSON encoding.
+This encoding defines no syntax for a concept's alternative labels, which [Section 4.4.2](#terminology-form) permits and which the YAML and JSON encodings carry as `altTerms`. The body carries prose, and front matter carries scalars and sequences of scalars ([Section 6.2.1](#md-structure)). A concept written here therefore has a preferred label and a definition and nothing else. A writer converting a concept that carries alternative labels MUST NOT discard them: [Section 4.4.1](#dumb-down) applies, so it keeps them as content by writing them into the item's text, which preserves the words and loses the structure. This is the one place where the model expresses something an encoding cannot, and a Frame whose alternative labels must survive a round trip SHOULD be held in the YAML or JSON encoding.
 
 <a id="md-mediatype"></a>
 
@@ -1204,7 +1214,7 @@ The Frame-native terms (`guidance`, the ten refinements, and `composition`) requ
 
 ## Appendix B. Machine-Readable Profile
 
-The element set of [Section 4](#elements) is published as a tabular application profile in the format of [[DCTAP]](#ref-DCTAP), with two columns beyond DCTAP's own: `mapsTo`, the crosswalk term, and `refines`, the refined element. A validator that reads this file can check obligation, repeatability, and value constraints without hard-coding the element set. The companion file `frame-core.csv` published with this specification is identical to the block below.
+The element set of [Section 4](#elements) is published as a tabular application profile in the format of [[DCTAP]](#ref-DCTAP), with two columns beyond DCTAP's own: `mapsTo`, the crosswalk term, and `refines`, the refined element. A validator that reads this file can check obligation, repeatability, and value constraints without hard-coding the element set. Where a column and an element's definition in [Section 4](#elements) disagree, the definition governs; the columns carry the constraints DCTAP can express, and two elements accept a value the columns do not: `license` accepts an SPDX identifier as well as a URI ([Section 4.3.9](#el-license)), and `issued` accepts a date as well as a date-time ([Section 4.3.10](#el-issued)). The companion file `frame-core.csv` published with this specification is identical to the block below.
 
 ```csv
 propertyID,propertyLabel,mandatory,repeatable,valueNodeType,valueDataType,valueConstraint,valueConstraintType,mapsTo,refines,note
