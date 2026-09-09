@@ -71,28 +71,6 @@ class CheckTests(unittest.TestCase):
         self.assertEqual(codes(findings, "error"), [])
         self.assertIn("empty-reference", codes(findings, "warning"))
 
-    def test_a_non_integer_value_for_the_one_integer_element_warns_and_never_errors(self):
-        """byteSize is the profile's only xsd:integer element (draft section 4.6).
-
-        Only xsd:dateTime was checked, so a byteSize of "quite big" validated clean.
-        """
-        f = self.frame(identifier="a/b", guidance=["g"], byteSize="quite big")
-        findings = check(f, self.p)
-        self.assertEqual(codes(findings, "error"), [])
-        self.assertIn("not-an-integer", codes(findings, "warning"))
-
-    def test_an_integer_is_accepted_in_either_of_the_forms_a_document_can_carry(self):
-        # A JSON or YAML number arrives as an int and a quoted one as a string that is
-        # still lexically an integer; xsd:integer admits a sign, so a signed value is
-        # a datatype question and not a plausibility one. A boolean is an int subclass
-        # in Python and must not pass as one.
-        for value in (1024, "1024", "+1024", "-1"):
-            with self.subTest(value=value):
-                f = self.frame(identifier="a/b", guidance=["g"], byteSize=value)
-                self.assertNotIn("not-an-integer", codes(check(f, self.p)))
-        f = self.frame(identifier="a/b", guidance=["g"], byteSize=True)
-        self.assertIn("not-an-integer", codes(check(f, self.p), "warning"))
-
     def test_a_null_guidance_is_reported_rather_than_accepted_silently(self):
         """Section 4.2.2 makes guidance MUST be present and MAY be empty and does not
         say whether an explicit null is empty. The mandatory check tests presence, so a

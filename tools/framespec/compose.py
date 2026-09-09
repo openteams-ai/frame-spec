@@ -26,8 +26,8 @@ def composing_elements(profile):
     Derived from the profile rather than listed here, so the element set stays in
     spec/profile/frame-core.csv. Rule 5 defines the composing side positively, and
     everything else belongs to the declaring Frame: the fourteen elements rule 5
-    enumerates, `composition`, the representation-level elements of section 4.6, and
-    any unknown or `x-` element, which appear in no list yet must not vanish.
+    enumerates, `composition`, and any unknown or `x-` element, which appear in no
+    list yet must not vanish.
     """
     names = list(profile.content_elements())
     if GUARDS not in names:

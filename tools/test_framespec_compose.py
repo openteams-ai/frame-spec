@@ -124,27 +124,23 @@ class Rule5Tests(unittest.TestCase):
             self.assertIn(name, p.elements, f"rule 5 names {name!r}, which the profile does not define")
             self.assertNotIn(name, composing, f"rule 5 says {name!r} MUST NOT be inherited")
 
-    def test_what_does_not_compose_is_the_fourteen_plus_composition_and_the_representation_level(self):
+    def test_what_does_not_compose_is_the_fourteen_plus_composition(self):
         # The complement is wider than rule 5's list, and deliberately: composition is
-        # neither content nor guards, and the section 4.6 elements describe the document
-        # rather than its content. Neither may be inherited either.
+        # neither content nor guards, so it may not be inherited either.
         p = Profile.load()
         not_composing = set(p.order) - set(compose.composing_elements(p))
-        self.assertEqual(not_composing,
-                         set(rule5_elements()) | {"composition", "mediaType", "checksum", "byteSize"})
+        self.assertEqual(not_composing, set(rule5_elements()) | {"composition"})
 
     def test_guidance_its_refinements_and_guards_are_what_composes(self):
         p = Profile.load()
         self.assertEqual(list(compose.composing_elements(p)), p.content_elements() + ["guards"])
         self.assertEqual(len(compose.composing_elements(p)), 12)   # guidance, ten refinements, guards
 
-    def test_composition_and_representation_elements_stay_with_the_declaring_frame(self):
+    def test_composition_stays_with_the_declaring_frame(self):
         p, frames = load_frames()
         result = compose.compose(frames, p).elements
         # brand-voice composes acme/company-core; only q4-playbook's own value survives.
         self.assertEqual(result["composition"], ["acme/brand-voice"])
-        for name in ("mediaType", "checksum", "byteSize"):
-            self.assertNotIn(name, compose.composing_elements(p))
 
     def test_unknown_and_extension_elements_are_not_inherited_but_are_kept(self):
         p = Profile.load()

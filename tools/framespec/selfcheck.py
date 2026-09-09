@@ -20,7 +20,6 @@ DEFAULT_SPEC_PATH = REPO_ROOT / "spec" / "frame-spec.md"
 SECTION_RE = re.compile(r"^#{3,4} \d+(?:\.\d+)*\. (\S+)\s*$", re.M)
 BULLET_RE = re.compile(r"^- \*\*(Label|Obligation|Repeatable|Maps to):\*\* (.*)$", re.M)
 REFINEMENT_RE = re.compile(r"^- \*\*([A-Za-z]+)\*\* \(([^)]+)\): (.*)$", re.M)
-REPRESENTATION_RE = re.compile(r"^- \*\*(mediaType|checksum|byteSize):\*\* (.*)$", re.M)
 
 # An obligation may be qualified: "MUST be present; MAY be empty" (guidance) and
 # "MAY; MUST be present when ... requires it" (derivedFrom). The obligation is the
@@ -39,16 +38,24 @@ TERM_RE = re.compile(r"`([^`]+)`")
 # registry, which reading the whole section would take for a sixth status.
 INITIAL_VALUES_RE = re.compile(r"the initial values are (.*?)\.(?:\s|$)")
 
-# The draft writes elements in three shapes and each is read by its own pattern
+# The draft writes elements in two shapes and each is read by its own pattern
 # above. A pattern that quietly stopped matching would make every comparison in
 # self_check() trivially true: nothing read, nothing compared, a clean report. So
 # each shape declares how many elements the draft is known to define, and reading
 # fewer is an error rather than a pass. These are floors: adding an element to the
 # draft never trips them, and removing one is deliberate and updates them here.
+#
+# A third shape lived here once: representation-level elements, read out of section
+# 4.6's three bullets. The draft dropped mediaType, checksum and byteSize outright,
+# and with them the Representation entity's last elements, so the pattern that read
+# that shape now matches nothing, in any draft this specification could publish. A
+# floor of zero would have kept the shape's name and its place in every dict below
+# while protecting nothing, since a pattern that can never match again can never
+# fall short of zero either. Removed instead, along with the loop in
+# read_spec_elements() that populated it.
 SECTION = "section"                     # 4.2 required, 4.3 descriptive, 4.5 relations
 REFINEMENT = "refinement"               # 4.4 content refinements
-REPRESENTATION = "representation"       # 4.6 representation-level elements
-EXPECTED_SHAPES = {SECTION: 17, REFINEMENT: 10, REPRESENTATION: 3}
+EXPECTED_SHAPES = {SECTION: 17, REFINEMENT: 10}
 
 # The same discipline for the two registered value vocabularies, which the draft
 # states in prose (sections 4.3.5 and 4.3.8) and the CSV records as a picklist.
@@ -134,7 +141,7 @@ def _appendix_findings(text, profile_path, where):
 
 
 def read_spec_elements(text):
-    """Element facts as written in the draft: sections 4.2, 4.3, 4.5 (per-element), 4.4, 4.6 (bullets)."""
+    """Element facts as written in the draft: sections 4.2, 4.3, 4.5 (per-element) and 4.4 (bullets)."""
     found = {}
     positions = [(m.start(), m.group(1)) for m in SECTION_RE.finditer(text)]
     for index, (start, name) in enumerate(positions):
@@ -161,17 +168,11 @@ def read_spec_elements(text):
     # "the Frame-native terms (`guidance`, the ten refinements, and `composition`)".
     # So a refinement's Frame-native rationale is guidance's rationale, and it is
     # read from section 4.2.2 rather than assumed here: hard-coding it would leave
-    # native-without-rationale unable to fire for ten of the thirty elements.
+    # native-without-rationale unable to fire for ten of the twenty-seven elements.
     guidance_is_native = found.get("guidance", {}).get("native", False)
     for name, label, _definition in REFINEMENT_RE.findall(text):
         found[name] = {"label": label, "obligation": "MAY", "repeatable": True, "maps_to": "",
                        "native": guidance_is_native, "values": (), "source": REFINEMENT}
-    # Section 4.6 gives the three Representation-level elements one bullet each,
-    # with the crosswalk term inline and no label. They are optional at the model
-    # layer; section 4.8 records their obligation as "per encoding".
-    for name, rest in REPRESENTATION_RE.findall(text):
-        found[name] = {"label": "", "obligation": "MAY", "repeatable": False, "maps_to": rest,
-                       "native": False, "values": (), "source": REPRESENTATION}
     return found
 
 
@@ -223,10 +224,13 @@ def self_check(spec_path=DEFAULT_SPEC_PATH, profile_path=DEFAULT_PROFILE_PATH):
             findings.append(Finding("error", "repeatable-mismatch",
                                     f"'{name}': CSV repeatable={element.repeatable} but draft says "
                                     f"{facts['repeatable']}", where))
-        # By shape rather than by "the draft's label came out empty": a section
-        # that lost its Label bullet has to be reported, not skipped. Only the
-        # three Representation bullets of 4.6 legitimately carry no label.
-        if facts["source"] != REPRESENTATION and element.label != facts["label"]:
+        # Checked unconditionally: every shape read_spec_elements() produces now
+        # carries a label, a section from its Label bullet and a refinement from
+        # its parenthetical. That was not always true; section 4.6's Representation
+        # bullets had no Label and were exempted here by shape. The exemption went
+        # with the shape when the draft dropped it, rather than staying in place to
+        # guard against a case that can no longer occur.
+        if element.label != facts["label"]:
             findings.append(Finding("error", "label-mismatch",
                                     f"'{name}': CSV label {element.label!r} but draft says {facts['label']!r}", where))
         if not element.maps_to and not facts["native"]:

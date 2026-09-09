@@ -13,10 +13,10 @@ class ProfileTests(unittest.TestCase):
     def setUp(self):
         self.p = Profile.load(DEFAULT_PROFILE_PATH)
 
-    def test_loads_thirty_elements_in_csv_order(self):
-        self.assertEqual(len(self.p.order), 30)
+    def test_loads_twenty_seven_elements_in_csv_order(self):
+        self.assertEqual(len(self.p.order), 27)
         self.assertEqual(self.p.order[0], "identifier")
-        self.assertEqual(self.p.order[-1], "byteSize")
+        self.assertEqual(self.p.order[-1], "guards")
 
     def test_mandatory_is_identifier_and_guidance(self):
         self.assertEqual(self.p.mandatory(), ["identifier", "guidance"])

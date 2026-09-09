@@ -30,10 +30,6 @@ SNIPPET = """
 
 - **rules** (Rules): What is and is not acceptable behavior within the scope.
 - **toolSpecs** (Tool Specifications): Specifications of the tools.
-
-### 4.6. Representation-Level Elements
-
-- **mediaType:** The media type of the Representation. Maps to `dcat:mediaType`.
 """
 
 # A spec and a profile that agree on exactly one element. Every comparison in
@@ -74,7 +70,7 @@ def run_cli(*args):
 
 
 class ReadSpecTests(unittest.TestCase):
-    def test_reads_element_sections_refinements_and_representation_bullets(self):
+    def test_reads_element_sections_and_refinement_bullets(self):
         found = selfcheck.read_spec_elements(SNIPPET)
         self.assertEqual(found["identifier"]["obligation"], "MUST")
         self.assertFalse(found["identifier"]["repeatable"])
@@ -84,7 +80,6 @@ class ReadSpecTests(unittest.TestCase):
         self.assertEqual(found["rules"]["label"], "Rules")
         self.assertEqual(found["toolSpecs"]["label"], "Tool Specifications")
         self.assertTrue(found["toolSpecs"]["repeatable"])
-        self.assertEqual(found["mediaType"]["obligation"], "MAY")
 
     def test_obligation_is_the_first_requirement_keyword_not_the_first_word(self):
         # The draft qualifies two obligations with a semicolon. Splitting on
@@ -103,7 +98,7 @@ class ReadSpecTests(unittest.TestCase):
         # Appendix A names "the Frame-native terms (`guidance`, the ten refinements,
         # and `composition`)". So a refinement's rationale is guidance's rationale,
         # and it has to be read from the draft rather than assumed: hard-coding it
-        # would make native-without-rationale unable to fire for ten of the thirty.
+        # would make native-without-rationale unable to fire for ten of the twenty-seven.
         self.assertTrue(selfcheck.read_spec_elements(SNIPPET)["rules"]["native"])
         text = SNIPPET.replace("- **Maps to:** Frame-native. The nearest terms describe a resource.",
                                "- **Maps to:** `schema:text` [[SCHEMA-ORG]](#ref-SCHEMA-ORG)")
@@ -121,15 +116,15 @@ class ReadSpecTests(unittest.TestCase):
         self.assertNotIn("stable", found["status"]["values"])
         self.assertEqual(found["title"]["values"], ())
 
-    def test_the_real_draft_yields_seventeen_sections_ten_refinements_and_three_bullets(self):
-        # The three shapes are read by three patterns. Counting them separately is
+    def test_the_real_draft_yields_seventeen_sections_and_ten_refinements(self):
+        # The two shapes are read by two patterns. Counting them separately is
         # what makes a pattern that stops matching visible instead of quiet.
         found = selfcheck.read_spec_elements(selfcheck.DEFAULT_SPEC_PATH.read_text(encoding="utf-8"))
         counted = {}
         for facts in found.values():
             counted[facts["source"]] = counted.get(facts["source"], 0) + 1
-        self.assertEqual(counted, {selfcheck.SECTION: 17, selfcheck.REFINEMENT: 10, selfcheck.REPRESENTATION: 3})
-        self.assertEqual(len(found), 30)
+        self.assertEqual(counted, {selfcheck.SECTION: 17, selfcheck.REFINEMENT: 10})
+        self.assertEqual(len(found), 27)
 
 
 class SelfCheckTests(unittest.TestCase):
@@ -182,7 +177,7 @@ class SelfCheckTests(unittest.TestCase):
 
     def test_an_element_the_csv_dropped_is_reported(self):
         self.assertIn("csv-missing-element", self.codes(
-            "checksum,Checksum,false,false,literal,xsd:string,,,spdx:checksum,,Representation level\n", ""))
+            "previousVersion,Previous Version,false,false,literal,xsd:string,,,dcat:previousVersion,,\n", ""))
 
     def test_an_element_with_no_crosswalk_term_and_no_native_rationale_is_reported(self):
         # Journey 2: no element is invented without justification. The draft's
@@ -203,7 +198,7 @@ class SelfCheckTests(unittest.TestCase):
         # Markdown example that follows the phrase "Appendix B" in the contents
         # list, nor the one after section 5.3's citation of RFC 5234's Appendix B.
         self.assertTrue(block.startswith("propertyID,propertyLabel,mandatory,"), block[:60])
-        self.assertEqual(len(block.rstrip().split("\n")), 31)      # header plus the thirty elements
+        self.assertEqual(len(block.rstrip().split("\n")), 28)      # header plus the twenty-seven elements
         self.assertEqual(block.rstrip(), DEFAULT_PROFILE_PATH.read_text(encoding="utf-8").rstrip())
         codes = [f.code for f in selfcheck.self_check()]
         self.assertNotIn("appendix-mismatch", codes)
@@ -211,8 +206,8 @@ class SelfCheckTests(unittest.TestCase):
 
     def test_an_appendix_block_that_drifted_from_the_csv_is_reported(self):
         self.assertIn("appendix-mismatch", self.edited_draft_codes(
-            "mediaType,Media Type,false,false,literal,xsd:string,,,dcat:mediaType,,Representation level",
-            "mediaType,Media Type,false,true,literal,xsd:string,,,dcat:mediaType,,Representation level"))
+            "previousVersion,Previous Version,false,false,literal,xsd:string,,,dcat:previousVersion,,",
+            "previousVersion,Previous Version,false,true,literal,xsd:string,,,dcat:previousVersion,,"))
 
     def test_a_final_newline_is_not_an_appendix_disagreement(self):
         # The comparison is about the element set, not about how either file ends.
@@ -275,7 +270,7 @@ class CliTests(unittest.TestCase):
         result = run_cli("--self-check")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("self-check-ok", result.stdout)
-        self.assertIn("30 elements agree", result.stdout)
+        self.assertIn("27 elements agree", result.stdout)
 
     def test_self_check_refuses_paths_rather_than_ignoring_them(self):
         # Accepting and dropping a path would leave a file the user asked about
