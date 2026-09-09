@@ -192,8 +192,8 @@ Frame                 the abstract artifact; persists across versions
         version, status, versionNotes, issued,
         guidance and its refinements
         |
-        +-- composition    (relation) ordered references to other
-        |                  Frames; the declaring Frame has precedence
+        +-- composition    (relation) ordered references to other Frame
+        |                  Versions; the declaring one has precedence
         +-- guards         (relation) Guards to run on output
         |
         +-- Representation a serialization of this version
@@ -452,11 +452,11 @@ Four elements relate a Frame to other artifacts.
 #### 4.5.1. composition
 
 - **Label:** Composition
-- **Definition:** A Frame whose content combines with this Frame's content when this Frame is activated, with this Frame taking precedence.
+- **Definition:** A Frame Version whose content combines with this Frame Version's content when this Frame is activated, with the declaring Frame Version taking precedence.
 - **Obligation:** MAY
 - **Repeatable:** Yes; the order of values is significant
 - **Maps to:** Frame-native. See below.
-- **Comment:** The value is a reference as defined in [Section 5.3](#ref-syntax). The rules governing composition are in [Section 5](#composition). No established vocabulary term means "combines with at activation": `schema:isBasedOn` and `prov:wasDerivedFrom` mean that one artifact was made from another, which is derivation and is expressed by `derivedFrom`. Mapping composition to a derivation term would contradict that term's meaning. The Markdown encoding spells this element `inherits` for compatibility with [[FRAME-V02]](#ref-FRAME-V02).
+- **Comment:** The value is a reference as defined in [Section 5.3](#ref-syntax). Content is carried by a Frame Version ([Section 3.1](#model-overview)), so composition targets a Version: a `pinned-ref` names one directly, while a reference carrying no version names a Frame and leaves the choice of Version to resolution ([Section 5.2](#declared-variation)). The rules governing composition are in [Section 5](#composition). No established vocabulary term means "combines with at activation": `schema:isBasedOn` and `prov:wasDerivedFrom` mean that one artifact was made from another, which is derivation and is expressed by `derivedFrom`. Mapping composition to a derivation term would contradict that term's meaning. The Markdown encoding spells this element `inherits` for compatibility with [[FRAME-V02]](#ref-FRAME-V02).
 
 <a id="el-derivedfrom"></a>
 
@@ -573,7 +573,7 @@ Rule 7's second sentence exists so that rule 4 and rule 7 do not conflict. An im
 
 ### 5.2. Declared Variation
 
-[[INTHUB]](#ref-INTHUB), Section 8.1, asks that "a Frame inherited by one Cog will be interpreted the same way by another." This specification guarantees identical interpretation of content, since [Section 4.4.1](#dumb-down) forbids content loss, and identical precedence. It permits declared variation in resolution depth (rule 4) and in merge narrowing (rule 6). Full uniformity would require making transitive resolution mandatory, which [[FRAME-V02]](#ref-FRAME-V02) chose not to do and which at least one implementation does not perform [[FRAME-SPEC-21]](#ref-FRAME-SPEC-21). The tradeoff is stated rather than hidden: an author who needs identical behavior across tools consults their conformance profiles, which exist so that the variation is visible.
+[[INTHUB]](#ref-INTHUB), Section 8.1, asks that "a Frame inherited by one Cog will be interpreted the same way by another." This specification guarantees identical interpretation of content, since [Section 4.4.1](#dumb-down) forbids content loss, and identical precedence. It permits declared variation in resolution depth (rule 4), in merge narrowing (rule 6), and in the choice of Frame Version for a reference that carries none. Such a reference names a Frame, and which of its Versions is composed is a profile concern: an implementation MUST declare its selection policy in its conformance profile ([Section 7](#profiles)). This specification does not constrain that policy, because a plausible constraint would rest on `status`, whose registered values are RECOMMENDED rather than required ([Section 4.3.5](#el-status)). An implementation that resolves composition MUST report, for each reference, the Frame Version it resolved, so that what an activation inherited is recoverable afterwards; rule 7 covers only the references it could not resolve. Full uniformity would require making transitive resolution mandatory, which [[FRAME-V02]](#ref-FRAME-V02) chose not to do and which at least one implementation does not perform [[FRAME-SPEC-21]](#ref-FRAME-SPEC-21). The tradeoff is stated rather than hidden: an author who needs identical behavior across tools consults their conformance profiles, which exist so that the variation is visible.
 
 <a id="ref-syntax"></a>
 
@@ -1251,6 +1251,8 @@ Specification:         draft-mcandrew-frame-spec-00
 Encodings read:        <markdown | yaml | json>
 Encodings written:     <markdown | yaml | json>
 Resolves composition:  <no | yes, non-transitive | yes, transitive>
+Version selection:     <not performed | policy for a reference
+                        that carries no version>
 Reference forms:       <pinned-ref | qualified-ref | uri-ref
                         | path-ref | name-ref>
 Rule 6 narrowings:     <none | dedup: <elements>
