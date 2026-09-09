@@ -18,7 +18,7 @@ import validate_frame                          # noqa: E402 - needs the sys.path
 from framespec import compose, io as frame_io  # noqa: E402 - same reason
 from framespec.compose import ALL_REPEATABLE   # noqa: E402 - same reason
 from framespec.model import Frame              # noqa: E402 - same reason
-from framespec.profile import Profile          # noqa: E402 - same reason
+from framespec.profile import CONTENT_ROOT, Profile  # noqa: E402 - same reason
 
 try:
     import yaml                                # noqa: F401 - presence is the point
@@ -31,9 +31,12 @@ ORDER = ["company-core.frame.json", "brand-voice.frame.json", "q4-playbook.frame
 NARROWING = DIR / "style-non-repeatable.conformance.yaml"
 SPEC = REPO / "spec" / "frame-spec.md"
 
-# Rule 5 enumerates the elements that MUST NOT be inherited. The list is read out of
-# the draft rather than copied here, so that the two cannot drift apart unnoticed.
-RULE5_RE = re.compile(r"The elements that describe the Frame itself \(([^)]*)\) MUST NOT be inherited")
+# Rule 5 no longer enumerates every element that MUST NOT be inherited: a spec
+# amendment replaced the list with a derivation (the complement of "content elements
+# and guards") plus three named examples, identifier and maintainer, then composition
+# on its own. The examples are read out of the draft rather than copied here, so
+# prose and code cannot drift apart unnoticed the way the old two-statement rule did.
+RULE5_RE = re.compile(r"MUST NOT be inherited from a composed Frame: ([^.]*\.)")
 
 
 def run(*args):
@@ -54,10 +57,10 @@ def load_frames(names=ORDER):
 
 
 def rule5_elements():
-    """The fourteen element names rule 5 says MUST NOT be inherited, from the draft."""
+    """The element names rule 5 gives as examples of what MUST NOT be inherited, from the draft."""
     match = RULE5_RE.search(SPEC.read_text(encoding="utf-8"))
     if match is None:
-        raise AssertionError("rule 5's enumeration was not found in spec/frame-spec.md")
+        raise AssertionError("rule 5's named examples were not found in spec/frame-spec.md")
     return re.findall(r"`([A-Za-z]+)`", match.group(1))
 
 
@@ -115,21 +118,36 @@ class PrecedenceDirectionTests(unittest.TestCase):
 
 
 class Rule5Tests(unittest.TestCase):
-    def test_none_of_the_fourteen_elements_rule_5_enumerates_composes(self):
+    def test_the_examples_rule_5_names_do_not_compose(self):
+        # Rule 5 used to enumerate every element that MUST NOT be inherited; a spec
+        # amendment replaced that with a derivation and three named examples instead,
+        # since restating the complement in prose was a second statement of the same
+        # fact and the two could drift. The three examples must still land on the
+        # non-composing side of whatever the derivation produces.
         p = Profile.load()
         composing = compose.composing_elements(p)
         named = rule5_elements()
-        self.assertEqual(len(named), 14, named)
+        self.assertEqual(set(named), {"identifier", "maintainer", "composition"}, named)
         for name in named:
             self.assertIn(name, p.elements, f"rule 5 names {name!r}, which the profile does not define")
             self.assertNotIn(name, composing, f"rule 5 says {name!r} MUST NOT be inherited")
 
-    def test_what_does_not_compose_is_the_fourteen_plus_composition(self):
-        # The complement is wider than rule 5's list, and deliberately: composition is
-        # neither content nor guards, so it may not be inherited either.
+    def test_what_does_not_compose_is_every_element_outside_content_and_guards(self):
+        # Rule 5's own words for the complement, now that it states the derivation
+        # instead of listing it: every element that neither refines guidance nor is
+        # guards. Computed here straight from the profile's refines column, rather
+        # than by calling compose.composing_elements() and comparing it to itself, so
+        # this is a check on that function and not a restatement of it. The three
+        # elements rule 5 names as examples must fall on the non-composing side.
         p = Profile.load()
-        not_composing = set(p.order) - set(compose.composing_elements(p))
-        self.assertEqual(not_composing, set(rule5_elements()) | {"composition"})
+        composing = set(compose.composing_elements(p))
+        expected_composing = {CONTENT_ROOT, compose.GUARDS} | {
+            name for name in p.order if p.elements[name].refines == CONTENT_ROOT
+        }
+        self.assertEqual(composing, expected_composing)
+        not_composing = set(p.order) - composing
+        for name in ("identifier", "maintainer", "composition"):
+            self.assertIn(name, not_composing)
 
     def test_guidance_its_refinements_and_guards_are_what_composes(self):
         p = Profile.load()
