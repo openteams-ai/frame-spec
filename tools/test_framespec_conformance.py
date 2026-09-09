@@ -1,4 +1,5 @@
 import io
+import re
 import subprocess
 import sys
 import tempfile
@@ -18,6 +19,7 @@ except ImportError:
 
 TOOLS = Path(__file__).resolve().parent
 REPO = TOOLS.parent
+SPEC_PATH = REPO / "spec" / "frame-spec.md"
 DIR = REPO / "spec" / "profiles"
 
 sys.path.insert(0, str(TOOLS))
@@ -34,6 +36,7 @@ GOOD = {
     "implementation": "X", "version": "1", "specification": "draft-mcandrew-frame-spec-00",
     "encodings_read": ["markdown"], "encodings_written": ["json"],
     "resolves_composition": "transitive", "version_selection": "latest version with status approved",
+    "resolver_context": "the registry the reader is configured against",
     "reference_forms": ["pinned-ref", "uri-ref"],
     "rule6_narrowings": {"dedup": ["rules"], "replace_by_key": ["terminology"]},
     "non_repeatable": ["style"], "additionally_required": ["version"],
@@ -49,6 +52,62 @@ BAD_SHAPES = {
     "mapping": {"a": 1},
     "nested list": [["x"]],
 }
+
+
+# Appendix C's template label against the profile key that answers it. Every label
+# the draft's template carries must appear here, and every key here that is not
+# `notes` must be one the checker requires: the template and REQUIRED_KEYS are two
+# statements of the same list, and section 7's declarations 6 and 7 were added to
+# the template while the checker still called a profile without them complete.
+TEMPLATE_FIELDS = {
+    "Implementation": "implementation",             # name and version, hence two keys
+    "Specification": "specification",
+    "Encodings read": "encodings_read",
+    "Encodings written": "encodings_written",
+    "Resolves composition": "resolves_composition",
+    "Version selection": "version_selection",
+    "Resolver context": "resolver_context",
+    "Reference forms": "reference_forms",
+    "Rule 6 narrowings": "rule6_narrowings",
+    "Non-repeatable": "non_repeatable",
+    "Additionally required": "additionally_required",
+    "Identifier minting": "identifier_minting",
+    "Visibility": "visibility",
+    "Notes": "notes",                               # optional: not a declaration
+}
+
+
+class TemplateAgreementTests(unittest.TestCase):
+    """Appendix C's template and conformance.REQUIRED_KEYS state the same list."""
+
+    def template_labels(self):
+        text = SPEC_PATH.read_text(encoding="utf-8")
+        start = text.index("## Appendix C.")
+        block = text[start:text.index("*Figure 10", start)]
+        return [m.group(1) for m in re.finditer(r"^([A-Z][A-Za-z0-9 -]*?):\s+", block, re.M)]
+
+    def test_every_template_field_is_mapped(self):
+        self.assertEqual(sorted(self.template_labels()), sorted(TEMPLATE_FIELDS))
+
+    def test_every_mapped_field_but_notes_is_required_by_the_checker(self):
+        for label, key in sorted(TEMPLATE_FIELDS.items()):
+            with self.subTest(label):
+                if key == "notes":
+                    self.assertNotIn(key, conformance.REQUIRED_KEYS)
+                else:
+                    self.assertIn(key, conformance.REQUIRED_KEYS)
+
+    def test_the_checker_requires_nothing_the_template_does_not_ask_for(self):
+        mapped = set(TEMPLATE_FIELDS.values()) | {"version"}   # Implementation carries both
+        self.assertEqual(set(conformance.REQUIRED_KEYS) - mapped, set())
+
+    def test_a_profile_missing_the_resolver_context_is_reported(self):
+        # Section 7 declaration 7 asks in what context a qualified-ref or a
+        # name-ref resolves. A profile that does not answer it is incomplete.
+        data = {k: v for k, v in GOOD.items() if k != "resolver_context"}
+        findings = conformance.check_profile(data, Profile.load())
+        self.assertIn("profile-missing-key", [f.code for f in findings])
+        self.assertIn("resolver_context", " ".join(str(f) for f in findings))
 
 
 class ConformanceTests(unittest.TestCase):
@@ -282,6 +341,7 @@ class ConformanceTests(unittest.TestCase):
             "implementation": "X", "version": "1", "specification": "draft-mcandrew-frame-spec-00",
             "encodings_read": "markdown", "encodings_written": "json",
             "resolves_composition": "transitive", "version_selection": "latest version with status approved",
+    "resolver_context": "the registry the reader is configured against",
             "reference_forms": "pinned-ref",
             "rule6_narrowings": {"dedup": "all-repeatable", "replace_by_key": "terminology"},
             "non_repeatable": "style", "additionally_required": "version",

@@ -70,9 +70,11 @@ class ProfileTests(unittest.TestCase):
                 writer = csv.writer(handle)
                 writer.writerow(["propertyID", "propertyLabel", "mandatory", "repeatable",
                                  "valueNodeType", "valueDataType", "valueConstraint",
-                                 "valueConstraintType", "mapsTo", "refines", "note"])
+                                 "valueConstraintType", "mapsTo", "refines", "level",
+                                 "note"])
                 writer.writerow(["identifier", "Identifier", "true", "false", "literal",
-                                 "xsd:string", "", "", "dcterms:identifier", "", ""])
+                                 "xsd:string", "", "", "dcterms:identifier", "", "Frame",
+                                 ""])
             with self.assertRaises(ValueError):
                 Profile.load(csv_path)
 

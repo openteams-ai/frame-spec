@@ -21,6 +21,13 @@ SECTION_RE = re.compile(r"^#{3,4} \d+(?:\.\d+)*\. (\S+)\s*$", re.M)
 BULLET_RE = re.compile(r"^- \*\*(Label|Obligation|Repeatable|Maps to):\*\* (.*)$", re.M)
 REFINEMENT_RE = re.compile(r"^- \*\*([A-Za-z]+)\*\* \(([^)]+)\): (.*)$", re.M)
 
+# Section 4.7's summary table is the only prose that states an element's level.
+# Its Element cell may name several elements, which is how the ten refinements
+# share one row; the header row cannot match, since its last cell is "Level"
+# rather than a level.
+SUMMARY_ROW_RE = re.compile(r"^\| ([A-Za-z, ]+) \| [^|]+ \| [^|]+ \| (Frame|Version|Representation) \|$",
+                            re.M)
+
 # An obligation may be qualified: "MUST be present; MAY be empty" (guidance) and
 # "MAY; MUST be present when ... requires it" (derivedFrom). The obligation is the
 # first requirement keyword, not the first whitespace-separated word, which would
@@ -56,6 +63,10 @@ INITIAL_VALUES_RE = re.compile(r"the initial values are (.*?)\.(?:\s|$)")
 SECTION = "section"                     # 4.2 required, 4.3 descriptive, 4.5 relations
 REFINEMENT = "refinement"               # 4.4 content refinements
 EXPECTED_SHAPES = {SECTION: 17, REFINEMENT: 10}
+
+# The same floor for the summary table, for the same reason: a table the pattern
+# stopped matching would leave every level trivially unchecked.
+EXPECTED_SUMMARY_ELEMENTS = 27
 
 # The same discipline for the two registered value vocabularies, which the draft
 # states in prose (sections 4.3.5 and 4.3.8) and the CSV records as a picklist.
@@ -176,11 +187,22 @@ def read_spec_elements(text):
     return found
 
 
+def read_spec_levels(text):
+    """Element name to level, from section 4.7's summary table."""
+    levels = {}
+    for names, level in SUMMARY_ROW_RE.findall(text):
+        for name in (part.strip() for part in names.split(",")):
+            if name:
+                levels[name] = level
+    return levels
+
+
 def self_check(spec_path=DEFAULT_SPEC_PATH, profile_path=DEFAULT_PROFILE_PATH):
     """Findings for every disagreement between the draft's prose and the profile CSV."""
     with open(spec_path, encoding="utf-8") as handle:
         text = handle.read()
     spec = read_spec_elements(text)
+    levels = read_spec_levels(text)
     profile = Profile.load(profile_path)
     findings = []
     # A file URI, the one location shape validate_frame.py reports: this module used
@@ -205,6 +227,12 @@ def self_check(spec_path=DEFAULT_SPEC_PATH, profile_path=DEFAULT_PROFILE_PATH):
                                     f"least {expected}; either the pattern that reads them no longer matches or "
                                     "the draft stopped registering them, so the picklist comparison below has "
                                     "verified less than it appears to", where))
+    if len(levels) < EXPECTED_SUMMARY_ELEMENTS:
+        findings.append(Finding("error", "spec-extraction-too-small",
+                                f"elements read from the draft's summary table: {len(levels)}, expected at "
+                                f"least {EXPECTED_SUMMARY_ELEMENTS}; either the pattern that reads the table no "
+                                "longer matches or the table dropped rows, so the level comparison below has "
+                                "verified less than it appears to", where))
     findings.extend(_appendix_findings(text, profile_path, where))
     for name in profile.order:
         if name not in spec:
@@ -251,6 +279,18 @@ def self_check(spec_path=DEFAULT_SPEC_PATH, profile_path=DEFAULT_PROFILE_PATH):
         # and often a secondary term, a reference link and a note on the fit. The
         # comparison is against whole backticked terms rather than the line's text,
         # so a truncated term is caught instead of matching as a substring.
+        # Level, which the draft states once, in section 4.7's table, and the CSV
+        # records per row so that the element registry of section 10.2 can be built
+        # from the file. Nothing else compares the two, and the table is maintained
+        # by hand.
+        if name not in levels:
+            findings.append(Finding("error", "spec-missing-level",
+                                    f"'{name}' has no row in the draft's summary table, so its level is "
+                                    f"stated only in the CSV, as {element.level!r}", where))
+        elif element.level != levels[name]:
+            findings.append(Finding("error", "level-mismatch",
+                                    f"'{name}': CSV level {element.level!r} but the draft's summary table "
+                                    f"says {levels[name]!r}", where))
         prose_terms = TERM_RE.findall(facts["maps_to"])
         if element.maps_to and element.maps_to not in prose_terms:
             findings.append(Finding("error", "maps-to-mismatch",

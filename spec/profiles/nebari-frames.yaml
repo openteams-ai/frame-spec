@@ -5,6 +5,7 @@ encodings_read: [markdown]
 encodings_written: [markdown]
 resolves_composition: transitive
 version_selection: not applicable; the only reference form it resolves is pinned-ref, and a pinned-ref always names its own version
+resolver_context: not applicable; the only reference form it resolves is pinned-ref, which carries no namespace to resolve
 reference_forms: [pinned-ref]
 rule6_narrowings:
   dedup: all-repeatable

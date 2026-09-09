@@ -46,8 +46,8 @@ HOLLOW_SPEC = """
 """
 
 CSV_HEADER = ("propertyID,propertyLabel,mandatory,repeatable,valueNodeType,valueDataType,"
-              "valueConstraint,valueConstraintType,mapsTo,refines,note\n")
-GUIDANCE_ROW = "guidance,Guidance,true,true,literal,xsd:string,,,,,Frame-native; may be empty\n"
+              "valueConstraint,valueConstraintType,mapsTo,refines,level,note\n")
+GUIDANCE_ROW = ("guidance,Guidance,true,true,literal,xsd:string,,,,,Version,Frame-native; may be empty\n")
 
 
 def write(directory, name, text):
@@ -177,7 +177,29 @@ class SelfCheckTests(unittest.TestCase):
 
     def test_an_element_the_csv_dropped_is_reported(self):
         self.assertIn("csv-missing-element", self.codes(
-            "previousVersion,Previous Version,false,false,literal,xsd:string,,,dcat:previousVersion,,\n", ""))
+            "previousVersion,Previous Version,false,false,literal,xsd:string,,,dcat:previousVersion,,"
+            "Version,\n", ""))
+
+    def test_the_level_the_csv_records_and_the_draft_states_are_compared(self):
+        # Level lives in the CSV so the section 10.2 registry can be built from the
+        # file, and in section 4.7's hand-maintained table. Two copies, one check.
+        self.assertIn("level-mismatch", self.codes(
+            "guidance,Guidance,true,true,literal,xsd:string,,,,,Version,",
+            "guidance,Guidance,true,true,literal,xsd:string,,,,,Frame,"))
+
+    def test_an_element_the_summary_table_does_not_list_is_reported(self):
+        cases = [
+            ("one row dropped", "| guards | MAY | yes | Version |\n", ["spec-missing-level"]),
+            ("the shared refinements row dropped",
+             "| rules, terminology, goals, style, norms, skills, toolSpecs, prompts, architecture, "
+             "businessProcess | MAY | yes | Version |\n",
+             ["spec-missing-level", "spec-extraction-too-small"]),
+        ]
+        for label, row, expected in cases:
+            with self.subTest(label):
+                codes = self.edited_draft_codes(row, "")
+                for code in expected:
+                    self.assertIn(code, codes)
 
     def test_an_element_with_no_crosswalk_term_and_no_native_rationale_is_reported(self):
         # Journey 2: no element is invented without justification. The draft's
@@ -206,8 +228,8 @@ class SelfCheckTests(unittest.TestCase):
 
     def test_an_appendix_block_that_drifted_from_the_csv_is_reported(self):
         self.assertIn("appendix-mismatch", self.edited_draft_codes(
-            "previousVersion,Previous Version,false,false,literal,xsd:string,,,dcat:previousVersion,,",
-            "previousVersion,Previous Version,false,true,literal,xsd:string,,,dcat:previousVersion,,"))
+            "previousVersion,Previous Version,false,false,literal,xsd:string,,,dcat:previousVersion,,Version,",
+            "previousVersion,Previous Version,false,true,literal,xsd:string,,,dcat:previousVersion,,Version,"))
 
     def test_a_final_newline_is_not_an_appendix_disagreement(self):
         # The comparison is about the element set, not about how either file ends.

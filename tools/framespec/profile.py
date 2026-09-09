@@ -24,6 +24,7 @@ class ElementDef:
     constraint_type: str
     maps_to: str
     refines: str
+    level: str
     note: str
 
     @property
@@ -68,6 +69,7 @@ class Profile:
                 constraint_type=row["valueConstraintType"],
                 maps_to=row["mapsTo"],
                 refines=row["refines"],
+                level=row["level"],
                 note=row["note"],
             )
             for row in rows

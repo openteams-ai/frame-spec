@@ -5,6 +5,7 @@ encodings_read: [markdown]
 encodings_written: []
 resolves_composition: none
 version_selection: not applicable; resolves no composition, so no reference is ever selected among versions
+resolver_context: not applicable; resolves no composition, so no reference is ever resolved
 reference_forms: []
 rule6_narrowings: {}
 non_repeatable: []
