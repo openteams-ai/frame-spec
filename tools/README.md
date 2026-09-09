@@ -90,4 +90,8 @@ information; an unrecognized heading is reported not at all, because its
 content simply becomes `guidance`, which is what section 6.2.2 says it is.
 PyYAML is optional: without it, Markdown front matter is parsed by the same
 line-based parser `validate_frames.py` uses, and the YAML encoding cannot be
-read. `validate_frames.py` remains the check for the released v0.2 format.
+read. That fallback is not a YAML parser, and it accepts front matter a YAML
+parser rejects: `name: [unclosed` is read as the literal string `[unclosed`
+rather than reported as a syntax error, so the same document can be valid
+without PyYAML and invalid with it. Install PyYAML to have front matter read as
+YAML. `validate_frames.py` remains the check for the released v0.2 format.

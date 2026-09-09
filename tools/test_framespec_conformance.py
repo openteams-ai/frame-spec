@@ -306,7 +306,11 @@ class CheckProfileCliTests(unittest.TestCase):
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn("path-not-found", result.stdout)
 
+    @unittest.skipUnless(HAVE_YAML, "the good path is a profile written as YAML")
     def test_a_missing_path_does_not_hide_a_good_one_in_the_same_run(self):
+        # The class's first test carries the same guard for the same reason: without
+        # PyYAML the good profile is itself a pyyaml-required failure, so there is no
+        # good path left for the missing one to hide.
         result = run("--check-profile", "spec/profiles/nebari-frames.yaml", "spec/profiles/does-not-exist.yaml")
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn("path-not-found", result.stdout)
@@ -353,6 +357,7 @@ class CheckProfileCliTests(unittest.TestCase):
         self.assertIn("pyyaml-required", out.getvalue())
         self.assertNotIn("Traceback", out.getvalue())
 
+    @unittest.skipUnless(HAVE_YAML, "the profile must load before check_profile() can be reached")
     def test_check_profile_paths_reports_a_finding_when_check_profile_itself_raises(self):
         # Item 2's defense in depth, proved independently of item 1: patches
         # conformance.check_profile() itself to raise a plain RuntimeError, standing

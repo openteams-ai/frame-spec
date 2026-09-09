@@ -3,6 +3,12 @@ from framespec import markdown
 from framespec.findings import has_errors
 from framespec.profile import Profile
 
+try:
+    import yaml
+    HAVE_YAML = True
+except ImportError:
+    HAVE_YAML = False
+
 SPEC_EXAMPLE = """---
 type: frame [0.3]
 identifier: acme/brand-voice
@@ -111,7 +117,14 @@ class DefectRegressionTests(unittest.TestCase):
     def setUp(self):
         self.p = Profile.load()
 
+    @unittest.skipUnless(HAVE_YAML, "only a YAML parser rejects this front matter")
     def test_malformed_yaml_returns_a_finding_rather_than_crashing(self):
+        # Requires PyYAML to be the thing that objects. The line-based fallback
+        # framespec.frontmatter uses without it reads "name: [unclosed" as the literal
+        # string "[unclosed" and parses the document without complaint, so the same
+        # file is invalid with PyYAML installed and valid without it. That is a real
+        # limitation of the fallback, recorded in tools/README.md rather than hidden
+        # behind this skip.
         frame, findings = markdown.parse("---\nname: [unclosed\n---\nbody\n", self.p, None)
         self.assertIsNone(frame)
         self.assertEqual(findings[0].code, "front-matter")

@@ -96,7 +96,10 @@ class CliTests(unittest.TestCase):
         self.assertIn("file-unreadable", result.stdout)
         self.assertIn("Frames checked: 2   passed: 1   failed: 1   skipped: 0", result.stdout)
 
+    @unittest.skipUnless(HAVE_YAML, "the yaml leg needs PyYAML")
     def test_round_trip_reports_ok_for_the_full_fixture(self):
+        # Without PyYAML the yaml leg cannot be written at all, which the mode reports
+        # as pyyaml-required and exit 1; that path has its own test below.
         result = run("--round-trip", "spec/fixtures/roundtrip/full.frame.md")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("ROUND-TRIP OK", result.stdout)
