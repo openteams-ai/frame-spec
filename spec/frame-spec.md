@@ -1288,6 +1288,9 @@ Specification:         draft-mcandrew-frame-spec-00
 Encodings read:        markdown
 Encodings written:     markdown
 Resolves composition:  yes, transitive, with cycle detection
+Version selection:     not performed; a pinned-ref names its own
+                        version
+Resolver context:      not applicable; resolves pinned-ref only
 Reference forms:       pinned-ref only
 Rule 6 narrowings:     dedup: all repeatable elements (first
                         occurrence kept); replace-by-key: terminology
