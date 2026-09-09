@@ -4,8 +4,8 @@ from .compose import ALL_REPEATABLE
 from .findings import Finding
 
 REQUIRED_KEYS = ("implementation", "version", "specification", "encodings_read", "encodings_written",
-                 "resolves_composition", "reference_forms", "rule6_narrowings", "non_repeatable",
-                 "additionally_required", "identifier_minting", "visibility")
+                 "resolves_composition", "version_selection", "reference_forms", "rule6_narrowings",
+                 "non_repeatable", "additionally_required", "identifier_minting", "visibility")
 ENCODINGS = {"markdown", "yaml", "json"}
 RESOLUTION = {"none", "non-transitive", "transitive"}
 FORMS = {"pinned-ref", "qualified-ref", "uri-ref", "path-ref", "name-ref"}

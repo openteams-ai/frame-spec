@@ -33,7 +33,8 @@ def run(*args):
 GOOD = {
     "implementation": "X", "version": "1", "specification": "draft-mcandrew-frame-spec-00",
     "encodings_read": ["markdown"], "encodings_written": ["json"],
-    "resolves_composition": "transitive", "reference_forms": ["pinned-ref", "uri-ref"],
+    "resolves_composition": "transitive", "version_selection": "latest version with status approved",
+    "reference_forms": ["pinned-ref", "uri-ref"],
     "rule6_narrowings": {"dedup": ["rules"], "replace_by_key": ["terminology"]},
     "non_repeatable": ["style"], "additionally_required": ["version"],
     "identifier_minting": "not performed", "visibility": "declared intent only; not an access control",
@@ -280,7 +281,8 @@ class ConformanceTests(unittest.TestCase):
         shorthand = {
             "implementation": "X", "version": "1", "specification": "draft-mcandrew-frame-spec-00",
             "encodings_read": "markdown", "encodings_written": "json",
-            "resolves_composition": "transitive", "reference_forms": "pinned-ref",
+            "resolves_composition": "transitive", "version_selection": "latest version with status approved",
+            "reference_forms": "pinned-ref",
             "rule6_narrowings": {"dedup": "all-repeatable", "replace_by_key": "terminology"},
             "non_repeatable": "style", "additionally_required": "version",
             "identifier_minting": "not performed", "visibility": "declared intent only; not an access control",

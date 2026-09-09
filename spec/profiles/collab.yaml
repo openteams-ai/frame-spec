@@ -4,6 +4,7 @@ specification: draft-mcandrew-frame-spec-00
 encodings_read: [markdown]
 encodings_written: []
 resolves_composition: none
+version_selection: not applicable; resolves no composition, so no reference is ever selected among versions
 reference_forms: []
 rule6_narrowings: {}
 non_repeatable: []
@@ -16,4 +17,7 @@ notes: >-
   inherits field had no effect on resolution; parent content appeared only
   when the parent was activated by hand. Rule 7 requires that an
   implementation which resolves no composition declare so; this profile is
-  that declaration pending confirmation.
+  that declaration pending confirmation. Section 5.2 also requires
+  reporting the Frame Version resolved for each reference, but only for an
+  implementation that resolves composition; since this one resolves none,
+  that requirement does not reach it either.

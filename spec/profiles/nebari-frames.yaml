@@ -4,6 +4,7 @@ specification: draft-mcandrew-frame-spec-00
 encodings_read: [markdown]
 encodings_written: [markdown]
 resolves_composition: transitive
+version_selection: not applicable; the only reference form it resolves is pinned-ref, and a pinned-ref always names its own version
 reference_forms: [pinned-ref]
 rule6_narrowings:
   dedup: all-repeatable
@@ -17,4 +18,9 @@ notes: >-
   encoding of the specification. At the time of writing the registry still
   constrains title to an identifier syntax and rejects unrecognized headings,
   unrecognized front matter keys, and unstructured terminology entries; those
-  behaviors do not conform and their removal is planned.
+  behaviors do not conform and their removal is planned. Section 5.2 also
+  requires reporting the Frame Version resolved for each reference. Rule 5
+  keeps a Frame's own composition list from being inherited, so the
+  top-level reference's pinned version survives unresolved in the result;
+  whether the registry also reports the version of every Frame it resolves
+  transitively beneath that is not confirmed here.
