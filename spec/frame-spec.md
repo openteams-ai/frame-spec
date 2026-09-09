@@ -61,9 +61,8 @@ This document is written in the structure of an IETF Internet-Draft and is inten
       - [4.5.2. derivedFrom](#el-derivedfrom)
       - [4.5.3. previousVersion](#el-previousversion)
       - [4.5.4. guards](#el-guards)
-   - [4.6. Representation-Level Elements](#representation)
-   - [4.7. Extension Elements](#extensions)
-   - [4.8. Summary of Elements](#element-summary)
+   - [4.6. Extension Elements](#extensions)
+   - [4.7. Summary of Elements](#element-summary)
 - [5. Composition](#composition)
    - [5.1. Rules](#composition-rules)
    - [5.2. Declared Variation](#declared-variation)
@@ -529,7 +528,7 @@ Unknown elements are metadata, not content. A reader MUST NOT present the value 
 
 *Table 1: Elements at a glance*
 
-Twenty-seven elements are defined at the Frame and Frame Version levels, of which two are mandatory, ten are refinements, and fifteen are optional descriptive and relational elements. Three are defined at the Representation level.
+Twenty-seven elements are defined at the Frame and Frame Version levels, of which two are mandatory, ten are refinements, and fifteen are optional descriptive and relational elements.
 
 <a id="composition"></a>
 
@@ -882,7 +881,7 @@ A Frame is text loaded as context for an AI system. Whatever a Frame says, the s
 
 ### 9.2. Instruction Injection
 
-A Frame is, by design, instructions. There is no distinction this specification can draw between a Frame's legitimate guidance and an attacker's, because both are text in the `guidance` element. Implementations and users MUST treat the decision to load a Frame as the decision to trust its author with influence over the system's behavior, and SHOULD load Frames only from sources they trust. The `maintainer`, `canonicalSource`, `checksum`, and `derivedFrom` elements exist to make provenance visible; none of them authenticates it. Authentication of a Frame's origin is a registry and transport concern.
+A Frame is, by design, instructions. There is no distinction this specification can draw between a Frame's legitimate guidance and an attacker's, because both are text in the `guidance` element. Implementations and users MUST treat the decision to load a Frame as the decision to trust its author with influence over the system's behavior, and SHOULD load Frames only from sources they trust. The `maintainer`, `canonicalSource`, and `derivedFrom` elements exist to make provenance visible; none of them authenticates it. Authentication of a Frame's origin is a registry and transport concern.
 
 <a id="trust-composition"></a>
 
@@ -894,7 +893,7 @@ Loading a Frame that composes others extends trust to every Frame in the compose
 
 ### 9.4. Identity Is a Claim
 
-An `identifier` is asserted by the Frame. A Frame may claim any identifier, including one belonging to a Frame its author does not control. The identity rules of [Section 3.2](#identity) make a change of identifier visible through `derivedFrom`; they do not prevent an attacker from omitting `derivedFrom`. Consumers that need to know whether a Frame is the one it claims to be MUST rely on a registry's attestation or on a `checksum` obtained through a trusted channel, not on the identifier alone. `canonicalSource` helps a consumer find the authoritative copy; it does not prove that the copy in hand matches it.
+An `identifier` is asserted by the Frame. A Frame may claim any identifier, including one belonging to a Frame its author does not control. The identity rules of [Section 3.2](#identity) make a change of identifier visible through `derivedFrom`; they do not prevent an attacker from omitting `derivedFrom`. Consumers that need to know whether a Frame is the one it claims to be MUST rely on a registry's attestation or on a digest of the bytes obtained through a trusted channel, not on the identifier alone. This document defines no element for such a digest, and could not usefully: a digest carried inside a document cannot describe that document, since adding it changes the bytes it would have to describe. `canonicalSource` helps a consumer find the authoritative copy; it does not prove that the copy in hand matches it.
 
 <a id="visibility-security"></a>
 
@@ -1000,7 +999,7 @@ IANA is requested to register the following variant in the Markdown Variants reg
 
 IANA is requested to create a registry named "Frame Element Names". The registration policy is Specification Required [[RFC8126]](#ref-RFC8126). Each entry consists of an element name in lower camel case, a label, the level at which it applies (Frame, Version, or Representation), whether it is repeatable, the element it refines if any, and a reference to its defining specification. Names beginning with `x-` are reserved for Private Use and MUST NOT be registered.
 
-The initial contents are the elements defined in [Section 4](#elements) of this document: the twenty-seven Frame- and Version-level elements and the three Representation-level elements listed in [Section 4.7](#element-summary), each with reference to this document.
+The initial contents are the twenty-seven elements defined in [Section 4](#elements) of this document and listed in [Section 4.7](#element-summary), each with reference to this document. The registry records a Representation level for future use; this document defines no element at that level.
 
 <a id="iana-status"></a>
 
