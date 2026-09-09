@@ -97,6 +97,17 @@ class ParseTests(unittest.TestCase):
         self.assertEqual(frame.elements["guidance"], ["## Review Norms\n\n- a"])
         self.assertEqual(frame.elements["rules"], ["### Hard rules", "b"])
 
+    def test_a_refinement_in_front_matter_precedes_its_body_section(self):
+        # Section 6.2.2 (amended): a refinement MAY appear as a front matter key, and
+        # where it appears both in front matter and as a body section, its front
+        # matter values precede its body values.
+        text = ("---\ntype: frame\nname: N\ndescription: D\nvisibility: internal\n"
+                "rules:\n  - a front matter rule\n---\n\n"
+                "## Rules\n\n- a body rule\n")
+        frame, findings = markdown.parse(text, self.p, None)
+        self.assertFalse(has_errors(findings), [str(f) for f in findings])
+        self.assertEqual(frame.elements["rules"], ["a front matter rule", "a body rule"])
+
     def test_missing_type_is_an_error(self):
         text = "---\nname: N\ndescription: D\nvisibility: internal\n---\nbody\n"
         frame, findings = markdown.parse(text, self.p, None)
