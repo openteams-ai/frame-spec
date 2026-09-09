@@ -24,10 +24,11 @@ def composing_elements(profile):
     """The elements rule 5 lets compose: guidance, its refinements, and guards, in profile order.
 
     Derived from the profile rather than listed here, so the element set stays in
-    spec/profile/frame-core.csv. Rule 5 defines the composing side positively, and
-    everything else belongs to the declaring Frame: the fourteen elements rule 5
-    enumerates, `composition`, and any unknown or `x-` element, which appear in no
-    list yet must not vanish.
+    spec/profile/frame-core.csv. Rule 5 defines the composing side positively, as
+    `guidance`, the elements that refine it, and `guards`; everything else belongs
+    to the declaring Frame. That remainder is the metadata elements, `composition`
+    itself, and any unknown or `x-` element, none of which appear in a list here
+    yet none of which may vanish.
     """
     names = list(profile.content_elements())
     if GUARDS not in names:

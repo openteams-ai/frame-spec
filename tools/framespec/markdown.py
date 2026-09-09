@@ -61,6 +61,13 @@ def parse(text, profile, location=None):
         findings.append(Finding("warning", "nonstandard-type-version",
                                 f"type {type_token!r} has a version token that is not '[<major>.<minor>]'; "
                                 "accepted as a Frame", location))
+    for key, value in fm.items():
+        if key != "type" and not _is_flat(value):
+            findings.append(Finding("warning", "nested-front-matter-value",
+                                    f"front matter key '{key}' carries a value with internal "
+                                    "structure; this encoding defines front matter as scalars and "
+                                    "sequences of scalars, so the value is preserved and no "
+                                    "structured form is extracted from it", location))
     extras = {"type": type_token} if type_token else {}
     elements = {ALIASES.get(k, k): v for k, v in fm.items() if k != "type"}
     defaulted = default_identifier(elements, extras, location)
@@ -75,6 +82,15 @@ def parse(text, profile, location=None):
         else:
             elements[name] = (existing if isinstance(existing, list) else [existing]) + values
     return Frame(normalize(elements, profile), "markdown", location, extras), findings
+
+
+def _is_flat(value):
+    """Section 6.2.1: a front matter value MUST be a scalar or a sequence of scalars."""
+    if isinstance(value, dict):
+        return False
+    if isinstance(value, list):
+        return not any(isinstance(item, (dict, list)) for item in value)
+    return True
 
 
 def _split_body(body, profile):

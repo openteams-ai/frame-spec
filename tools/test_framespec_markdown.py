@@ -291,6 +291,44 @@ class DefectRegressionTests(unittest.TestCase):
         self.assertIn("## Not A Heading", frame.elements["rules"][1])
 
 
+class FrontMatterShapeTests(unittest.TestCase):
+    """Section 6.2.1: a front matter value MUST be a scalar or a sequence of scalars."""
+
+    def setUp(self):
+        self.p = Profile.load()
+
+    HEAD = "---\ntype: frame\nname: N\ndescription: D\nvisibility: internal\n"
+
+    def test_shape_is_warned_about_but_never_rejected(self):
+        cases = [
+            ("a scalar", "maintainer: marketing\n", False),
+            ("an empty scalar", "maintainer:\n", False),
+            ("a sequence of scalars", "maintainer:\n  - marketing\n  - sales\n", False),
+            ("a mapping", "terminology:\n  term: client\n  altTerms:\n    - account\n", True),
+            ("a sequence holding a mapping", "terminology:\n  - term: client\n", True),
+            ("a sequence holding a sequence", "maintainer:\n  - - marketing\n", True),
+        ]
+        for label, block, want_warning in cases:
+            with self.subTest(label):
+                if want_warning and not HAVE_YAML:
+                    self.skipTest("only a YAML parser produces a nested value")
+                frame, findings = markdown.parse(self.HEAD + block + "---\n\nBody.\n",
+                                                 self.p, None)
+                self.assertFalse(has_errors(findings), [str(f) for f in findings])
+                warned = [f for f in findings if f.code == "nested-front-matter-value"]
+                self.assertEqual(bool(warned), want_warning, [str(f) for f in findings])
+                for finding in warned:
+                    self.assertEqual(finding.level, "warning")
+
+    @unittest.skipUnless(HAVE_YAML, "only a YAML parser produces a nested value")
+    def test_a_nested_value_is_preserved_and_no_concept_is_extracted(self):
+        text = (self.HEAD + "terminology:\n  term: client\n  altTerms:\n    - account\n"
+                + "---\n\nBody.\n")
+        frame, _ = markdown.parse(text, self.p, None)
+        self.assertEqual(frame.elements["terminology"],
+                         [{"term": "client", "altTerms": ["account"]}])
+
+
 class WriteTests(unittest.TestCase):
     def test_write_then_parse_preserves_element_values(self):
         p = Profile.load()
