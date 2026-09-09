@@ -197,12 +197,11 @@ Frame                 the abstract artifact; persists across versions
         +-- guards         (relation) Guards to run on output
         |
         +-- Representation a serialization of this version
-              mediaType, checksum, byteSize
 ```
 
 *Figure 1: The Frame data model*
 
-A Frame persists across its versions and carries the elements that identify and describe it, and its lineage (`derivedFrom`). A Frame Version carries the content, the elements that describe a revision, and the relations that can differ between revisions (`composition`, `guards`). A Representation is one encoding of one version and carries the elements that describe bytes. In a single document the Frame-level and version-level elements appear together; the distinction matters to registries, which MAY treat Frame-level elements as shared across versions, and to consumers that must name a version unambiguously, which is done by `identifier` together with `version` and, where bytes matter, a Representation's `checksum`.
+A Frame persists across its versions and carries the elements that identify and describe it, and its lineage (`derivedFrom`). A Frame Version carries the content, the elements that describe a revision, and the relations that can differ between revisions (`composition`, `guards`). A Representation is one encoding of one version; this specification defines no elements on it, because the properties of bytes are carried by the layer that stores or transports them rather than by the Frame. In a single document the Frame-level and version-level elements appear together; the distinction matters to registries, which MAY treat Frame-level elements as shared across versions, and to consumers that must name a version unambiguously, which is done by `identifier` together with `version`.
 
 <a id="identity"></a>
 
@@ -493,17 +492,9 @@ Four elements relate a Frame to other artifacts.
 
 <a id="representation"></a>
 
-### 4.6. Representation-Level Elements
-
-Three elements describe a Representation and appear only in encoding metadata and registries, never in a Frame's content.
-
-- **mediaType:** The media type of the Representation. Maps to `dcat:mediaType` [[DCAT3]](#ref-DCAT3). The values for the encodings defined here are registered in [Section 10](#iana).
-- **checksum:** A digest of the Representation's bytes, with its algorithm. Maps to `spdx:checksum` [[SPDX]](#ref-SPDX). SHA-256 is RECOMMENDED.
-- **byteSize:** The size of the Representation in bytes. Maps to `dcat:byteSize` [[DCAT3]](#ref-DCAT3).
-
 <a id="extensions"></a>
 
-### 4.7. Extension Elements
+### 4.6. Extension Elements
 
 An element name beginning with `x-` is an extension element and is reserved for implementation-specific use. Extension names are never registered ([Section 10.2](#iana-elements)).
 
@@ -513,7 +504,7 @@ Unknown elements are metadata, not content. A reader MUST NOT present the value 
 
 <a id="element-summary"></a>
 
-### 4.8. Summary of Elements
+### 4.7. Summary of Elements
 
 | Element | Obligation | Repeatable | Level |
 |---|---|---|---|
@@ -535,7 +526,6 @@ Unknown elements are metadata, not content. A reader MUST NOT present the value 
 | derivedFrom | MAY | yes | Frame |
 | previousVersion | MAY | no | Version |
 | guards | MAY | yes | Version |
-| mediaType, checksum, byteSize | per encoding | no | Representation |
 
 *Table 1: Elements at a glance*
 
@@ -683,7 +673,7 @@ An encoding is a binding of the model to a syntax. This document defines three. 
 ### 6.1. Requirements Common to All Encodings
 
 - **Identifier default:** A document with no explicit `identifier` is identified by the location it was retrieved from, expressed as a URI where one exists. A document exchanged without a location (for example, pasted into a message) has no identifier until a reader or registry assigns one, at which point [Section 3.2](#identity) applies.
-- **Unknown elements:** A reader MUST preserve, and a writer MUST emit, elements the implementation does not recognize ([Section 4.7](#extensions)).
+- **Unknown elements:** A reader MUST preserve, and a writer MUST emit, elements the implementation does not recognize ([Section 4.6](#extensions)).
 - **Composed Frames are not documents:** the encodings of this section define documents. A composed Frame ([Section 5](#composition)) is the result of resolution, and this specification defines no serialization for one; a document declares its own content and its `composition` references, never the resolved content of the Frames it composes.
 - **Round trip:** Converting a document from one encoding to another and back MUST preserve the value of every element. Encodings are not required to preserve source layout, comments, or key order.
 - **Character encoding:** Documents MUST be encoded in UTF-8.
@@ -916,7 +906,7 @@ The `visibility` element declares the maintainer's intent. A Frame marked `priva
 
 ### 9.6. Unknown Elements
 
-Readers preserve elements they do not recognize ([Section 4.7](#extensions)). An attacker could place instructions in an extension element in the hope that a reader forwards them to the model. [Section 4.7](#extensions) therefore requires that unrecognized elements never be presented to an AI system as guidance. An implementation that forwards arbitrary metadata into model context does not conform.
+Readers preserve elements they do not recognize ([Section 4.6](#extensions)). An attacker could place instructions in an extension element in the hope that a reader forwards them to the model. [Section 4.6](#extensions) therefore requires that unrecognized elements never be presented to an AI system as guidance. An implementation that forwards arbitrary metadata into model context does not conform.
 
 <a id="resources"></a>
 
@@ -1010,7 +1000,7 @@ IANA is requested to register the following variant in the Markdown Variants reg
 
 IANA is requested to create a registry named "Frame Element Names". The registration policy is Specification Required [[RFC8126]](#ref-RFC8126). Each entry consists of an element name in lower camel case, a label, the level at which it applies (Frame, Version, or Representation), whether it is repeatable, the element it refines if any, and a reference to its defining specification. Names beginning with `x-` are reserved for Private Use and MUST NOT be registered.
 
-The initial contents are the elements defined in [Section 4](#elements) of this document: the twenty-seven Frame- and Version-level elements and the three Representation-level elements listed in [Section 4.8](#element-summary), each with reference to this document.
+The initial contents are the elements defined in [Section 4](#elements) of this document: the twenty-seven Frame- and Version-level elements and the three Representation-level elements listed in [Section 4.7](#element-summary), each with reference to this document.
 
 <a id="iana-status"></a>
 
@@ -1196,9 +1186,6 @@ This appendix collects the correspondences stated element by element in [Section
 | derivedFrom | prov:wasDerivedFrom; prov:hadPrimarySource | exact |
 | previousVersion | dcat:previousVersion; prov:wasRevisionOf | exact |
 | guards | dcterms:requires | exact |
-| mediaType | dcat:mediaType | exact |
-| checksum | spdx:checksum | exact |
-| byteSize | dcat:byteSize | exact |
 
 *Table 4: Element to vocabulary crosswalk*
 
@@ -1239,9 +1226,6 @@ composition,Composition,false,true,literal,xsd:string,frame-ref,pattern,,,Frame-
 derivedFrom,Derived From,false,true,literal,xsd:string,frame-ref,pattern,prov:wasDerivedFrom,,
 previousVersion,Previous Version,false,false,literal,xsd:string,,,dcat:previousVersion,,
 guards,Guards,false,true,literal,xsd:string,frame-ref,pattern,dcterms:requires,,composes by accumulation
-mediaType,Media Type,false,false,literal,xsd:string,,,dcat:mediaType,,Representation level
-checksum,Checksum,false,false,literal,xsd:string,,,spdx:checksum,,Representation level
-byteSize,Byte Size,false,false,literal,xsd:integer,,,dcat:byteSize,,Representation level
 ```
 
 *Figure 9: frame-core.csv*
@@ -1307,7 +1291,7 @@ This specification adds to [[FRAME-V02]](#ref-FRAME-V02); it does not remove or 
 - Registries for `status` and `visibility` values ([Section 10](#iana)). Registered values are RECOMMENDED; unregistered values are preserved, so Frames written before the registries existed remain valid.
 - Composition rules 5 through 9 ([Section 5.1](#composition-rules)), session composition ([Section 5.4](#session)), and a reference grammar ([Section 5.3](#ref-syntax)).
 - Identity rules ([Section 3.2](#identity)).
-- The extensibility rule and the `x-` prefix ([Section 4.7](#extensions)).
+- The extensibility rule and the `x-` prefix ([Section 4.6](#extensions)).
 - YAML and JSON encodings ([Section 6.3](#enc-yaml), [Section 6.4](#enc-json)) and media types for all three encodings ([Section 10](#iana)).
 - Conformance profiles ([Section 7](#profiles)).
 - Security considerations ([Section 9](#security)).
