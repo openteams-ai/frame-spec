@@ -122,7 +122,7 @@ Two things follow from that definition and motivate this document. First, a Fram
 
 ### 1.1. Why a Data Model
 
-Frame Spec v0.2 [[FRAME-V02]](#ref-FRAME-V02) defines a Frame as a Markdown file whose YAML front matter carries four required fields, with a free-form body. That definition has served early adoption well, and it is preserved here in full as the Markdown encoding ([Section 6.2](#enc-markdown)). It is, however, a definition of a file layout rather than of a Frame. A registry that stores Frames as database rows, a desktop application that holds them in memory, and a Markdown file on disk all hold Frames, and a specification predicated on files cannot say what they have in common.
+Frame Spec v0.2 [[FRAME-V02]](#ref-FRAME-V02) defines a Frame as a Markdown file whose YAML front matter carries four required fields, with a free-form body. That definition has served early adoption well, and its file format is the Markdown encoding of this specification ([Section 6.2](#enc-markdown)), which relaxes three of its four required fields to SHOULD ([Section 1.3](#rel-v02)). It is, however, a definition of a file layout rather than of a Frame. A registry that stores Frames as database rows, a desktop application that holds them in memory, and a Markdown file on disk all hold Frames, and a specification predicated on files cannot say what they have in common.
 
 This document therefore specifies the Frame itself, independent of any encoding, and then specifies encodings as bindings of that model. The approach follows the separation between an abstract artifact and its distributions in the W3C Data Catalog Vocabulary [[DCAT3]](#ref-DCAT3), and the separation between a domain model, an element set, and encoding syntax guidelines in the Singapore Framework for application profiles [[SINGAPORE]](#ref-SINGAPORE). Where an element of the model corresponds to a term already defined by an established vocabulary, this document says so ([Appendix A](#crosswalk)) rather than defining a new meaning.
 
@@ -161,6 +161,7 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 - **Frame Version:** A specific revision of a Frame. A Frame Version carries the Frame's content.
 - **Representation:** A serialization of a Frame Version in one encoding. The same Frame Version may have Markdown, YAML, and JSON Representations.
 - **Element:** A named property of a Frame or Frame Version, defined in [Section 4](#elements).
+- **Content element:** `guidance`, and the refinements that narrow it. The term is used by [Section 5](#composition) and [Section 6.2.2](#md-body).
 - **Refinement:** An element that narrows the general content element, `guidance`, to a named kind of content, such as `rules` or `terminology` ([Section 4.4](#refinements)).
 - **Composition:** The relation by which one Frame's content combines with another's when the first is activated, with the declaring Frame taking precedence ([Section 5](#composition)).
 - **Reader:** An implementation that parses a Representation into the Frame model. A reader may also resolve composition.
@@ -330,7 +331,7 @@ The following elements describe the Frame or a version of it. None is mandatory 
 - **Obligation:** MAY
 - **Repeatable:** No
 - **Maps to:** `schema:creativeWorkStatus` [[SCHEMA-ORG]](#ref-SCHEMA-ORG)
-- **Comment:** The value SHOULD be one of the values in the Frame Status Values registry ([Section 10.3](#iana-status)); the initial values are `draft`, `review`, `approved`, `deprecated`, and `revoked`. A reader MUST preserve a value that is not registered and MUST NOT reject a Frame for carrying one; it MAY warn. Frame Spec v0.2 did not define this element, and Frames written to it carry values such as `stable` that predate the registry. Readers MUST NOT treat registered values as interchangeable.
+- **Comment:** The value SHOULD be one of the values in the Frame Status Values registry ([Section 10.3](#iana-status)); the initial values are `draft`, `review`, `approved`, `deprecated`, and `revoked`. A reader MUST preserve a value that is not registered and MUST NOT reject a Frame for carrying one; it MAY warn. Frame Spec v0.2 did not define this element, and Frames written to it carry values such as `stable` that predate the registry. A reader MUST NOT treat an unregistered value as equivalent to a registered one: silently reading `stable` as `approved` would assert something the Frame did not.
 
 <a id="el-maintainer"></a>
 
@@ -488,8 +489,6 @@ Four elements relate a Frame to other artifacts.
 - **Repeatable:** Yes
 - **Maps to:** `dcterms:requires` [[DCTERMS]](#ref-DCTERMS): "a related resource that is required by the described resource to support its function, delivery, or coherence"
 - **Comment:** The value is a reference as defined in [Section 5.3](#ref-syntax). [[INTHUB]](#ref-INTHUB) lists Output Guards among what a Frame carries and states that "one of the critical things that Frames can do is define a Validation or Verification tool (a Guard) that must be called and pass on the output of the system." This element is a relation rather than a refinement of `guidance` because a Guard is run on output, not read as context; under [Section 4.4.1](#dumb-down) a refinement would degrade to prose loaded into a model, which is the wrong failure mode for a validation requirement. What a Guard is, how it is run, and how the reference resolves are outside this specification. Unlike the other relations, `guards` participates in composition ([Section 5](#composition), rule 5).
-
-<a id="representation"></a>
 
 <a id="extensions"></a>
 
@@ -682,7 +681,7 @@ An encoding is a binding of the model to a syntax. This document defines three. 
 
 ### 6.2. Markdown Encoding
 
-The Markdown encoding is the file format of [[FRAME-V02]](#ref-FRAME-V02). A document conforming to v0.2 conforms to this encoding. This section restates v0.2's requirements in the terms of this specification and adds the mapping of body structure to elements.
+The Markdown encoding is the file format of [[FRAME-V02]](#ref-FRAME-V02). A document conforming to v0.2 conforms to this encoding. This section states v0.2's requirements in the terms of this specification, relaxes three of its four required front matter fields to SHOULD, and adds the mapping of body structure to elements.
 
 <a id="md-structure"></a>
 
@@ -855,8 +854,10 @@ A profile MUST state:
 3. Which reference forms of [Section 5.3](#ref-syntax) it resolves (rule 9).
 4. Which narrowings of rule 6 it applies, and to which elements.
 5. Which elements it treats as non-repeatable beyond those the model defines as such, and which elements it requires beyond `identifier` and `guidance`.
-6. How it derives an identifier for a Frame that arrives without one ([Section 3.2](#identity)), if it does so.
-7. How it treats `visibility`, confirming that it is not used as an access control.
+6. Which Frame Version it composes for a reference that carries no version, if it resolves composition at all ([Section 5.2](#declared-variation)).
+7. The context in which it resolves a `qualified-ref` or a `name-ref` ([Section 5.3](#ref-syntax)), since neither is globally unique.
+8. How it derives an identifier for a Frame that arrives without one ([Section 3.2](#identity)), if it does so.
+9. How it treats `visibility`, confirming that it is not used as an access control.
 
 [Appendix C](#profile-template) gives a template. Two implementations' profiles are described in [Section 8](#impl-status).
 
@@ -1019,7 +1020,7 @@ Initial contents:
 | review | Under review by the maintainer or a designated reviewer | This document |
 | approved | Approved for use within its declared visibility | This document |
 | deprecated | Superseded; use is discouraged | This document |
-| revoked | Withdrawn; MUST NOT be used | This document |
+| revoked | Withdrawn by its maintainer | This document |
 
 *Table 2: Initial Frame Status Values*
 
@@ -1248,6 +1249,8 @@ Encodings written:     <markdown | yaml | json>
 Resolves composition:  <no | yes, non-transitive | yes, transitive>
 Version selection:     <not performed | policy for a reference
                         that carries no version>
+Resolver context:      <the namespace or registry a qualified-ref
+                        or name-ref is resolved in>
 Reference forms:       <pinned-ref | qualified-ref | uri-ref
                         | path-ref | name-ref>
 Rule 6 narrowings:     <none | dedup: <elements>
@@ -1287,7 +1290,7 @@ Notes:                 internal storage is YAML but is not the YAML
 
 ## Appendix D. Changes from Frame Spec v0.2
 
-This specification adds to [[FRAME-V02]](#ref-FRAME-V02); it does not remove or alter any v0.2 requirement for documents in the Markdown encoding.
+This specification adds to [[FRAME-V02]](#ref-FRAME-V02). It alters one v0.2 requirement: of the four front matter fields v0.2 requires, only `type` is REQUIRED here and the other three are SHOULD ([Section 6.2.1](#md-structure)). Every v0.2 document remains conforming, so compatibility is preserved backward; a document written to this specification may omit a field a v0.2 reader requires, so it is not preserved forward ([Section 1.3](#rel-v02)).
 
 - A data model ([Section 3](#model)) independent of any encoding, with Frame, Frame Version, and Representation.
 - Definitions, obligations, and vocabulary correspondences for every element ([Section 4](#elements)), including definitions for `visibility` and `name` (as `title`), which v0.2 required without defining.
