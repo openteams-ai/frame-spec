@@ -700,7 +700,7 @@ A document is a Markdown file beginning with a YAML front matter block delimited
 
 The front matter is a YAML mapping [[YAML12]](#ref-YAML12). Its keys are element names, with two aliases retained from v0.2: the key `name` denotes `title`, and the key `inherits` denotes `composition`. A writer producing this encoding MUST use the aliased spellings so that v0.2 readers continue to accept the document.
 
-The following front matter keys are REQUIRED in this encoding, as they are in v0.2: `type`, `name`, `description`, `visibility`. The `type` value MUST be `frame` or `frame [<major>.<minor>]`, where the bracketed token names the specification version; `frame [0.3]` denotes this document, and `frame [0.2]` denotes [[FRAME-V02]](#ref-FRAME-V02) and remains valid. The `type` key is the version token of [Section 6.1](#enc-common) and is specific to this encoding; it exists so that a reader can distinguish a Frame from other Markdown files, which structured encodings do not need.
+The following front matter keys are REQUIRED in this encoding, as they are in v0.2: `type`, `name`, `description`, `visibility`. The `type` value MUST begin with the word `frame`, which is the sentinel that distinguishes a Frame from any other Markdown file; a value that does not begin with `frame` means the document is not a Frame. The word MAY be followed by a bracketed version token, which SHOULD name a major and a minor version only: `frame [0.3]` denotes this document, and `frame [0.2]` denotes [[FRAME-V02]](#ref-FRAME-V02) and remains valid. Patch releases clarify wording without changing requirements, so the patch component does not appear in the token. A reader MUST NOT reject a document because its version token names a version the reader does not recognize or is not in that shape, and SHOULD warn; this is the rule of [Section 6.1](#enc-common) applied to this encoding. This key is specific to the Markdown encoding; the structured encodings need no sentinel.
 
 <a id="md-body"></a>
 
@@ -710,6 +710,8 @@ The body is the `guidance` element, with the following rule for extracting refin
 
 A level-two heading (a line beginning with two hash characters) whose text, after trimming white space and ignoring case, equals the label of a refinement begins a section whose content is that refinement's value. The labels are: Rules, Terminology, Goals, Style, Norms, Skills, Tool Specifications, Prompts, Architecture, Business Process. A section extends to the next level-two heading or the end of the document. Headings of level three and deeper within a section belong to that section.
 
+The number of values a refinement section yields follows the element's repeatability as this specification defines it ([Section 4.4](#refinements)). Where the element is repeatable, the section yields one value per top-level block, in document order: each item of a top-level list is a value, and each other block, such as a paragraph or a fenced code block, is a value. Where the element is not repeatable, the section's content is its single value. A conformance profile that declares a content element non-repeatable ([Section 5.2](#declared-variation)) narrows composition only and MUST NOT change how a document is read, so the same document yields the same element values in every conforming reader.
+
 Every other level-two heading, and all content not within a refinement section, is `guidance`. A reader MUST NOT treat an unrecognized heading as an error. A heading whose text merely contains a label, such as "Rules of the Game" or "Review Norms", is not a match and its section is `guidance`; readers MUST NOT match labels by prefix, suffix, or similarity.
 
 A writer emits exactly one `guidance` value per document, containing all non-refinement content in document order with its own headings preserved, and emits each refinement as a level-two section with its label. Because refinement sections are extracted wherever they occur and re-emitted after the guidance, a document whose refinement sections are interleaved with loose prose will not preserve its layout across a round trip; it will preserve every element value. Authors who care about layout SHOULD place refinement sections last.
@@ -718,7 +720,7 @@ A writer emits exactly one `guidance` value per document, containing all non-ref
 
 #### 6.2.3. Terminology in Markdown
 
-Within a Terminology section, a list item of the form `- **term**: definition` is a concept in the structured form of [Section 4.4.2](#terminology-form); the bold text is the preferred label and the remainder is the definition. Any other content in the section is unstructured `terminology` content. A reader MUST NOT fail on the shape of a list item.
+[Section 6.2.2](#md-body) makes each top-level list item in a Terminology section one value of `terminology`. A list item of the form `- **term**: definition` is additionally a concept in the structured form of [Section 4.4.2](#terminology-form); the bold text is the preferred label and the remainder is the definition. A list item of any other shape, and any content in the section that is not a top-level list item, is unstructured `terminology` content governed by [Section 4.4.1](#dumb-down). A reader MUST NOT fail on the shape of a list item.
 
 <a id="md-mediatype"></a>
 
