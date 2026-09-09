@@ -83,6 +83,13 @@ python tools/validate_frame.py --check-profile spec/profiles/*.yaml
 python tools/validate_frame.py --compose A.frame.json B.frame.json C.frame.json
 ```
 
+Section 4.2.2 makes `guidance` MUST be present and MAY be empty, and does not
+say whether an explicit null is empty. This tool takes the permissive reading:
+`guidance: null` is present, the Frame is valid, and the reading is reported as
+the `guidance-null` information finding rather than applied silently. The draft
+does not settle the question, so an implementation that read it the other way
+would conform too.
+
 It never rejects a Frame for an unrecognized element, an unregistered
 `status` or `visibility` value, an unrecognized heading, or the form of a
 reference. The first two and the last are reported as a warning or as
