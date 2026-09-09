@@ -109,6 +109,18 @@ class ReadSpecTests(unittest.TestCase):
                                "- **Maps to:** `schema:text` [[SCHEMA-ORG]](#ref-SCHEMA-ORG)")
         self.assertFalse(selfcheck.read_spec_elements(text)["rules"]["native"])
 
+    def test_the_registered_values_are_read_from_the_sentence_that_registers_them(self):
+        # Sections 4.3.5 and 4.3.8 register their values in one sentence of the Comment
+        # bullet. The rest of that bullet backticks terms that are not registered
+        # values: 4.3.5 names `stable` as a v0.2 value that predates the registry, so
+        # reading every backticked term in the section would report a sixth status.
+        found = selfcheck.read_spec_elements(selfcheck.DEFAULT_SPEC_PATH.read_text(encoding="utf-8"))
+        self.assertEqual(found["status"]["values"],
+                         ("draft", "review", "approved", "deprecated", "revoked"))
+        self.assertEqual(found["visibility"]["values"], ("private", "internal", "shared", "public"))
+        self.assertNotIn("stable", found["status"]["values"])
+        self.assertEqual(found["title"]["values"], ())
+
     def test_the_real_draft_yields_seventeen_sections_ten_refinements_and_three_bullets(self):
         # The three shapes are read by three patterns. Counting them separately is
         # what makes a pattern that stops matching visible instead of quiet.
@@ -217,6 +229,30 @@ class SelfCheckTests(unittest.TestCase):
         self.assertIn("appendix-not-found", self.edited_draft_codes(
             "## Appendix B. Machine-Readable Profile", "## Appendix B. Profile"))
         self.assertIn("appendix-not-found", self.edited_draft_codes("```csv\n", ""))
+
+    def test_a_value_registered_in_the_draft_and_missing_from_the_csv_is_reported(self):
+        # The drift this module exists to catch and did not: registering a sixth status
+        # in the prose left --self-check reporting agreement, after which the checker
+        # warned unregistered-value on a value the normative text registers.
+        self.assertIn("picklist-mismatch", self.edited_draft_codes(
+            "the initial values are `draft`, `review`, `approved`, `deprecated`, and `revoked`.",
+            "the initial values are `draft`, `review`, `approved`, `deprecated`, `revoked`, and `archived`."))
+
+    def test_a_value_in_the_csv_and_not_in_the_draft_is_reported(self):
+        # The same disagreement from the other side, which would make the checker
+        # accept a value the normative text does not register.
+        self.assertIn("picklist-mismatch", self.codes(
+            "visibility,Visibility,false,false,literal,xsd:string,private internal shared public,picklist,",
+            "visibility,Visibility,false,false,literal,xsd:string,private internal shared public team,picklist,"))
+
+    def test_a_picklist_the_draft_stopped_registering_is_an_error_not_a_pass(self):
+        # Two vocabularies both read as empty agree trivially. The floor makes a
+        # pattern that stopped matching an error, as it does for the three element
+        # shapes; without it the comparison above would pass having compared nothing.
+        codes = self.edited_draft_codes(
+            "the initial values are `draft`, `review`, `approved`, `deprecated`, and `revoked`.", "")
+        self.assertIn("spec-extraction-too-small", codes)
+        self.assertIn("picklist-mismatch", codes)
 
     def test_a_crosswalk_term_the_draft_does_not_state_is_reported(self):
         self.assertIn("maps-to-mismatch", self.codes(

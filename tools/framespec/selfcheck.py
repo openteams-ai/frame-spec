@@ -30,6 +30,14 @@ KEYWORD_RE = re.compile(r"\b(MUST NOT|MUST|SHOULD NOT|SHOULD|MAY)\b")
 # A crosswalk term as the draft writes it: `dcterms:identifier`, in backticks.
 TERM_RE = re.compile(r"`([^`]+)`")
 
+# The sentence in which an element's Comment bullet registers its values: "the
+# initial values are `draft`, `review`, `approved`, `deprecated`, and `revoked`."
+# Bounded at the end of that sentence, because it is the sentence that registers
+# them and the rest of the same bullet backticks terms that are not registered
+# values: section 4.3.5 goes on to name `stable` as a value that predates the
+# registry, which reading the whole section would take for a sixth status.
+INITIAL_VALUES_RE = re.compile(r"the initial values are (.*?)\.(?:\s|$)")
+
 # The draft writes elements in three shapes and each is read by its own pattern
 # above. A pattern that quietly stopped matching would make every comparison in
 # self_check() trivially true: nothing read, nothing compared, a clean report. So
@@ -40,6 +48,13 @@ SECTION = "section"                     # 4.2 required, 4.3 descriptive, 4.5 rel
 REFINEMENT = "refinement"               # 4.4 content refinements
 REPRESENTATION = "representation"       # 4.6 representation-level elements
 EXPECTED_SHAPES = {SECTION: 17, REFINEMENT: 10, REPRESENTATION: 3}
+
+# The same discipline for the two registered value vocabularies, which the draft
+# states in prose (sections 4.3.5 and 4.3.8) and the CSV records as a picklist.
+# Comparing two vocabularies that were both read as empty is the same clean report
+# for nothing checked, so a shape that reads fewer values than the draft is known
+# to register is an error rather than a pass. A floor, like the counts above.
+EXPECTED_PICKLISTS = {"status": 5, "visibility": 4}
 
 # Appendix B republishes the profile inside the draft and states that the
 # companion frame-core.csv "is identical to the block below", so the element set
@@ -56,6 +71,17 @@ def _obligation(value):
     """The requirement keyword an Obligation bullet states, or the raw text if it states none."""
     match = KEYWORD_RE.search(value)
     return match.group(1) if match else value.strip()
+
+
+def _registered_values(body):
+    """The values one element's prose registers, in the order the draft writes them."""
+    match = INITIAL_VALUES_RE.search(body)
+    return tuple(TERM_RE.findall(match.group(1))) if match else ()
+
+
+def _vocabulary(values):
+    """A vocabulary as a message fragment, so an empty one reads as words and not as '()'."""
+    return ", ".join(values) if values else "no values"
 
 
 def read_appendix_profile(text):
@@ -125,6 +151,7 @@ def read_spec_elements(text):
             "repeatable": facts.get("Repeatable", "").lower().startswith("yes"),
             "maps_to": facts.get("Maps to", ""),
             "native": "Frame-native" in facts.get("Maps to", ""),
+            "values": _registered_values(body),
             "source": SECTION,
         }
     # Section 4.4 states the ten refinements' shared obligation and repeatability
@@ -137,13 +164,13 @@ def read_spec_elements(text):
     guidance_is_native = found.get("guidance", {}).get("native", False)
     for name, label, _definition in REFINEMENT_RE.findall(text):
         found[name] = {"label": label, "obligation": "MAY", "repeatable": True, "maps_to": "",
-                       "native": guidance_is_native, "source": REFINEMENT}
+                       "native": guidance_is_native, "values": (), "source": REFINEMENT}
     # Section 4.6 gives the three Representation-level elements one bullet each,
     # with the crosswalk term inline and no label. They are optional at the model
     # layer; section 4.8 records their obligation as "per encoding".
     for name, rest in REPRESENTATION_RE.findall(text):
         found[name] = {"label": "", "obligation": "MAY", "repeatable": False, "maps_to": rest,
-                       "native": False, "source": REPRESENTATION}
+                       "native": False, "values": (), "source": REPRESENTATION}
     return found
 
 
@@ -165,6 +192,14 @@ def self_check(spec_path=DEFAULT_SPEC_PATH, profile_path=DEFAULT_PROFILE_PATH):
                                     f"{expected}; either the pattern that reads them no longer matches or the draft "
                                     "dropped elements, so the comparisons that follow have verified less than they appear to",
                                     where))
+    for name, expected in EXPECTED_PICKLISTS.items():
+        read = len(spec.get(name, {}).get("values", ()))
+        if read < expected:
+            findings.append(Finding("error", "spec-extraction-too-small",
+                                    f"registered values read from the draft for '{name}': {read}, expected at "
+                                    f"least {expected}; either the pattern that reads them no longer matches or "
+                                    "the draft stopped registering them, so the picklist comparison below has "
+                                    "verified less than it appears to", where))
     findings.extend(_appendix_findings(text, profile_path, where))
     for name in profile.order:
         if name not in spec:
@@ -193,6 +228,17 @@ def self_check(spec_path=DEFAULT_SPEC_PATH, profile_path=DEFAULT_PROFILE_PATH):
         if not element.maps_to and not facts["native"]:
             findings.append(Finding("error", "native-without-rationale",
                                     f"'{name}' has no crosswalk term and the draft does not call it Frame-native", where))
+        # The registered values, which the draft states in prose and the CSV records as
+        # a picklist. These two vocabularies are the only ones in the model that drive
+        # user-visible output: framespec.check warns 'unregistered-value' against the
+        # CSV's picklist, so a value the draft registers and the CSV lacks becomes a
+        # warning on a Frame that conforms to the normative text. Compared as sets
+        # rather than in order, because what each copy registers is which values are in
+        # the vocabulary and neither states that their order is part of it.
+        if set(element.picklist) != set(facts["values"]):
+            findings.append(Finding("error", "picklist-mismatch",
+                                    f"'{name}': the CSV registers {_vocabulary(element.picklist)} but the draft "
+                                    f"registers {_vocabulary(facts['values'])}", where))
         # Membership, not equality: a Maps-to line states the term the CSV records
         # and often a secondary term, a reference link and a note on the fit. The
         # comparison is against whole backticked terms rather than the line's text,
