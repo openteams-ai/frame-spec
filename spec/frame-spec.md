@@ -214,10 +214,10 @@ When a Frame is read from a location and carries no explicit `identifier`, the i
 
 Two rules govern changes to an identifier and are normative for readers and registries:
 
-1. A reader or registry that assigns an identifier to a Frame that arrived without one MUST NOT present that identifier as a claim the Frame made about itself.
+1. A reader or registry that assigns an identifier to a Frame that arrived without one MUST NOT present that identifier as a claim the Frame made about itself. This covers an identifier derived from a retrieval location ([Section 6.1](#enc-common)) as well as one a registry mints: a writer MUST NOT emit a derived identifier into a document, because doing so would record a reader's retrieval path as the Frame's own claim about itself. Because two readers may derive different identifiers from the same bytes, a Frame intended for exchange SHOULD state its `identifier`.
 2. A reader or registry that changes a Frame's identifier MUST record the prior identifier in `derivedFrom`.
 
-The second rule makes every fork visible. A Frame carrying `identifier: acme/brand-voice` that is imported into another organization's registry and stored as `contoso/brand-voice` MUST carry `derivedFrom: acme/brand-voice`. How a registry derives a new identifier is a profile concern ([Section 7](#profiles)), not a model one.
+The second rule makes every fork visible. A Frame carrying `identifier: acme/brand-voice` that is imported into another organization's registry and stored as `contoso/brand-voice` MUST carry `derivedFrom: acme/brand-voice`. How a registry derives a new identifier is a profile concern ([Section 7](#profiles)), not a model one. A registry that wants an identifier no rename can invalidate MAY mint an opaque one, a UUID [[RFC9562]](#ref-RFC9562) for instance, and use `canonicalSource` to say how it resolves; the cost is that a reference then carries no information a reviewer can read, which the chain of authority in [[INTHUB]](#ref-INTHUB) depends on.
 
 A distribution mechanism may assign its own artifact identity at the envelope layer, as a package manager or content-addressed store does. Such an identity is distinct from the Frame's `identifier`. A distribution mechanism SHOULD record the Frame's `identifier` alongside its own and is bound by the rules above if it changes the Frame-level identifier. The `canonicalSource` element is where a Frame may point at its authoritative envelope location.
 
@@ -580,6 +580,8 @@ Rule 7's second sentence exists so that rule 4 and rule 7 do not conflict. An im
 ### 5.3. Reference Syntax
 
 The values of `composition`, `guards`, and `derivedFrom` are references. This specification defines a grammar that classifies a reference by form. It does not define how any form is resolved; that is the concern of the implementation that holds the referenced artifact, and each implementation declares which forms it resolves.
+
+A `qualified-ref` and a `name-ref` are not globally unique, so they are resolved in the resolver's own context, and an implementation MUST declare that context in its conformance profile ([Section 7](#profiles)). A consequence worth stating: the same reference may resolve to different Frames in different contexts, which is why a Frame whose references must survive a move between registries SHOULD use a `uri-ref`, and why `canonicalSource` ([Section 4.3.11](#el-canonicalsource)) exists for a copy to point at the place its updates come from.
 
 ```abnf
 frame-ref     = pinned-ref / qualified-ref / uri-ref
@@ -1148,6 +1150,9 @@ Initial contents: the ten refinements of [Section 4.4](#refinements), each refin
 
 <a id="ref-RFC7942"></a>
 **[RFC7942]** Sheffer, Y. and A. Farrel, "Improving Awareness of Running Code: The Implementation Status Section", BCP 205, RFC 7942, DOI 10.17487/RFC7942, July 2016, <https://www.rfc-editor.org/rfc/rfc7942>.
+
+<a id="ref-RFC9562"></a>
+**[RFC9562]** Davis, K., Peabody, B., and P. Leach, "Universally Unique IDentifiers (UUIDs)", RFC 9562, DOI 10.17487/RFC9562, May 2024, <https://www.rfc-editor.org/info/rfc9562>.
 
 <a id="ref-RO-CRATE"></a>
 **[RO-CRATE]** ResearchObject.org, "RO-Crate Metadata Specification 1.1", 2021, <https://www.researchobject.org/ro-crate/1.1/>.
