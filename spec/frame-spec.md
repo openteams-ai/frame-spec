@@ -122,7 +122,7 @@ Two things follow from that definition and motivate this document. First, a Fram
 
 ### 1.1. Why a Data Model
 
-Frame Spec v0.2 [[FRAME-V02]](#ref-FRAME-V02) defines a Frame as a Markdown file whose YAML front matter carries four required fields, with a free-form body. That definition has served early adoption well, and it is preserved here in full as the Markdown encoding ([Section 6.2](#enc-markdown)). It is, however, a definition of a file layout rather than of a Frame. A registry that stores Frames as database rows, a desktop application that holds them in memory, and a Markdown file on disk all hold Frames, and a specification predicated on files cannot say what they have in common.
+Frame Spec v0.2 [[FRAME-V02]](#ref-FRAME-V02) defines a Frame as a Markdown file whose YAML front matter carries four required fields, with a free-form body. That definition has served early adoption well, and its file format is the Markdown encoding of this specification ([Section 6.2](#enc-markdown)), which relaxes three of its four required fields to SHOULD ([Section 1.3](#rel-v02)). It is, however, a definition of a file layout rather than of a Frame. A registry that stores Frames as database rows, a desktop application that holds them in memory, and a Markdown file on disk all hold Frames, and a specification predicated on files cannot say what they have in common.
 
 This document therefore specifies the Frame itself, independent of any encoding, and then specifies encodings as bindings of that model. The approach follows the separation between an abstract artifact and its distributions in the W3C Data Catalog Vocabulary [[DCAT3]](#ref-DCAT3), and the separation between a domain model, an element set, and encoding syntax guidelines in the Singapore Framework for application profiles [[SINGAPORE]](#ref-SINGAPORE). Where an element of the model corresponds to a term already defined by an established vocabulary, this document says so ([Appendix A](#crosswalk)) rather than defining a new meaning.
 
@@ -161,6 +161,7 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 - **Frame Version:** A specific revision of a Frame. A Frame Version carries the Frame's content.
 - **Representation:** A serialization of a Frame Version in one encoding. The same Frame Version may have Markdown, YAML, and JSON Representations.
 - **Element:** A named property of a Frame or Frame Version, defined in [Section 4](#elements).
+- **Content element:** `guidance`, and the refinements that narrow it. The term is used by [Section 5](#composition) and [Section 6.2.2](#md-body).
 - **Refinement:** An element that narrows the general content element, `guidance`, to a named kind of content, such as `rules` or `terminology` ([Section 4.4](#refinements)).
 - **Composition:** The relation by which one Frame's content combines with another's when the first is activated, with the declaring Frame taking precedence ([Section 5](#composition)).
 - **Reader:** An implementation that parses a Representation into the Frame model. A reader may also resolve composition.
@@ -308,7 +309,7 @@ The following elements describe the Frame or a version of it. None is mandatory 
 - **Obligation:** SHOULD
 - **Repeatable:** No
 - **Maps to:** `dcat:version` [[DCAT3]](#ref-DCAT3); `schema:version` [[SCHEMA-ORG]](#ref-SCHEMA-ORG)
-- **Comment:** Tracks the Frame's own revision history, not the version of this specification. Semantic Versioning [[SEMVER]](#ref-SEMVER) is RECOMMENDED. Registries SHOULD require `version` on publication even though the model does not require it on exchange.
+- **Comment:** Tracks the Frame's own revision history, not the version of this specification. Semantic Versioning [[SEMVER]](#ref-SEMVER) is RECOMMENDED. Registries SHOULD require `version` on publication even though the model does not require it on exchange. A Frame Version's content MUST NOT change once the Version has been issued: content that changes is a new Version. Without that, a `pinned-ref` would name nothing stable, and neither the version-selection policy of [Section 5.2](#declared-variation) nor the identical-precedence guarantee of that section would give an author a reproducible result. A system that cannot enforce this MUST say so in its conformance profile ([Section 7](#profiles)).
 
 <a id="el-versionnotes"></a>
 
@@ -330,14 +331,14 @@ The following elements describe the Frame or a version of it. None is mandatory 
 - **Obligation:** MAY
 - **Repeatable:** No
 - **Maps to:** `schema:creativeWorkStatus` [[SCHEMA-ORG]](#ref-SCHEMA-ORG)
-- **Comment:** The value SHOULD be one of the values in the Frame Status Values registry ([Section 10.3](#iana-status)); the initial values are `draft`, `review`, `approved`, `deprecated`, and `revoked`. A reader MUST preserve a value that is not registered and MUST NOT reject a Frame for carrying one; it MAY warn. Frame Spec v0.2 did not define this element, and Frames written to it carry values such as `stable` that predate the registry. Readers MUST NOT treat registered values as interchangeable.
+- **Comment:** The value SHOULD be one of the values in the Frame Status Values registry ([Section 10.3](#iana-status)); the initial values are `draft`, `review`, `approved`, `deprecated`, and `revoked`. A reader MUST preserve a value that is not registered and MUST NOT reject a Frame for carrying one; it MAY warn. Frame Spec v0.2 did not define this element, and Frames written to it carry values such as `stable` that predate the registry. A reader MUST NOT treat an unregistered value as equivalent to a registered one: silently reading `stable` as `approved` would assert something the Frame did not.
 
 <a id="el-maintainer"></a>
 
 #### 4.3.6. maintainer
 
 - **Label:** Maintainer
-- **Definition:** The person, team, or organization that manages contributions to, and publication of, the Frame, and is accountable for it.
+- **Definition:** The person, team, or organization that manages contributions to, and publication of, the Frame.
 - **Obligation:** SHOULD
 - **Repeatable:** Yes
 - **Maps to:** `schema:maintainer` [[SCHEMA-ORG]](#ref-SCHEMA-ORG); secondarily `schema:accountablePerson` (partial: that term's range is a person only, and a maintainer may be a team)
@@ -362,7 +363,7 @@ The following elements describe the Frame or a version of it. None is mandatory 
 - **Definition:** The sharing boundary the maintainer declares for the Frame.
 - **Obligation:** MAY
 - **Repeatable:** No
-- **Maps to:** `dcterms:accessRights` [[DCTERMS]](#ref-DCTERMS); `schema:conditionsOfAccess` [[SCHEMA-ORG]](#ref-SCHEMA-ORG)
+- **Maps to:** `dcterms:accessRights` [[DCTERMS]](#ref-DCTERMS) (partial: that term covers a resource's security status, and this element is declared intent that carries no protection, see [Section 9.5](#visibility-security)); `schema:conditionsOfAccess` [[SCHEMA-ORG]](#ref-SCHEMA-ORG) (partial, for the same reason)
 - **Comment:** The value SHOULD be one of the values in the Frame Visibility Values registry ([Section 10.4](#iana-visibility)); the initial values are `private`, `internal`, `shared`, and `public`, which Frame Spec v0.2 listed as suggested values. A reader MUST preserve a value that is not registered and MUST NOT reject a Frame for carrying one; it MAY warn. Visibility is declared intent and travels with the Frame. It is not an access control, and readers MUST NOT treat it as one; who may read a Frame is decided by the system that holds it. See [Section 9](#security).
 
 <a id="el-license"></a>
@@ -427,6 +428,8 @@ The following rule is normative and is the mechanism by which a Frame with no re
 
 A reader that does not implement a refinement MUST treat its value as `guidance`. It MUST NOT discard the value.
 
+This rule binds a reader that can tell the name is a refinement. That knowledge comes from the element registry ([Section 10.2](#iana-elements)) as the reader knows it, never from the document, since no encoding marks an element as a refinement. A reader whose registry predates a refinement's registration cannot place the name, and treats it as an unknown element under [Section 4.6](#extensions): the value is preserved and re-emitted, but it is not presented as guidance. A writer that needs such a reader to see the content SHOULD write it as `guidance` instead of using a refinement registered later than the readers it must reach.
+
 A reader that implements a refinement but cannot extract the refinement's structured form from a value MUST keep the value as that refinement's content. It MUST NOT reject the Frame and MUST NOT demote the value to `guidance` on that account.
 
 This is the dumb-down principle of [[DC-USAGE]](#ref-DC-USAGE): "A client should be able to ignore any qualifier and use the value as if it were unqualified." Its consequence is that a reader which knows only `guidance` sees a plain body, a reader which knows the refinements sees typed sections, and no content is lost in either case.
@@ -489,8 +492,6 @@ Four elements relate a Frame to other artifacts.
 - **Maps to:** `dcterms:requires` [[DCTERMS]](#ref-DCTERMS): "a related resource that is required by the described resource to support its function, delivery, or coherence"
 - **Comment:** The value is a reference as defined in [Section 5.3](#ref-syntax). [[INTHUB]](#ref-INTHUB) lists Output Guards among what a Frame carries and states that "one of the critical things that Frames can do is define a Validation or Verification tool (a Guard) that must be called and pass on the output of the system." This element is a relation rather than a refinement of `guidance` because a Guard is run on output, not read as context; under [Section 4.4.1](#dumb-down) a refinement would degrade to prose loaded into a model, which is the wrong failure mode for a validation requirement. What a Guard is, how it is run, and how the reference resolves are outside this specification. Unlike the other relations, `guards` participates in composition ([Section 5](#composition), rule 5).
 
-<a id="representation"></a>
-
 <a id="extensions"></a>
 
 ### 4.6. Extension Elements
@@ -500,6 +501,8 @@ An element name beginning with `x-` is an extension element and is reserved for 
 Readers MUST preserve elements they do not recognize, including extension elements, and MUST NOT reject a Frame for carrying them. Writers MUST emit preserved unknown elements when producing a Representation, so that round trips through a reader that does not understand an element are lossless.
 
 Unknown elements are metadata, not content. A reader MUST NOT present the value of an unrecognized element to an AI system as guidance. See [Section 9](#security).
+
+An unrecognized element is one whose name the reader cannot resolve to a registered element. This rule does not override [Section 4.4.1](#dumb-down) for a refinement the reader resolves but does not implement: that value is content, and the dumb-down rule governs it.
 
 <a id="element-summary"></a>
 
@@ -554,7 +557,7 @@ Rules 1 through 4 are those of [[FRAME-V02]](#ref-FRAME-V02), carried over uncha
 
 Rule 5 exists for two reasons. For the descriptive elements, a Frame that omits `description` must not silently acquire its parent's; a Frame's description is its own. For `guards`, the reverse holds: a Guard attached by a composed Frame must not be silently dropped by a Frame that does not mention it. [[INTHUB]](#ref-INTHUB) gives the motivating case, a compliance Frame "pointing to a Guard that must be run after every output"; if a child could remove that Guard by omission, the compliance Frame would not do what it exists to do. Excluding a Frame from the composed set entirely removes its Guards along with its content.
 
-Rule 6 makes merge behavior a consequence of the element definitions rather than a separate specification. Two narrowings of rule 6 are permitted to profiles and MUST be declared: deduplication of identical values within a repeatable element, and replacement by key within a repeatable element whose values carry a natural key. The `terminology` element is the standing example of the second: [[SKOS]](#ref-SKOS) permits at most one preferred label per language within a concept scheme, so a composed Frame's definition of a term replaces a lower-precedence Frame's definition of the same term. A profile MUST NOT drop non-identical values under either narrowing.
+Rule 6 makes merge behavior a consequence of the element definitions rather than a separate specification. Two narrowings of rule 6 are permitted to profiles and MUST be declared: deduplication of identical values within a repeatable element, and replacement by key within a repeatable element whose values carry a natural key. The `terminology` element is the standing example of the second: [[SKOS]](#ref-SKOS) allows a concept at most one preferred label per language tag, and Frame terminology treats the preferred label as the key of a concept, so a composed Frame's definition of a term replaces a lower-precedence Frame's definition of the same term. A profile MUST NOT drop non-identical values under either narrowing.
 
 Rule 7's second sentence exists so that rule 4 and rule 7 do not conflict. An implementation that silently ignores `composition` does not conform; the same implementation that declares "resolves no composition" in its profile does.
 
@@ -615,6 +618,8 @@ When an application combines Frames that do not declare each other, as when a us
 ### 5.5. Worked Example
 
 Three Frames: `acme/company-core`, composed by `acme/brand-voice`, composed by `acme/q4-playbook`. Each carries `rules` (repeatable), `style` (repeatable at the model layer), a `description`, and the first carries a `guards` reference.
+
+The result below assumes two things a profile declares rather than this specification: that the reader resolves composition transitively, since rule 4 makes that OPTIONAL and a non-transitive reader composes only `acme/brand-voice`, omitting `acme/company-core`'s rule and its Guard; and that its policy selects the Versions shown, since the references carry no version ([Section 5.2](#declared-variation)).
 
 ```
 acme/company-core            (lowest precedence)
@@ -682,7 +687,7 @@ An encoding is a binding of the model to a syntax. This document defines three. 
 
 ### 6.2. Markdown Encoding
 
-The Markdown encoding is the file format of [[FRAME-V02]](#ref-FRAME-V02). A document conforming to v0.2 conforms to this encoding. This section restates v0.2's requirements in the terms of this specification and adds the mapping of body structure to elements.
+The Markdown encoding is the file format of [[FRAME-V02]](#ref-FRAME-V02). A document conforming to v0.2 conforms to this encoding. This section states v0.2's requirements in the terms of this specification, relaxes three of its four required front matter fields to SHOULD, and adds the mapping of body structure to elements.
 
 <a id="md-structure"></a>
 
@@ -694,7 +699,11 @@ The front matter is a YAML mapping [[YAML12]](#ref-YAML12). Its keys are element
 
 A repeatable element MAY be written as a scalar or as a sequence; a scalar is exactly one value. A writer MUST emit a sequence, so that documents a tool produces carry one shape. A scalar is not split on any delimiter: `maintainer: Acme, Inc.` is one value, because two repeatable elements, `maintainer` and `versionNotes`, carry values in which a comma occurs literally.
 
-The key `type` is REQUIRED in this encoding. It is the only one: a key is mandatory here only where two systems cannot exchange the document without it ([[RFC2119]](#ref-RFC2119), Section 6), and `type` is the sentinel a reader needs to tell a Frame from any other Markdown file. `name`, `description` and `visibility` are REQUIRED by [[FRAME-V02]](#ref-FRAME-V02) and are SHOULD here; a reader MUST NOT reject a document for omitting one. A writer SHOULD emit all four, so that documents it produces remain readable by a v0.2 reader. Its value MUST begin with the word `frame`, matched case-sensitively; a value that does not means the document is not a Frame. The contrast with refinement labels, which match ignoring case ([Section 6.2.2](#md-body)), is deliberate: a label is prose an author writes and may capitalize as they please, while this value is a token a reader matches. The word MAY be followed by a bracketed version token, which SHOULD name a major and a minor version only: `frame [0.3]` denotes this document, and `frame [0.2]` denotes [[FRAME-V02]](#ref-FRAME-V02) and remains valid. Patch releases clarify wording without changing requirements, so the patch component does not appear in the token. A reader MUST NOT reject a document because its version token names a version the reader does not recognize or is not in that shape, and SHOULD warn; this is the rule of [Section 6.1](#enc-common) applied to this encoding. This key is specific to the Markdown encoding; the structured encodings need no sentinel.
+A front matter value MUST be a scalar or a sequence of scalars. This encoding defines no front matter syntax for a value with internal structure, such as a `terminology` concept ([Section 4.4.2](#terminology-form)); [Section 6.2.2](#md-body) carries such a value in the body instead. A reader that encounters a nested mapping or sequence MUST NOT reject the document: it MUST preserve the value, MUST NOT extract a structured form from it, and SHOULD warn.
+
+The key `type` is REQUIRED in this encoding. It is the only one: a key is mandatory here only where two systems cannot exchange the document without it ([[RFC2119]](#ref-RFC2119), Section 6), and `type` is the sentinel a reader needs to tell a Frame from any other Markdown file. `name`, `description` and `visibility` are REQUIRED by [[FRAME-V02]](#ref-FRAME-V02) and are SHOULD here; a reader MUST NOT reject a document for omitting one. A writer SHOULD emit all four, so that documents it produces remain readable by a v0.2 reader.
+
+The value of `type` MUST begin with the word `frame`, matched case-sensitively; a value that does not means the document is not a Frame. The contrast with refinement labels, which match ignoring case ([Section 6.2.2](#md-body)), is deliberate: a label is prose an author writes and may capitalize as they please, while this value is a token a reader matches. The word MAY be followed by a bracketed version token, which SHOULD name a major and a minor version only: `frame [0.3]` denotes this document, and `frame [0.2]` denotes [[FRAME-V02]](#ref-FRAME-V02) and remains valid. Patch releases clarify wording without changing requirements, so the patch component does not appear in the token. A reader MUST NOT reject a document because its version token names a version the reader does not recognize or is not in that shape, and SHOULD warn; this is the rule of [Section 6.1](#enc-common) applied to this encoding. This key is specific to the Markdown encoding; the structured encodings need no sentinel.
 
 <a id="md-body"></a>
 
@@ -718,7 +727,7 @@ A writer emits exactly one `guidance` value per document, containing all non-ref
 
 [Section 6.2.2](#md-body) makes each top-level list item in a Terminology section one value of `terminology`. A list item whose value, after its marker is removed, has the form `**term**: definition` is additionally a concept in the structured form of [Section 4.4.2](#terminology-form); the bold text is the preferred label and the remainder is the definition. The marker may be of either kind ([Section 6.2.2](#md-body)), so a numbered item carries a concept exactly as a bulleted one does. A list item of any other shape, and any content in the section that is not a top-level list item, is unstructured `terminology` content governed by [Section 4.4.1](#dumb-down). A reader MUST NOT fail on the shape of a list item.
 
-This encoding has no syntax for a concept's alternative labels, which [Section 4.4.2](#terminology-form) permits and which the YAML and JSON encodings carry as `altTerms`. A concept written here therefore has a preferred label and a definition and nothing else. A writer converting a concept that carries alternative labels MUST NOT discard them: [Section 4.4.1](#dumb-down) applies, so it keeps them as content by writing them into the item's text, which preserves the words and loses the structure. This is the one place where the model expresses something an encoding cannot, and a Frame whose alternative labels must survive a round trip SHOULD be held in the YAML or JSON encoding.
+This encoding defines no syntax for a concept's alternative labels, which [Section 4.4.2](#terminology-form) permits and which the YAML and JSON encodings carry as `altTerms`. The body carries prose, and front matter carries scalars and sequences of scalars ([Section 6.2.1](#md-structure)). A concept written here therefore has a preferred label and a definition and nothing else. A writer converting a concept that carries alternative labels MUST NOT discard them: [Section 4.4.1](#dumb-down) applies, so it keeps them as content by writing them into the item's text, which preserves the words and loses the structure. This is the one place where the model expresses something an encoding cannot, and a Frame whose alternative labels must survive a round trip SHOULD be held in the YAML or JSON encoding.
 
 <a id="md-mediatype"></a>
 
@@ -855,8 +864,10 @@ A profile MUST state:
 3. Which reference forms of [Section 5.3](#ref-syntax) it resolves (rule 9).
 4. Which narrowings of rule 6 it applies, and to which elements.
 5. Which elements it treats as non-repeatable beyond those the model defines as such, and which elements it requires beyond `identifier` and `guidance`.
-6. How it derives an identifier for a Frame that arrives without one ([Section 3.2](#identity)), if it does so.
-7. How it treats `visibility`, confirming that it is not used as an access control.
+6. Which Frame Version it composes for a reference that carries no version, if it resolves composition at all ([Section 5.2](#declared-variation)).
+7. The context in which it resolves a `qualified-ref` or a `name-ref` ([Section 5.3](#ref-syntax)), since neither is globally unique.
+8. How it derives an identifier for a Frame that arrives without one ([Section 3.2](#identity)), if it does so.
+9. How it treats `visibility`, confirming that it is not used as an access control.
 
 [Appendix C](#profile-template) gives a template. Two implementations' profiles are described in [Section 8](#impl-status).
 
@@ -1019,7 +1030,7 @@ Initial contents:
 | review | Under review by the maintainer or a designated reviewer | This document |
 | approved | Approved for use within its declared visibility | This document |
 | deprecated | Superseded; use is discouraged | This document |
-| revoked | Withdrawn; MUST NOT be used | This document |
+| revoked | Withdrawn by its maintainer | This document |
 
 *Table 2: Initial Frame Status Values*
 
@@ -1056,11 +1067,26 @@ Initial contents: the ten refinements of [Section 4.4](#refinements), each refin
 
 ### 11.1. Normative References
 
+<a id="ref-ADMS"></a>
+**[ADMS]** W3C, "Asset Description Metadata Schema (ADMS)", August 2013, <https://www.w3.org/TR/vocab-adms/>.
+
 <a id="ref-COMMONMARK"></a>
 **[COMMONMARK]** MacFarlane, J., "CommonMark Spec", Version 0.31.2, January 2024, <https://spec.commonmark.org/0.31.2/>.
 
+<a id="ref-DCAT3"></a>
+**[DCAT3]** W3C, "Data Catalog Vocabulary (DCAT) - Version 3", August 2024, <https://www.w3.org/TR/vocab-dcat-3/>.
+
+<a id="ref-DCTAP"></a>
+**[DCTAP]** Dublin Core Metadata Initiative, "DCTAP Elements", Draft, December 2022, <https://www.dublincore.org/specifications/dctap/elements/>.
+
+<a id="ref-DCTERMS"></a>
+**[DCTERMS]** Dublin Core Metadata Initiative, "DCMI Metadata Terms", January 2020, <https://www.dublincore.org/specifications/dublin-core/dcmi-terms/>.
+
 <a id="ref-FRAME-V02"></a>
 **[FRAME-V02]** "Frame Spec v0.2.0", August 2026, [spec/v0.2.md](v0.2.md) in this repository.
+
+<a id="ref-PROV-O"></a>
+**[PROV-O]** W3C, "PROV-O: The PROV Ontology", April 2013, <https://www.w3.org/TR/prov-o/>.
 
 <a id="ref-RFC2119"></a>
 **[RFC2119]** Bradner, S., "Key words for use in RFCs to Indicate Requirement Levels", BCP 14, RFC 2119, DOI 10.17487/RFC2119, March 1997, <https://www.rfc-editor.org/rfc/rfc2119>.
@@ -1095,8 +1121,14 @@ Initial contents: the ten refinements of [Section 4.4](#refinements), each refin
 <a id="ref-RFC9512"></a>
 **[RFC9512]** Polli, R., Wilde, E., and E. Aro, "YAML Media Type", RFC 9512, DOI 10.17487/RFC9512, February 2024, <https://www.rfc-editor.org/rfc/rfc9512>.
 
+<a id="ref-SCHEMA-ORG"></a>
+**[SCHEMA-ORG]** Schema.org Community Group, "Schema.org Vocabulary", 2026, <https://schema.org/>.
+
 <a id="ref-SEMVER"></a>
 **[SEMVER]** Preston-Werner, T., "Semantic Versioning 2.0.0", 2013, <https://semver.org/spec/v2.0.0.html>.
+
+<a id="ref-SKOS"></a>
+**[SKOS]** W3C, "SKOS Simple Knowledge Organization System Reference", August 2009, <https://www.w3.org/TR/skos-reference/>.
 
 <a id="ref-YAML12"></a>
 **[YAML12]** YAML Language Development Team, "YAML Ain't Markup Language (YAML) Version 1.2, Revision 1.2.2", October 2021, <https://yaml.org/spec/1.2.2/>.
@@ -1104,9 +1136,6 @@ Initial contents: the ten refinements of [Section 4.4](#refinements), each refin
 <a id="informative-references"></a>
 
 ### 11.2. Informative References
-
-<a id="ref-ADMS"></a>
-**[ADMS]** W3C, "Asset Description Metadata Schema (ADMS)", August 2013, <https://www.w3.org/TR/vocab-adms/>.
 
 <a id="ref-AGENTS-MD"></a>
 **[AGENTS-MD]** Agentic AI Foundation, "AGENTS.md", 2026, <https://agents.md/>.
@@ -1116,15 +1145,6 @@ Initial contents: the ten refinements of [Section 4.4](#refinements), each refin
 
 <a id="ref-DCAP"></a>
 **[DCAP]** Dublin Core Metadata Initiative, "Guidelines for Dublin Core Application Profiles", May 2009, <https://www.dublincore.org/specifications/dublin-core/profile-guidelines/>.
-
-<a id="ref-DCAT3"></a>
-**[DCAT3]** W3C, "Data Catalog Vocabulary (DCAT) - Version 3", August 2024, <https://www.w3.org/TR/vocab-dcat-3/>.
-
-<a id="ref-DCTAP"></a>
-**[DCTAP]** Dublin Core Metadata Initiative, "DCTAP Elements", Draft, December 2022, <https://www.dublincore.org/specifications/dctap/elements/>.
-
-<a id="ref-DCTERMS"></a>
-**[DCTERMS]** Dublin Core Metadata Initiative, "DCMI Metadata Terms", January 2020, <https://www.dublincore.org/specifications/dublin-core/dcmi-terms/>.
 
 <a id="ref-FRAME-SPEC-21"></a>
 **[FRAME-SPEC-21]** openteams-ai/frame-spec, issue 21, "Investigation: inherits field and frame composition behavior in Collab", July 2026, <https://github.com/openteams-ai/frame-spec/issues/21>.
@@ -1138,9 +1158,6 @@ Initial contents: the ten refinements of [Section 4.4](#refinements), each refin
 <a id="ref-NEBARI-FRAMES"></a>
 **[NEBARI-FRAMES]** nebari-dev, "Nebari Frames", 2026, <https://github.com/nebari-dev/nebari-frames>.
 
-<a id="ref-PROV-O"></a>
-**[PROV-O]** W3C, "PROV-O: The PROV Ontology", April 2013, <https://www.w3.org/TR/prov-o/>.
-
 <a id="ref-RFC3552"></a>
 **[RFC3552]** Rescorla, E. and B. Korver, "Guidelines for Writing RFC Text on Security Considerations", BCP 72, RFC 3552, DOI 10.17487/RFC3552, July 2003, <https://www.rfc-editor.org/rfc/rfc3552>.
 
@@ -1153,14 +1170,8 @@ Initial contents: the ten refinements of [Section 4.4](#refinements), each refin
 <a id="ref-RO-CRATE"></a>
 **[RO-CRATE]** ResearchObject.org, "RO-Crate Metadata Specification 1.1", 2021, <https://www.researchobject.org/ro-crate/1.1/>.
 
-<a id="ref-SCHEMA-ORG"></a>
-**[SCHEMA-ORG]** Schema.org Community Group, "Schema.org Vocabulary", 2026, <https://schema.org/>.
-
 <a id="ref-SINGAPORE"></a>
 **[SINGAPORE]** Dublin Core Metadata Initiative, "The Singapore Framework for Dublin Core Application Profiles", January 2008, <https://www.dublincore.org/specifications/dublin-core/singapore-framework/>.
-
-<a id="ref-SKOS"></a>
-**[SKOS]** W3C, "SKOS Simple Knowledge Organization System Reference", August 2009, <https://www.w3.org/TR/skos-reference/>.
 
 <a id="ref-SPDX"></a>
 **[SPDX]** The Linux Foundation, "The System Package Data Exchange (SPDX) Specification", 2024, <https://spdx.github.io/spdx-spec/>.
@@ -1170,6 +1181,8 @@ Initial contents: the ten refinements of [Section 4.4](#refinements), each refin
 ## Appendix A. Relationship to Other Vocabularies
 
 This appendix collects the correspondences stated element by element in [Section 4](#elements). An implementation that emits JSON-LD [[JSON-LD11]](#ref-JSON-LD11) uses these as its context.
+
+One systematic difference applies to every element whose value is a reference, which are `composition`, `guards`, `derivedFrom` and `previousVersion`. This specification carries such values as strings, because a reference here need not be a URI ([Section 5.3](#ref-syntax)), while the terms they map to take a node as their value: `dcterms:requires` is intended for non-literal values, and `prov:wasDerivedFrom` has `prov:Entity` as its range. An implementation emitting JSON-LD MUST coerce such a value to a node rather than emit a string literal, and cannot do so for a reference form that is not a URI. The correspondence is in the meaning of the relation, not in the value's form.
 
 | Element | Term | Fit |
 |---|---|---|
@@ -1181,7 +1194,7 @@ This appendix collects the correspondences stated element by element in [Section
 | status | schema:creativeWorkStatus | exact |
 | maintainer | schema:maintainer; schema:accountablePerson | exact; partial |
 | scope | dcterms:audience | partial |
-| visibility | dcterms:accessRights; schema:conditionsOfAccess | exact |
+| visibility | dcterms:accessRights; schema:conditionsOfAccess | partial |
 | license | dcterms:license | exact |
 | issued | dcterms:issued | exact |
 | canonicalSource | schema:sameAs; prov:specializationOf | exact; secondary |
@@ -1201,7 +1214,7 @@ The Frame-native terms (`guidance`, the ten refinements, and `composition`) requ
 
 ## Appendix B. Machine-Readable Profile
 
-The element set of [Section 4](#elements) is published as a tabular application profile in the format of [[DCTAP]](#ref-DCTAP), with two columns beyond DCTAP's own: `mapsTo`, the crosswalk term, and `refines`, the refined element. A validator that reads this file can check obligation, repeatability, and value constraints without hard-coding the element set. The companion file `frame-core.csv` published with this specification is identical to the block below.
+The element set of [Section 4](#elements) is published as a tabular application profile in the format of [[DCTAP]](#ref-DCTAP), with two columns beyond DCTAP's own: `mapsTo`, the crosswalk term, and `refines`, the refined element. A validator that reads this file can check obligation, repeatability, and value constraints without hard-coding the element set. Where a column and an element's definition in [Section 4](#elements) disagree, the definition governs; the columns carry the constraints DCTAP can express, and two elements accept a value the columns do not: `license` accepts an SPDX identifier as well as a URI ([Section 4.3.9](#el-license)), and `issued` accepts a date as well as a date-time ([Section 4.3.10](#el-issued)). The companion file `frame-core.csv` published with this specification is identical to the block below.
 
 ```csv
 propertyID,propertyLabel,mandatory,repeatable,valueNodeType,valueDataType,valueConstraint,valueConstraintType,mapsTo,refines,note
@@ -1248,6 +1261,8 @@ Encodings written:     <markdown | yaml | json>
 Resolves composition:  <no | yes, non-transitive | yes, transitive>
 Version selection:     <not performed | policy for a reference
                         that carries no version>
+Resolver context:      <the namespace or registry a qualified-ref
+                        or name-ref is resolved in>
 Reference forms:       <pinned-ref | qualified-ref | uri-ref
                         | path-ref | name-ref>
 Rule 6 narrowings:     <none | dedup: <elements>
@@ -1287,7 +1302,7 @@ Notes:                 internal storage is YAML but is not the YAML
 
 ## Appendix D. Changes from Frame Spec v0.2
 
-This specification adds to [[FRAME-V02]](#ref-FRAME-V02); it does not remove or alter any v0.2 requirement for documents in the Markdown encoding.
+This specification adds to [[FRAME-V02]](#ref-FRAME-V02). It alters one v0.2 requirement: of the four front matter fields v0.2 requires, only `type` is REQUIRED here and the other three are SHOULD ([Section 6.2.1](#md-structure)). Every v0.2 document remains conforming, so compatibility is preserved backward; a document written to this specification may omit a field a v0.2 reader requires, so it is not preserved forward ([Section 1.3](#rel-v02)).
 
 - A data model ([Section 3](#model)) independent of any encoding, with Frame, Frame Version, and Representation.
 - Definitions, obligations, and vocabulary correspondences for every element ([Section 4](#elements)), including definitions for `visibility` and `name` (as `title`), which v0.2 required without defining.
