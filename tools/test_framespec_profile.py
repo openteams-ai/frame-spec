@@ -3,7 +3,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from framespec.profile import Profile, DEFAULT_PROFILE_PATH, CONTENT_ROOT
+from framespec.profile import Profile, DEFAULT_PROFILE_PATH
+
+REFINEMENTS = ["rules", "terminology", "goals", "style", "norms", "skills",
+               "toolSpecs", "prompts", "architecture", "businessProcess"]
 
 
 class ProfileTests(unittest.TestCase):
@@ -20,10 +23,24 @@ class ProfileTests(unittest.TestCase):
 
     def test_ten_refinements_with_labels(self):
         names = [e.name for e in self.p.refinements()]
-        self.assertEqual(names, ["rules", "terminology", "goals", "style", "norms", "skills",
-                                 "toolSpecs", "prompts", "architecture", "businessProcess"])
-        self.assertEqual(self.p.labels(),
-                         {e.label.lower(): e.name for e in self.p.refinements()})
+        self.assertEqual(names, REFINEMENTS)
+        # The expected pairs written out, not a comprehension over refinements(): that
+        # restated the implementation and would have passed just as well if labels()
+        # had stopped lower-casing, which is the one thing it does beyond inverting
+        # the mapping. The two labels that are not the element name are the ones that
+        # matter, and hard-coding is what the assertion above already does.
+        self.assertEqual(self.p.labels(), {
+            "rules": "rules",
+            "terminology": "terminology",
+            "goals": "goals",
+            "style": "style",
+            "norms": "norms",
+            "skills": "skills",
+            "tool specifications": "toolSpecs",
+            "prompts": "prompts",
+            "architecture": "architecture",
+            "business process": "businessProcess",
+        })
 
     def test_picklists_and_references(self):
         self.assertEqual(self.p.elements["status"].picklist,
@@ -41,8 +58,10 @@ class ProfileTests(unittest.TestCase):
         self.assertFalse(self.p.is_repeatable("nonexistent"))
 
     def test_content_elements(self):
-        self.assertEqual(self.p.content_elements(),
-                         [CONTENT_ROOT] + [e.name for e in self.p.refinements()])
+        # Written out for the same reason: a comprehension over refinements() would
+        # pass whatever content_elements() returned, as long as it returned the same
+        # thing twice.
+        self.assertEqual(self.p.content_elements(), ["guidance"] + REFINEMENTS)
 
     def test_missing_content_root_raises(self):
         with tempfile.TemporaryDirectory() as tmp_dir:
