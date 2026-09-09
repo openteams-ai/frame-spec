@@ -775,7 +775,7 @@ In this example `guidance` is the opening paragraph together with the "Things We
 
 A document is a single YAML mapping [[YAML12]](#ref-YAML12) whose keys are element names in lower camel case and whose values are the elements' values. `guidance` and the refinements are keys at the top level of the mapping. Repeatable elements are sequences; a non-repeatable element is a scalar. `guidance` is the exception: a document's `guidance` has one value ([Section 4.2.2](#el-guidance)), so it is written as a scalar, and its repeatability exists for composition rather than for several values in one document. A `terminology` value in the structured form is a sequence of mappings with the keys `term`, `definition`, and optionally `altTerms`, corresponding to `skos:prefLabel`, `skos:definition`, and `skos:altLabel`.
 
-The key `type` MAY be present with a value of the form given in [Section 6.2.1](#md-structure), and MUST NOT be required; a structured document does not need a discriminator to be recognized.
+The key `type` MAY be present with a value of the form given in [Section 6.2.1](#md-structure), and MUST NOT be required; a structured document does not need a discriminator to be recognized. The sentinel role of that key does not carry across encodings, but the version declaration does: a writer converting a document that carries a version token SHOULD preserve it, and MUST NOT invent one for a document that carried none. A writer producing the Markdown encoding, where the key is REQUIRED, necessarily supplies one.
 
 The media type of this encoding is `application/frame+yaml` ([Section 10.1.2](#iana-yaml)).
 
