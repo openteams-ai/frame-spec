@@ -53,16 +53,33 @@ class CliTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("Frames checked: 18   passed: 18   failed: 0", result.stdout)
 
-    def test_a_bad_markdown_frame_fails_with_exit_1(self):
+    def test_a_markdown_frame_missing_type_fails_with_exit_1(self):
+        # `type` is the only front matter key section 6.2.1 REQUIRES; without it the
+        # document is not a Frame at all.
         bad = TOOLS / "_cli_bad.frame.md"
-        bad.write_text("---\ntype: frame [0.3.0]\ndescription: D\nvisibility: internal\n---\nbody\n", encoding="utf-8")
+        bad.write_text("---\nname: N\ndescription: D\nvisibility: internal\n---\nbody\n", encoding="utf-8")
         try:
             result = run(str(bad))
             self.assertEqual(result.returncode, 1)
             self.assertIn("missing-required-key", result.stdout)
-            self.assertIn("nonstandard-type-version", result.stdout)
         finally:
             bad.unlink()
+
+    def test_a_markdown_frame_missing_recommended_keys_passes_with_warnings(self):
+        # Section 6.2.1 (amended): `name`, `description`, and `visibility` are SHOULD,
+        # not REQUIRED, so a reader must not reject a document for omitting one; a
+        # missing `name` alongside an odd version token is a warning-only document
+        # that still passes.
+        borderline = TOOLS / "_cli_borderline.frame.md"
+        borderline.write_text("---\ntype: frame [0.3.0]\ndescription: D\nvisibility: internal\n---\nbody\n",
+                              encoding="utf-8")
+        try:
+            result = run(str(borderline))
+            self.assertEqual(result.returncode, 0, result.stdout)
+            self.assertIn("missing-recommended-key", result.stdout)
+            self.assertIn("nonstandard-type-version", result.stdout)
+        finally:
+            borderline.unlink()
 
     def test_unregistered_status_is_a_warning_not_a_failure(self):
         result = run("examples/sow-review/business-owner.frame.md")
@@ -213,20 +230,20 @@ class CliTests(unittest.TestCase):
                     self.assertNotIn("Traceback", result.stderr)
 
     @unittest.skipUnless(HAVE_YAML, "the yaml leg needs PyYAML")
-    def test_round_trip_fails_when_a_leg_writes_a_document_that_cannot_be_read_back(self):
-        # A Frame carrying only the two elements section 4.2 makes mandatory writes a
-        # Markdown document that section 6.2.1 rejects, since that encoding makes four
-        # front matter keys REQUIRED. The element values survive, so comparing them
-        # alone reported ROUND-TRIP OK and exit 0 for a trip that produced an invalid
-        # document. The run must fail and name the leg and the finding.
+    def test_round_trip_passes_for_a_model_minimal_frame(self):
+        # A Frame carrying only the two elements section 4.2 makes mandatory used to
+        # write a Markdown document that section 6.2.1 rejected, since that encoding
+        # made four front matter keys REQUIRED: the element values survived the trip,
+        # so comparing them alone reported ROUND-TRIP OK and exit 0 for a trip that had
+        # actually produced an invalid document. The amendment makes three of the four
+        # SHOULD rather than REQUIRED, so this Frame's markdown leg now warns instead
+        # of erroring, and the trip genuinely passes.
         with tempfile.TemporaryDirectory() as tmp:
             bare = Path(tmp) / "bare.frame.json"
             bare.write_text('{"identifier": "acme/bare", "guidance": "just guidance"}\n', encoding="utf-8")
             result = run("--round-trip", str(bare))
-        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
-        self.assertIn("the markdown leg", result.stdout)
-        self.assertEqual(result.stdout.count("missing-required-key"), 3, result.stdout)
-        self.assertNotIn("ROUND-TRIP OK", result.stdout)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("ROUND-TRIP OK", result.stdout)
 
     def test_round_trip_reports_a_failure_for_an_unreadable_file_instead_of_a_silent_skip(self):
         # round_trip_paths() must tell read_frame()'s two None-returning cases

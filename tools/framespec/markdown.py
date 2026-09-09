@@ -6,7 +6,8 @@ from . import frontmatter
 from .findings import Finding
 from .model import Frame, default_identifier, derived_names, normalize
 
-REQUIRED_KEYS = ("type", "name", "description", "visibility")
+REQUIRED_KEYS = ("type",)
+RECOMMENDED_KEYS = ("name", "description", "visibility")
 ALIASES = {"name": "title", "inherits": "composition"}
 REVERSE_ALIASES = {v: k for k, v in ALIASES.items()}
 TYPE_RE = re.compile(r"^frame(?: \[\d+\.\d+\])?$")
@@ -35,6 +36,11 @@ def parse(text, profile, location=None):
         if fm.get(key) in (None, ""):
             findings.append(Finding("error", "missing-required-key",
                                     f"the Markdown encoding requires front matter key '{key}'", location))
+    for key in RECOMMENDED_KEYS:
+        if fm.get(key) in (None, ""):
+            findings.append(Finding("warning", "missing-recommended-key",
+                                    f"front matter key '{key}' is recommended but not present; "
+                                    "the document is still a Frame", location))
     type_token = str(fm.get("type", "")).strip()
     if type_token and not TYPE_SENTINEL_RE.match(type_token):
         findings.append(Finding("error", "bad-type-token",

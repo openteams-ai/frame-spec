@@ -6,6 +6,7 @@ from unittest import mock
 from framespec import io as frame_io
 from framespec import markdown, roundtrip
 from framespec.findings import has_errors
+from framespec.model import Frame
 from framespec.profile import Profile
 
 try:
@@ -68,15 +69,16 @@ class RoundTripTests(unittest.TestCase):
         names = [d[0] for d in diffs]
         self.assertIn("guards", names, "a dropped element must show up as a difference")
 
-    def test_a_leg_that_writes_an_unreadable_document_does_not_report_a_clean_trip(self):
-        """The findings of each leg's own re-read are part of the result.
+    def test_a_model_minimal_frame_now_has_a_valid_markdown_form_with_warnings(self):
+        """Section 6.2.1 (amended) makes only `type` REQUIRED in the Markdown encoding.
 
-        A Frame carrying only the two elements section 4.2 makes mandatory has no
-        valid Markdown form, because section 6.2.1 makes four front matter keys
-        REQUIRED in that encoding. The element values still survive the trip, so
-        comparing them alone reports OK for a trip that wrote a document with three
-        errors in it. That is the false green this asserts against: the diffs are
-        empty and the markdown leg's findings are not.
+        A Frame carrying only the two elements section 4.2 makes mandatory, identifier
+        and guidance, used to have no valid Markdown form: the encoding made four
+        front matter keys REQUIRED, so writing this Frame and reading it back reported
+        three missing-required-key errors, a false green for anyone comparing element
+        values alone. The amendment downgrades `name`, `description`, and `visibility`
+        to SHOULD, so the same Frame's markdown leg now carries three
+        missing-recommended-key warnings instead of errors, and the trip is clean.
         """
         p = Profile.load()
         frame, findings = frame_io.PARSERS["json"](
@@ -87,7 +89,26 @@ class RoundTripTests(unittest.TestCase):
         codes = {leg: [f.code for f in leg_findings if f.level == "error"] for leg, leg_findings in legs}
         self.assertEqual(codes["json"], [])
         self.assertEqual(codes["yaml"], [])
-        self.assertEqual(codes["markdown"], ["missing-required-key"] * 3)
+        self.assertEqual(codes["markdown"], [])
+        markdown_findings = next(fs for leg, fs in legs if leg == "markdown")
+        self.assertEqual([(f.level, f.code) for f in markdown_findings],
+                         [("warning", "missing-recommended-key")] * 3)
+
+    def test_an_error_level_leg_finding_still_fails_the_trip(self):
+        """The amendment closes the one gap that used to make a leg's re-read error
+        on element presence alone, but `type` is still REQUIRED and its value must
+        still begin with the word 'frame' (section 6.2.1); a leg can still write a
+        document it cannot read back for that reason. Built directly rather than
+        parsed, since going through the json and yaml legs first would not preserve
+        a `type` extra for the markdown leg to reproduce; `order` targets the leg
+        that can still fail on its own.
+        """
+        p = Profile.load()
+        frame = Frame({"identifier": "acme/bad-type", "guidance": ["g"]}, "json", None, {"type": "framework"})
+        final, diffs, legs = roundtrip.round_trip(frame, p, order=("markdown",))
+        self.assertEqual(diffs, [], diffs)
+        codes = {leg: [f.code for f in leg_findings if f.level == "error"] for leg, leg_findings in legs}
+        self.assertEqual(codes["markdown"], ["bad-type-token"])
 
 
 if __name__ == "__main__":

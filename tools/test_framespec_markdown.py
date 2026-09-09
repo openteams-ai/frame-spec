@@ -97,14 +97,37 @@ class ParseTests(unittest.TestCase):
         self.assertEqual(frame.elements["guidance"], ["## Review Norms\n\n- a"])
         self.assertEqual(frame.elements["rules"], ["### Hard rules", "b"])
 
-    def test_missing_required_key_is_an_error_and_odd_version_token_only_warns(self):
-        text = "---\ntype: frame [0.3.0]\ndescription: D\nvisibility: internal\n---\nbody\n"
+    def test_missing_type_is_an_error(self):
+        text = "---\nname: N\ndescription: D\nvisibility: internal\n---\nbody\n"
+        frame, findings = markdown.parse(text, self.p, None)
+        codes = [f.code for f in findings]
+        self.assertEqual(codes, ["missing-required-key"])
+        self.assertTrue(has_errors(findings))
+
+    def test_missing_recommended_keys_are_warnings_and_the_document_is_accepted(self):
+        # Section 6.2.1 (amended): only `type` is REQUIRED in the Markdown encoding.
+        # `name`, `description`, and `visibility` are SHOULD, so a reader MUST NOT
+        # reject a document for omitting one; this is a bare-minimum document, missing
+        # all three, and it still parses with no error.
+        text = "---\ntype: frame [0.3]\n---\nbody\n"
+        frame, findings = markdown.parse(text, self.p, None)
+        self.assertIsNotNone(frame)
+        codes = [f.code for f in findings]
+        self.assertEqual(codes, ["missing-recommended-key"] * 3)
+        self.assertTrue(all(f.level == "warning" for f in findings))
+        self.assertFalse(has_errors(findings), [str(f) for f in findings])
+        self.assertEqual(frame.elements["guidance"], ["body"])
+
+    def test_missing_required_key_and_missing_recommended_key_coexist(self):
+        text = "---\ndescription: D\nvisibility: internal\n---\nbody\n"
         frame, findings = markdown.parse(text, self.p, None)
         codes = [f.code for f in findings]
         self.assertIn("missing-required-key", codes)
-        self.assertIn("nonstandard-type-version", codes)
-        warning = next(f for f in findings if f.code == "nonstandard-type-version")
-        self.assertEqual(warning.level, "warning")
+        self.assertIn("missing-recommended-key", codes)
+        required = next(f for f in findings if f.code == "missing-required-key")
+        recommended = next(f for f in findings if f.code == "missing-recommended-key")
+        self.assertEqual(required.level, "error")
+        self.assertEqual(recommended.level, "warning")
         self.assertTrue(has_errors(findings))
 
     def test_type_not_beginning_with_frame_is_an_error(self):
