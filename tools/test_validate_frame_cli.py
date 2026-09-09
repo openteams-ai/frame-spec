@@ -26,7 +26,28 @@ def run(*args):
                           capture_output=True, text=True, cwd=REPO)
 
 
+# The one convention every mode's findings follow: eight spaces, a dash, the finding,
+# and a file URI as its location.
+FINDING_PREFIX = "        - "
+LEVELS = ("ERROR  ", "WARNING", "INFO   ")
+COMPOSED_SET = ["spec/fixtures/composition/company-core.frame.json",
+                "spec/fixtures/composition/brand-voice.frame.json",
+                "spec/fixtures/composition/q4-playbook.frame.json"]
+
+
+def finding_lines(output):
+    return [line for line in output.splitlines() if any(level in line for level in LEVELS)]
+
+
 class CliTests(unittest.TestCase):
+    def assert_one_finding_convention(self, output):
+        """Every finding indented under a path header, with a file URI as its location."""
+        lines = finding_lines(output)
+        self.assertTrue(lines, f"no findings to check the shape of:\n{output}")
+        for line in lines:
+            self.assertTrue(line.startswith(FINDING_PREFIX), line)
+            self.assertRegex(line, r"\(file://[^)]*\)$")
+
     def test_all_eighteen_examples_pass(self):
         result = run("examples")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
@@ -103,6 +124,93 @@ class CliTests(unittest.TestCase):
         result = run("--round-trip", "spec/fixtures/roundtrip/full.frame.md")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("ROUND-TRIP OK", result.stdout)
+
+    @unittest.skipUnless(HAVE_YAML, "the check-profile run reads a profile written as YAML")
+    def test_every_mode_reports_a_finding_in_the_same_shape(self):
+        # One location shape, one prefix, one indentation, whichever mode produced the
+        # finding. The same run used to print a file URI from validation, an absolute
+        # path from --self-check, and the path as typed from --check-profile, and
+        # --self-check printed its findings with no path header and no indentation.
+        runs = {
+            "validate": run("examples/sow-review/business-owner.frame.md"),
+            "round-trip": run("--round-trip", "examples/this-path-does-not-exist.frame.md"),
+            "self-check": run("--self-check"),
+            "check-profile": run("--check-profile", "spec/profiles/collab.yaml"),
+        }
+        for mode, result in runs.items():
+            with self.subTest(mode=mode):
+                self.assert_one_finding_convention(result.stdout)
+
+    def test_compose_reports_its_findings_the_same_way_on_stderr(self):
+        # --compose keeps stdout for the resolved Frame alone, so its findings go to
+        # stderr; the shape they take there is the shape every other mode uses.
+        result = run("--compose", *COMPOSED_SET)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assert_one_finding_convention(result.stderr)
+        self.assertEqual(finding_lines(result.stdout), [])
+
+    def test_every_path_scanning_mode_ends_with_a_count_line(self):
+        # Only plain validation printed one. Without it, a run that scanned nothing
+        # looks exactly like a run in which everything passed.
+        self.assertIn("Frames checked: 1   passed: 1   failed: 0   skipped: 0",
+                      run("examples/minimal/frame.md").stdout)
+        self.assertIn("Frames round-tripped: 1   passed: 0   failed: 1   skipped: 0",
+                      run("--round-trip", "examples/this-path-does-not-exist.frame.md").stdout)
+        with tempfile.TemporaryDirectory() as tmp:
+            # A profile written as JSON, so this holds with or without PyYAML.
+            bad = Path(tmp) / "profile.json"
+            bad.write_text('{"implementation": "X"}', encoding="utf-8")
+            self.assertIn("Profiles checked: 1   passed: 0   failed: 1",
+                          run("--check-profile", str(bad)).stdout)
+
+    def test_the_modes_are_mutually_exclusive_rather_than_overriding_each_other(self):
+        # --round-trip --self-check ran the self-check, --round-trip --compose ran
+        # compose, and --round-trip --check-profile ran check-profile, each with the
+        # flag the user also gave doing nothing and saying nothing.
+        pairs = [("--round-trip", "--self-check"), ("--round-trip", "--compose"),
+                 ("--round-trip", "--check-profile"), ("--compose", "--check-profile"),
+                 ("--self-check", "--compose"), ("--self-check", "--check-profile")]
+        for pair in pairs:
+            with self.subTest(pair=pair):
+                result = run(*pair, "examples/minimal/frame.md")
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                self.assertIn("not allowed with argument", result.stderr)
+
+    def test_the_encoding_flag_is_documented_like_every_other_flag(self):
+        # --encoding was the one flag with no help text at all. Asserted against the
+        # parser's actions rather than against --help's output, which wraps the text at
+        # the terminal width and would make the assertion depend on where it broke.
+        parser = validate_frame.build_parser()
+        undocumented = sorted(action.option_strings[0] for action in parser._actions
+                              if action.option_strings and not action.help)
+        self.assertEqual(undocumented, [])
+
+    def test_a_profile_csv_that_is_not_there_is_a_finding_not_a_traceback(self):
+        # --profile was the one input to this tool that still produced a traceback:
+        # FileNotFoundError straight out of framespec.profile.Profile.load().
+        result = run("--profile", "spec/profile/not-written-yet.csv", "examples/minimal/frame.md")
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("profile-unreadable", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+
+    @unittest.skipUnless(HAVE_YAML, "one of the modes under test reads a profile written as YAML")
+    def test_a_file_that_is_not_the_profile_is_a_finding_in_every_mode(self):
+        # Including --self-check and --compose, which read the CSV by their own routes:
+        # every mode has to be behind the same guard, or one of them still raises.
+        with tempfile.TemporaryDirectory() as tmp:
+            wrong = Path(tmp) / "not-a-profile.csv"
+            wrong.write_text("a,b\n1,2\n", encoding="utf-8")
+            modes = [["examples/minimal/frame.md"],
+                     ["--round-trip", "examples/minimal/frame.md"],
+                     ["--self-check"],
+                     ["--check-profile", "spec/profiles/collab.yaml"],
+                     ["--compose", "examples/minimal/frame.md"]]
+            for args in modes:
+                with self.subTest(mode=args[0]):
+                    result = run("--profile", str(wrong), *args)
+                    self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                    self.assertIn("profile-unreadable", result.stderr)
+                    self.assertNotIn("Traceback", result.stderr)
 
     @unittest.skipUnless(HAVE_YAML, "the yaml leg needs PyYAML")
     def test_round_trip_fails_when_a_leg_writes_a_document_that_cannot_be_read_back(self):

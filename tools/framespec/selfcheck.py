@@ -10,6 +10,7 @@ is the only one here whose subject is the specification rather than a Frame.
 
 import re
 from itertools import zip_longest
+from pathlib import Path
 
 from .findings import Finding
 from .profile import DEFAULT_PROFILE_PATH, REPO_ROOT, Profile
@@ -181,7 +182,10 @@ def self_check(spec_path=DEFAULT_SPEC_PATH, profile_path=DEFAULT_PROFILE_PATH):
     spec = read_spec_elements(text)
     profile = Profile.load(profile_path)
     findings = []
-    where = str(spec_path)
+    # A file URI, the one location shape validate_frame.py reports: this module used
+    # to report an absolute path here while validation reported a URI for the same
+    # kind of subject.
+    where = Path(spec_path).resolve().as_uri()
     read_by_shape = {shape: 0 for shape in EXPECTED_SHAPES}
     for facts in spec.values():
         read_by_shape[facts["source"]] += 1
