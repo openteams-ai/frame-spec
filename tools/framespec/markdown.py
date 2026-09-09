@@ -13,8 +13,20 @@ REVERSE_ALIASES = {v: k for k, v in ALIASES.items()}
 TYPE_RE = re.compile(r"^frame(?: \[\d+\.\d+\])?$")
 TYPE_SENTINEL_RE = re.compile(r"^frame\b")
 HEADING_RE = re.compile(r"^## (.+?)\s*$")
-BULLET_RE = re.compile(r"^- (.*)$")
-TERM_RE = re.compile(r"^- \*\*(.+?)\*\*:\s*(.*)$")
+# Section 6.2.2: a list item may begin with a bullet marker, `-`, `*` or `+`, or an
+# ordered-list marker, a number followed by `.` or `)`; the marker is not part of the
+# value. This matches only an unindented marker followed by exactly one space, which is
+# enough to serve that rule and to keep every marker's item shaped like the hyphen items
+# the fixtures already use; it does not attempt CommonMark's fuller list-item syntax
+# (a marker may be indented up to three spaces, and a run of markers of one kind versus
+# another starts a new list), neither of which the rule depends on and neither of which
+# this parser needs, since every item becomes its own value regardless of which list it
+# would belong to under full CommonMark parsing.
+BULLET_RE = re.compile(r"^(?:[-*+]|\d+[.)]) (.*)$")
+# Section 6.2.3: the concept form is matched on the item's value, after BULLET_RE has
+# already removed the marker, so this carries no marker of its own and applies the same
+# way regardless of which of the five markers introduced the item.
+TERM_RE = re.compile(r"^\*\*(.+?)\*\*:\s*(.*)$")
 
 
 def parse(text, profile, location=None):
@@ -86,7 +98,7 @@ def _split_body(body, profile):
 
 
 def _items(name, lines):
-    """Top-level bullets are values; other paragraphs are values; terminology bullets may be concepts."""
+    """Top-level list items are values; other paragraphs are values; terminology items may be concepts."""
     values, paragraph, in_fence = [], [], False
 
     def flush():
@@ -99,17 +111,18 @@ def _items(name, lines):
             in_fence = not in_fence
             paragraph.append(line)
             continue
-        if in_fence:                      # a bullet inside a fence is code, not a value
+        if in_fence:                      # a list marker inside a fence is code, not a value
             paragraph.append(line)
             continue
         bullet = BULLET_RE.match(line)
         if bullet:
             flush()
-            concept = TERM_RE.match(line)
-            if name == "terminology" and concept:
+            value = bullet.group(1).strip()
+            concept = TERM_RE.match(value) if name == "terminology" else None
+            if concept:
                 values.append({"term": concept.group(1), "definition": concept.group(2)})
             else:
-                values.append(bullet.group(1).strip())
+                values.append(value)
         elif line.strip() == "":
             flush()
         else:

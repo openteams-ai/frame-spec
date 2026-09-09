@@ -165,6 +165,56 @@ class ParseTests(unittest.TestCase):
         self.assertEqual(findings[0].code, "front-matter")
 
 
+def _section(label, lines):
+    return ("---\ntype: frame\nname: N\ndescription: D\nvisibility: internal\n---\n\n"
+            f"## {label}\n\n" + "\n".join(lines) + "\n")
+
+
+class ListMarkerTests(unittest.TestCase):
+    """Section 6.2.2 (amended): a list item may begin with any of five markers, and the
+    marker is not part of the value. Section 6.2.3 (amended): a numbered item carries a
+    concept exactly as a bulleted one does."""
+
+    def setUp(self):
+        self.p = Profile.load()
+
+    def test_a_numbered_list_yields_one_value_per_item(self):
+        text = _section("Rules", ["1. First rule.", "2. Second rule.", "3. Third rule."])
+        frame, findings = markdown.parse(text, self.p, None)
+        self.assertFalse(has_errors(findings), [str(f) for f in findings])
+        self.assertEqual(frame.elements["rules"], ["First rule.", "Second rule.", "Third rule."])
+
+    def test_each_of_the_five_markers_is_recognized_and_the_marker_is_not_in_the_value(self):
+        for marker in ("-", "*", "+", "1.", "1)"):
+            with self.subTest(marker=marker):
+                text = _section("Rules", [f"{marker} an item."])
+                frame, findings = markdown.parse(text, self.p, None)
+                self.assertFalse(has_errors(findings), [str(f) for f in findings])
+                self.assertEqual(frame.elements["rules"], ["an item."])
+
+    def test_a_numbered_terminology_item_produces_a_concept(self):
+        text = _section("Terminology",
+                        ["1. **customer**: an organization that has deployed an Acme Hub."])
+        frame, findings = markdown.parse(text, self.p, None)
+        self.assertFalse(has_errors(findings), [str(f) for f in findings])
+        self.assertEqual(frame.elements["terminology"],
+                         [{"term": "customer", "definition": "an organization that has deployed an Acme Hub."}])
+
+    def test_a_hyphen_bulleted_list_behaves_exactly_as_before(self):
+        # Pins the pre-amendment shape: recognizing four new markers must not change
+        # what a hyphen bullet, plain or a concept, yields.
+        text = _section("Rules", ["- No performance claims without a cited benchmark."]) + (
+            "\n## Terminology\n\n"
+            "- **customer**: an organization that has deployed an Acme Hub.\n"
+            '- Prefer "Hub" over "instance".\n')
+        frame, findings = markdown.parse(text, self.p, None)
+        self.assertFalse(has_errors(findings), [str(f) for f in findings])
+        self.assertEqual(frame.elements["rules"], ["No performance claims without a cited benchmark."])
+        self.assertEqual(frame.elements["terminology"], [
+            {"term": "customer", "definition": "an organization that has deployed an Acme Hub."},
+            'Prefer "Hub" over "instance".'])
+
+
 class DefectRegressionTests(unittest.TestCase):
     """One test per defect found while implementing this task."""
 
