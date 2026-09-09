@@ -96,7 +96,7 @@ def compose(frames, profile, conformance=None):
         if name in replace_by_key:
             values = _replace_by_key(values)
         if dedup_all or name in dedup_names:
-            values = _dedup_keep_last(values)
+            values = _dedup_keep_first(values)
         if values:
             result[name] = values
     if CONTENT_ROOT not in result:
@@ -211,16 +211,27 @@ def _stable_key(value):
         return repr((type(value).__name__, value))
 
 
-def _dedup_keep_last(values):
-    """Identical values collapse to their highest-precedence occurrence.
+def _dedup_keep_first(values):
+    """Identical values collapse to their first occurrence in the concatenation.
 
-    Rule 6 permits a profile to deduplicate identical values but does not say which
-    position a deduplicated value keeps. This keeps the last, so a value sits where the
-    highest-precedence Frame that declared it put it and the declaring Frame's own
-    ordering survives (rule 3). Only position is at stake: the values are identical.
+    Rule 6 keeps the first occurrence, not the highest-precedence one, and it is not a
+    precedence question at all: rule 3 decides which content wins when Frames conflict,
+    but identical values do not conflict, so rule 3 has nothing to say about which of
+    them a dedup narrowing keeps. What rule 6 asks for instead is that the result stay a
+    subsequence of the concatenation, so a narrowing removes values rather than
+    reordering them. Keeping the first occurrence is what makes that true; keeping the
+    last would reorder a repeated value forward to wherever its highest-precedence
+    occurrence sits, which is a reordering rather than a removal.
     """
-    last = {_stable_key(v): i for i, v in enumerate(values)}
-    return [v for i, v in enumerate(values) if last[_stable_key(v)] == i]
+    seen = set()
+    out = []
+    for value in values:
+        key = _stable_key(value)
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(value)
+    return out
 
 
 def _replace_by_key(values):

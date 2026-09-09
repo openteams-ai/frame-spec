@@ -182,14 +182,16 @@ class Rule6Tests(unittest.TestCase):
         self.assertEqual(compose.compose(frames, p).elements["guidance"],
                          ["Company-wide guidance.", "Sound like us."])
 
-    def test_dedup_keeps_the_highest_precedence_position(self):
-        # Rule 6 permits deduplication but does not say where a deduplicated value
-        # sits. This pins the choice: the highest-precedence occurrence.
+    def test_dedup_keeps_the_first_occurrence_in_the_concatenation(self):
+        # Rule 6 keeps the first occurrence, not the highest-precedence one: identical
+        # values do not conflict, so rule 3's precedence has no say in this, and keeping
+        # the first is what makes the deduplicated result a subsequence of the
+        # concatenation rather than a reordering of it.
         p = Profile.load()
         a = Frame({"identifier": "a", "guidance": [""], "rules": ["x", "y"]}, "json")
         b = Frame({"identifier": "b", "guidance": [""], "rules": ["y", "x"]}, "json")
         result = compose.compose([a, b], p, {"rule6_narrowings": {"dedup": ["rules"]}})
-        self.assertEqual(result.elements["rules"], ["y", "x"])
+        self.assertEqual(result.elements["rules"], ["x", "y"])
 
     def test_a_dedup_narrowing_written_as_one_name_narrows_that_element_only(self):
         p = Profile.load()
