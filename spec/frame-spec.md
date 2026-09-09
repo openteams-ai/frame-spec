@@ -718,6 +718,8 @@ A writer emits exactly one `guidance` value per document, containing all non-ref
 
 [Section 6.2.2](#md-body) makes each top-level list item in a Terminology section one value of `terminology`. A list item whose value, after its marker is removed, has the form `**term**: definition` is additionally a concept in the structured form of [Section 4.4.2](#terminology-form); the bold text is the preferred label and the remainder is the definition. The marker may be of either kind ([Section 6.2.2](#md-body)), so a numbered item carries a concept exactly as a bulleted one does. A list item of any other shape, and any content in the section that is not a top-level list item, is unstructured `terminology` content governed by [Section 4.4.1](#dumb-down). A reader MUST NOT fail on the shape of a list item.
 
+This encoding has no syntax for a concept's alternative labels, which [Section 4.4.2](#terminology-form) permits and which the YAML and JSON encodings carry as `altTerms`. A concept written here therefore has a preferred label and a definition and nothing else. A writer converting a concept that carries alternative labels MUST NOT discard them: [Section 4.4.1](#dumb-down) applies, so it keeps them as content by writing them into the item's text, which preserves the words and loses the structure. This is the one place where the model expresses something an encoding cannot, and a Frame whose alternative labels must survive a round trip SHOULD be held in the YAML or JSON encoding.
+
 <a id="md-mediatype"></a>
 
 #### 6.2.4. Media Type
