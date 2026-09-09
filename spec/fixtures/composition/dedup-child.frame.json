@@ -1,0 +1,8 @@
+{
+  "identifier": "acme/dedup-child",
+  "title": "Dedup Child",
+  "visibility": "internal",
+  "composition": ["acme/dedup-parent"],
+  "guidance": "",
+  "rules": ["lead with impact", "cite sources"]
+}

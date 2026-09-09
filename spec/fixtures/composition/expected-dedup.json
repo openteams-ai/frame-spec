@@ -1,0 +1,16 @@
+{
+  "composition": [
+    "acme/dedup-parent"
+  ],
+  "guidance": [
+    "Parent guidance."
+  ],
+  "identifier": "acme/dedup-child",
+  "rules": [
+    "cite sources",
+    "no hype",
+    "lead with impact"
+  ],
+  "title": "Dedup Child",
+  "visibility": "internal"
+}

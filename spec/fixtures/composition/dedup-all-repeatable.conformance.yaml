@@ -1,0 +1,10 @@
+# The narrowing that expected-dedup.json is resolved under: a profile that
+# deduplicates every repeatable element, collapsing an identical value to its first
+# occurrence in the concatenation (rule 6) rather than dropping non-identical values or
+# reordering anything.
+#
+# Only the key --compose reads is here. A conformance profile is a longer document
+# (draft section 7 and Appendix C), and the profiles of real implementations live in
+# spec/profiles/; the Nebari Frames profile declares this same narrowing.
+rule6_narrowings:
+  dedup: all-repeatable

@@ -68,3 +68,12 @@ jobs:
         run: |
           python tools/validate_frame.py --compose --conformance-profile spec/fixtures/composition/style-non-repeatable.conformance.yaml spec/fixtures/composition/style-clear-parent.frame.json spec/fixtures/composition/style-clear-child.frame.json > /tmp/style-cleared.json
           diff /tmp/style-cleared.json spec/fixtures/composition/expected-style-cleared.json
+
+      # parent then child, lowest precedence first, listed explicitly rather than
+      # globbed for the same reason as above: alphabetically, child sorts before
+      # parent. Rule 6: a deduplicated value keeps its first occurrence in the
+      # concatenation.
+      - name: Composition fixture, deduplication keeps the first occurrence
+        run: |
+          python tools/validate_frame.py --compose --conformance-profile spec/fixtures/composition/dedup-all-repeatable.conformance.yaml spec/fixtures/composition/dedup-parent.frame.json spec/fixtures/composition/dedup-child.frame.json > /tmp/dedup.json
+          diff /tmp/dedup.json spec/fixtures/composition/expected-dedup.json
