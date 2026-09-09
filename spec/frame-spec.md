@@ -338,7 +338,7 @@ The following elements describe the Frame or a version of it. None is mandatory 
 #### 4.3.6. maintainer
 
 - **Label:** Maintainer
-- **Definition:** The person, team, or organization that manages contributions to, and publication of, the Frame, and is accountable for it.
+- **Definition:** The person, team, or organization that manages contributions to, and publication of, the Frame.
 - **Obligation:** SHOULD
 - **Repeatable:** Yes
 - **Maps to:** `schema:maintainer` [[SCHEMA-ORG]](#ref-SCHEMA-ORG); secondarily `schema:accountablePerson` (partial: that term's range is a person only, and a maintainer may be a team)
@@ -363,7 +363,7 @@ The following elements describe the Frame or a version of it. None is mandatory 
 - **Definition:** The sharing boundary the maintainer declares for the Frame.
 - **Obligation:** MAY
 - **Repeatable:** No
-- **Maps to:** `dcterms:accessRights` [[DCTERMS]](#ref-DCTERMS); `schema:conditionsOfAccess` [[SCHEMA-ORG]](#ref-SCHEMA-ORG)
+- **Maps to:** `dcterms:accessRights` [[DCTERMS]](#ref-DCTERMS) (partial: that term covers a resource's security status, and this element is declared intent that carries no protection, see [Section 9.5](#visibility-security)); `schema:conditionsOfAccess` [[SCHEMA-ORG]](#ref-SCHEMA-ORG) (partial, for the same reason)
 - **Comment:** The value SHOULD be one of the values in the Frame Visibility Values registry ([Section 10.4](#iana-visibility)); the initial values are `private`, `internal`, `shared`, and `public`, which Frame Spec v0.2 listed as suggested values. A reader MUST preserve a value that is not registered and MUST NOT reject a Frame for carrying one; it MAY warn. Visibility is declared intent and travels with the Frame. It is not an access control, and readers MUST NOT treat it as one; who may read a Frame is decided by the system that holds it. See [Section 9](#security).
 
 <a id="el-license"></a>
@@ -553,7 +553,7 @@ Rules 1 through 4 are those of [[FRAME-V02]](#ref-FRAME-V02), carried over uncha
 
 Rule 5 exists for two reasons. For the descriptive elements, a Frame that omits `description` must not silently acquire its parent's; a Frame's description is its own. For `guards`, the reverse holds: a Guard attached by a composed Frame must not be silently dropped by a Frame that does not mention it. [[INTHUB]](#ref-INTHUB) gives the motivating case, a compliance Frame "pointing to a Guard that must be run after every output"; if a child could remove that Guard by omission, the compliance Frame would not do what it exists to do. Excluding a Frame from the composed set entirely removes its Guards along with its content.
 
-Rule 6 makes merge behavior a consequence of the element definitions rather than a separate specification. Two narrowings of rule 6 are permitted to profiles and MUST be declared: deduplication of identical values within a repeatable element, and replacement by key within a repeatable element whose values carry a natural key. The `terminology` element is the standing example of the second: [[SKOS]](#ref-SKOS) permits at most one preferred label per language within a concept scheme, so a composed Frame's definition of a term replaces a lower-precedence Frame's definition of the same term. A profile MUST NOT drop non-identical values under either narrowing.
+Rule 6 makes merge behavior a consequence of the element definitions rather than a separate specification. Two narrowings of rule 6 are permitted to profiles and MUST be declared: deduplication of identical values within a repeatable element, and replacement by key within a repeatable element whose values carry a natural key. The `terminology` element is the standing example of the second: [[SKOS]](#ref-SKOS) allows a concept at most one preferred label per language tag, and Frame terminology treats the preferred label as the key of a concept, so a composed Frame's definition of a term replaces a lower-precedence Frame's definition of the same term. A profile MUST NOT drop non-identical values under either narrowing.
 
 Rule 7's second sentence exists so that rule 4 and rule 7 do not conflict. An implementation that silently ignores `composition` does not conform; the same implementation that declares "resolves no composition" in its profile does.
 
@@ -1057,11 +1057,26 @@ Initial contents: the ten refinements of [Section 4.4](#refinements), each refin
 
 ### 11.1. Normative References
 
+<a id="ref-ADMS"></a>
+**[ADMS]** W3C, "Asset Description Metadata Schema (ADMS)", August 2013, <https://www.w3.org/TR/vocab-adms/>.
+
 <a id="ref-COMMONMARK"></a>
 **[COMMONMARK]** MacFarlane, J., "CommonMark Spec", Version 0.31.2, January 2024, <https://spec.commonmark.org/0.31.2/>.
 
+<a id="ref-DCAT3"></a>
+**[DCAT3]** W3C, "Data Catalog Vocabulary (DCAT) - Version 3", August 2024, <https://www.w3.org/TR/vocab-dcat-3/>.
+
+<a id="ref-DCTAP"></a>
+**[DCTAP]** Dublin Core Metadata Initiative, "DCTAP Elements", Draft, December 2022, <https://www.dublincore.org/specifications/dctap/elements/>.
+
+<a id="ref-DCTERMS"></a>
+**[DCTERMS]** Dublin Core Metadata Initiative, "DCMI Metadata Terms", January 2020, <https://www.dublincore.org/specifications/dublin-core/dcmi-terms/>.
+
 <a id="ref-FRAME-V02"></a>
 **[FRAME-V02]** "Frame Spec v0.2.0", August 2026, [spec/v0.2.md](v0.2.md) in this repository.
+
+<a id="ref-PROV-O"></a>
+**[PROV-O]** W3C, "PROV-O: The PROV Ontology", April 2013, <https://www.w3.org/TR/prov-o/>.
 
 <a id="ref-RFC2119"></a>
 **[RFC2119]** Bradner, S., "Key words for use in RFCs to Indicate Requirement Levels", BCP 14, RFC 2119, DOI 10.17487/RFC2119, March 1997, <https://www.rfc-editor.org/rfc/rfc2119>.
@@ -1096,8 +1111,14 @@ Initial contents: the ten refinements of [Section 4.4](#refinements), each refin
 <a id="ref-RFC9512"></a>
 **[RFC9512]** Polli, R., Wilde, E., and E. Aro, "YAML Media Type", RFC 9512, DOI 10.17487/RFC9512, February 2024, <https://www.rfc-editor.org/rfc/rfc9512>.
 
+<a id="ref-SCHEMA-ORG"></a>
+**[SCHEMA-ORG]** Schema.org Community Group, "Schema.org Vocabulary", 2026, <https://schema.org/>.
+
 <a id="ref-SEMVER"></a>
 **[SEMVER]** Preston-Werner, T., "Semantic Versioning 2.0.0", 2013, <https://semver.org/spec/v2.0.0.html>.
+
+<a id="ref-SKOS"></a>
+**[SKOS]** W3C, "SKOS Simple Knowledge Organization System Reference", August 2009, <https://www.w3.org/TR/skos-reference/>.
 
 <a id="ref-YAML12"></a>
 **[YAML12]** YAML Language Development Team, "YAML Ain't Markup Language (YAML) Version 1.2, Revision 1.2.2", October 2021, <https://yaml.org/spec/1.2.2/>.
@@ -1105,9 +1126,6 @@ Initial contents: the ten refinements of [Section 4.4](#refinements), each refin
 <a id="informative-references"></a>
 
 ### 11.2. Informative References
-
-<a id="ref-ADMS"></a>
-**[ADMS]** W3C, "Asset Description Metadata Schema (ADMS)", August 2013, <https://www.w3.org/TR/vocab-adms/>.
 
 <a id="ref-AGENTS-MD"></a>
 **[AGENTS-MD]** Agentic AI Foundation, "AGENTS.md", 2026, <https://agents.md/>.
@@ -1117,15 +1135,6 @@ Initial contents: the ten refinements of [Section 4.4](#refinements), each refin
 
 <a id="ref-DCAP"></a>
 **[DCAP]** Dublin Core Metadata Initiative, "Guidelines for Dublin Core Application Profiles", May 2009, <https://www.dublincore.org/specifications/dublin-core/profile-guidelines/>.
-
-<a id="ref-DCAT3"></a>
-**[DCAT3]** W3C, "Data Catalog Vocabulary (DCAT) - Version 3", August 2024, <https://www.w3.org/TR/vocab-dcat-3/>.
-
-<a id="ref-DCTAP"></a>
-**[DCTAP]** Dublin Core Metadata Initiative, "DCTAP Elements", Draft, December 2022, <https://www.dublincore.org/specifications/dctap/elements/>.
-
-<a id="ref-DCTERMS"></a>
-**[DCTERMS]** Dublin Core Metadata Initiative, "DCMI Metadata Terms", January 2020, <https://www.dublincore.org/specifications/dublin-core/dcmi-terms/>.
 
 <a id="ref-FRAME-SPEC-21"></a>
 **[FRAME-SPEC-21]** openteams-ai/frame-spec, issue 21, "Investigation: inherits field and frame composition behavior in Collab", July 2026, <https://github.com/openteams-ai/frame-spec/issues/21>.
@@ -1139,9 +1148,6 @@ Initial contents: the ten refinements of [Section 4.4](#refinements), each refin
 <a id="ref-NEBARI-FRAMES"></a>
 **[NEBARI-FRAMES]** nebari-dev, "Nebari Frames", 2026, <https://github.com/nebari-dev/nebari-frames>.
 
-<a id="ref-PROV-O"></a>
-**[PROV-O]** W3C, "PROV-O: The PROV Ontology", April 2013, <https://www.w3.org/TR/prov-o/>.
-
 <a id="ref-RFC3552"></a>
 **[RFC3552]** Rescorla, E. and B. Korver, "Guidelines for Writing RFC Text on Security Considerations", BCP 72, RFC 3552, DOI 10.17487/RFC3552, July 2003, <https://www.rfc-editor.org/rfc/rfc3552>.
 
@@ -1154,14 +1160,8 @@ Initial contents: the ten refinements of [Section 4.4](#refinements), each refin
 <a id="ref-RO-CRATE"></a>
 **[RO-CRATE]** ResearchObject.org, "RO-Crate Metadata Specification 1.1", 2021, <https://www.researchobject.org/ro-crate/1.1/>.
 
-<a id="ref-SCHEMA-ORG"></a>
-**[SCHEMA-ORG]** Schema.org Community Group, "Schema.org Vocabulary", 2026, <https://schema.org/>.
-
 <a id="ref-SINGAPORE"></a>
 **[SINGAPORE]** Dublin Core Metadata Initiative, "The Singapore Framework for Dublin Core Application Profiles", January 2008, <https://www.dublincore.org/specifications/dublin-core/singapore-framework/>.
-
-<a id="ref-SKOS"></a>
-**[SKOS]** W3C, "SKOS Simple Knowledge Organization System Reference", August 2009, <https://www.w3.org/TR/skos-reference/>.
 
 <a id="ref-SPDX"></a>
 **[SPDX]** The Linux Foundation, "The System Package Data Exchange (SPDX) Specification", 2024, <https://spdx.github.io/spdx-spec/>.
@@ -1171,6 +1171,8 @@ Initial contents: the ten refinements of [Section 4.4](#refinements), each refin
 ## Appendix A. Relationship to Other Vocabularies
 
 This appendix collects the correspondences stated element by element in [Section 4](#elements). An implementation that emits JSON-LD [[JSON-LD11]](#ref-JSON-LD11) uses these as its context.
+
+One systematic difference applies to every element whose value is a reference, which are `composition`, `guards`, `derivedFrom` and `previousVersion`. This specification carries such values as strings, because a reference here need not be a URI ([Section 5.3](#ref-syntax)), while the terms they map to take a node as their value: `dcterms:requires` is intended for non-literal values, and `prov:wasDerivedFrom` has `prov:Entity` as its range. An implementation emitting JSON-LD MUST coerce such a value to a node rather than emit a string literal, and cannot do so for a reference form that is not a URI. The correspondence is in the meaning of the relation, not in the value's form.
 
 | Element | Term | Fit |
 |---|---|---|
@@ -1182,7 +1184,7 @@ This appendix collects the correspondences stated element by element in [Section
 | status | schema:creativeWorkStatus | exact |
 | maintainer | schema:maintainer; schema:accountablePerson | exact; partial |
 | scope | dcterms:audience | partial |
-| visibility | dcterms:accessRights; schema:conditionsOfAccess | exact |
+| visibility | dcterms:accessRights; schema:conditionsOfAccess | partial |
 | license | dcterms:license | exact |
 | issued | dcterms:issued | exact |
 | canonicalSource | schema:sameAs; prov:specializationOf | exact; secondary |
