@@ -700,15 +700,15 @@ The key `type` is REQUIRED in this encoding. It is the only one: a key is mandat
 
 #### 6.2.2. Body Structure
 
-The body is the `guidance` element, with the following rule for extracting refinements.
+The body is CommonMark [[COMMONMARK]](#ref-COMMONMARK), and the terms this section uses for its structure, including heading, paragraph, list, list item and fenced code block, are CommonMark's. The rule for extracting refinements follows.
 
-A level-two heading (a line beginning with two hash characters) whose text, after trimming white space and ignoring case, equals the label of a refinement begins a section whose content is that refinement's value. The labels are: Rules, Terminology, Goals, Style, Norms, Skills, Tool Specifications, Prompts, Architecture, Business Process. A section extends to the next level-two heading or the end of the document. Headings of level three and deeper within a section belong to that section.
+An ATX heading of level 2 whose text, after trimming white space and ignoring case, equals the label of a refinement begins a section whose content is that refinement's value. A setext heading does not, even though CommonMark gives it level 2: the front matter delimiter is a line of three hyphens, so underlined text would be ambiguous with a front matter fence. The labels are: Rules, Terminology, Goals, Style, Norms, Skills, Tool Specifications, Prompts, Architecture, Business Process. A section extends to the next such heading or the end of the document. Headings of level three and deeper within a section belong to that section.
 
 The number of values a refinement section yields follows the element's repeatability as this specification defines it ([Section 4.4](#refinements)). Where the element is repeatable, the section yields one value per top-level block, in document order: each item of a top-level list is a value, and each other block, such as a paragraph or a fenced code block, is a value. Where the element is not repeatable, the section's content is its single value; every refinement is repeatable in this version, so this branch applies only to a content element added later that is not. A conformance profile that declares a content element non-repeatable ([Section 5.2](#declared-variation)) narrows composition only and MUST NOT change how a document is read, so the same document yields the same element values in every conforming reader.
 
-Every other level-two heading, and all content not within a refinement section, is `guidance`. A reader MUST NOT treat an unrecognized heading as an error. A heading whose text merely contains a label, such as "Rules of the Game" or "Review Norms", is not a match and its section is `guidance`; readers MUST NOT match labels by prefix, suffix, or similarity.
+Every other heading, and all content not within a refinement section, is `guidance`. A reader MUST NOT treat an unrecognized heading as an error. A heading whose text merely contains a label, such as "Rules of the Game" or "Review Norms", is not a match and its section is `guidance`; readers MUST NOT match labels by prefix, suffix, or similarity.
 
-A writer emits exactly one `guidance` value per document, containing all non-refinement content in document order with its own headings preserved, and emits each refinement as a level-two section with its label. Because refinement sections are extracted wherever they occur and re-emitted after the guidance, a document whose refinement sections are interleaved with loose prose will not preserve its layout across a round trip; it will preserve every element value. Authors who care about layout SHOULD place refinement sections last.
+A writer emits exactly one `guidance` value per document, containing all non-refinement content in document order with its own headings preserved, and emits each refinement as an ATX level 2 section with its label. Because refinement sections are extracted wherever they occur and re-emitted after the guidance, a document whose refinement sections are interleaved with loose prose will not preserve its layout across a round trip; it will preserve every element value. Authors who care about layout SHOULD place refinement sections last.
 
 <a id="md-terminology"></a>
 
@@ -1051,6 +1051,9 @@ Initial contents: the ten refinements of [Section 4.4](#refinements), each refin
 <a id="normative-references"></a>
 
 ### 11.1. Normative References
+
+<a id="ref-COMMONMARK"></a>
+**[COMMONMARK]** MacFarlane, J., "CommonMark Spec", Version 0.31.2, January 2024, <https://spec.commonmark.org/0.31.2/>.
 
 <a id="ref-FRAME-V02"></a>
 **[FRAME-V02]** "Frame Spec v0.2.0", August 2026, [spec/v0.2.md](v0.2.md) in this repository.
