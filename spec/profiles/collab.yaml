@@ -10,7 +10,8 @@ reference_forms: []
 rule6_narrowings: {}
 non_repeatable: []
 additionally_required: []
-identifier_minting: not performed
+identifier_minting: the retrieval location of the file, per Section 6.1; no identifier is
+  minted beyond that, and none is written back into a document
 visibility: declared intent only; not an access control
 notes: >-
   Observed behavior, not a declaration by the implementation's maintainers.

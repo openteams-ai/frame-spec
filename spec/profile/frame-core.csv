@@ -24,5 +24,5 @@ architecture,Architecture,false,true,literal,xsd:string,,,,guidance,Version,
 businessProcess,Business Process,false,true,literal,xsd:string,,,,guidance,Version,
 composition,Composition,false,true,literal,xsd:string,frame-ref,pattern,,,Version,Frame-native; ordered
 derivedFrom,Derived From,false,true,literal,xsd:string,frame-ref,pattern,prov:wasDerivedFrom,,Frame,
-previousVersion,Previous Version,false,false,literal,xsd:string,,,dcat:previousVersion,,Version,
+previousVersion,Previous Version,false,false,literal,xsd:string,frame-ref,pattern,dcat:previousVersion,,Version,
 guards,Guards,false,true,literal,xsd:string,frame-ref,pattern,dcterms:requires,,Version,composes by accumulation

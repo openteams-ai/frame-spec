@@ -13,7 +13,9 @@ rule6_narrowings:
   replace_by_key: [terminology]
 non_repeatable: [toolSpecs, goals, style, norms, architecture, businessProcess]
 additionally_required: [version]
-identifier_minting: slugified title; reject on collision
+identifier_minting: slugified title; reject on collision. A document read without an
+  `identifier` takes the retrieval location as its identifier, per Section 6.1, which
+  Section 3.2 rule 1 classes as derived and so never written back into a document
 visibility: declared intent only; not an access control
 notes: >-
   Cycle detection on resolution. Internal storage is YAML but is not the YAML

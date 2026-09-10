@@ -32,9 +32,10 @@ MUTATIONS = [
      "A reader MUST reject a document because its version token names a version",
      "undeclared-rejection-path"),
     ("B6 a restatement that drops the qualification the original carries",
-     "The structure is that of the YAML encoding ([Section 6.3](#enc-yaml)), including its one "
-     "exception: repeatable elements are arrays and non-repeatable elements are strings, except "
-     "`guidance`, which is a string because a document has exactly one `guidance` value.",
+     "The structure is that of the YAML encoding ([Section 6.3](#enc-yaml)), including the "
+     "requirement that `guidance` be present and its one exception: repeatable elements are arrays "
+     "and non-repeatable elements are strings, except `guidance`, which is a string because a "
+     "document has exactly one `guidance` value.",
      "A repeatable element is always an array and a non-repeatable element is always a string, so "
      "an element's type does not vary between documents.",
      "restatement-drops-a-qualification"),

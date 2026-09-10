@@ -177,7 +177,7 @@ class SelfCheckTests(unittest.TestCase):
 
     def test_an_element_the_csv_dropped_is_reported(self):
         self.assertIn("csv-missing-element", self.codes(
-            "previousVersion,Previous Version,false,false,literal,xsd:string,,,dcat:previousVersion,,"
+            "previousVersion,Previous Version,false,false,literal,xsd:string,frame-ref,pattern,dcat:previousVersion,,"
             "Version,\n", ""))
 
     def test_the_level_the_csv_records_and_the_draft_states_are_compared(self):
@@ -228,8 +228,8 @@ class SelfCheckTests(unittest.TestCase):
 
     def test_an_appendix_block_that_drifted_from_the_csv_is_reported(self):
         self.assertIn("appendix-mismatch", self.edited_draft_codes(
-            "previousVersion,Previous Version,false,false,literal,xsd:string,,,dcat:previousVersion,,Version,",
-            "previousVersion,Previous Version,false,true,literal,xsd:string,,,dcat:previousVersion,,Version,"))
+            "previousVersion,Previous Version,false,false,literal,xsd:string,frame-ref,pattern,dcat:previousVersion,,Version,",
+            "previousVersion,Previous Version,false,true,literal,xsd:string,frame-ref,pattern,dcat:previousVersion,,Version,"))
 
     def test_a_final_newline_is_not_an_appendix_disagreement(self):
         # The comparison is about the element set, not about how either file ends.

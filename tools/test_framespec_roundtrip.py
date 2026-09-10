@@ -144,6 +144,7 @@ class MarkdownLimitsTests(unittest.TestCase):
                 self.assertIn("Second para." if element == "rules" and len(expected) == 2
                               else "Be nice.", str(back.elements[element]))
 
+    @unittest.skipUnless(HAVE_YAML, "round_trip passes through the YAML leg")
     def test_the_loss_is_visible_in_round_trip_output(self):
         elements = {"identifier": "x/y", "guidance": "Be plain.\n\n## Rules\n\nBe nice."}
         frame, _ = yamljson.parse_json(json.dumps(elements), self.p, "file:///t.frame.json")

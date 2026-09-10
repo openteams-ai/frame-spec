@@ -78,7 +78,25 @@ def parse(text, profile, location=None):
                                     "sequences of scalars, so the value is preserved and no "
                                     "structured form is extracted from it", location))
     extras = {"type": type_token} if type_token else {}
-    elements = {ALIASES.get(k, k): v for k, v in fm.items() if k != "type"}
+    # Section 6.2.1: where a document carries both spellings of an aliased key, the
+    # aliased spelling is the one that applies. A comprehension let dict insertion
+    # order decide instead, so `name` won or `title` won depending on which the
+    # author wrote second, and neither reader warned.
+    elements, both = {}, []
+    for key, value in fm.items():
+        if key == "type":
+            continue
+        name = ALIASES.get(key, key)
+        if name in elements:
+            both.append(name)
+            if key not in ALIASES:              # the non-aliased spelling loses
+                continue
+        elements[name] = value
+    for name in both:
+        findings.append(Finding("warning", "both-spellings",
+                                f"front matter carries both spellings of '{name}' "
+                                f"('{REVERSE_ALIASES[name]}' and '{name}'); the aliased spelling "
+                                "applies and the other value is not used", location))
     defaulted = default_identifier(elements, extras, location)
     if defaulted:
         findings.append(defaulted)
@@ -156,10 +174,18 @@ def _items(name, lines):
     return values
 
 
-def write(frame, profile, spec_version="0.3"):
-    """Render a Frame in the Markdown encoding, v0.2-compatible front matter first."""
+def write(frame, profile):
+    """Render a Frame in the Markdown encoding, v0.2-compatible front matter first.
+
+    Section 6.3: a writer preserves a version token the source document carried and
+    MUST NOT invent one for a document that carried none. This encoding requires the
+    `type` key ([Section 6.2.1](#md-structure)), so a source with no token yields the
+    bare sentinel, `type: frame`, rather than this specification's own version. Writing
+    a version the source never claimed would record the converting tool's version as
+    the document's own.
+    """
     content = set(profile.content_elements())
-    fm = {"type": frame.extras.get("type") or f"frame [{spec_version}]"}
+    fm = {"type": frame.extras.get("type") or "frame"}
     skip = derived_names(frame)
     for name in profile.order:
         if name in content or name not in frame.elements or name in skip:

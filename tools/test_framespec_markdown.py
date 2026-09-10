@@ -1,8 +1,9 @@
+import json
 import sys
 import unittest
 from unittest import mock
 
-from framespec import frontmatter, markdown
+from framespec import frontmatter, markdown, yamljson
 from framespec.findings import has_errors
 from framespec.profile import Profile
 
@@ -316,6 +317,76 @@ class DefectRegressionTests(unittest.TestCase):
         self.assertEqual(frame.elements["guidance"], [""])
         self.assertEqual(frame.elements["rules"][0], "real bullet")
         self.assertIn("## Not A Heading", frame.elements["rules"][1])
+
+
+class VersionTokenTests(unittest.TestCase):
+    """Section 6.3: preserve a token the source carried, and never invent one.
+
+    The writer emitted `type: frame [0.3]` for every document, so converting a JSON
+    Frame that claimed no version recorded this specification's version as the
+    document's own claim. Section 6.2.1 requires the key, so the bare sentinel is
+    what a source with no token yields.
+    """
+
+    def setUp(self):
+        self.p = Profile.load()
+
+    def test_the_token_a_source_carried_is_preserved_and_none_is_invented(self):
+        cases = [
+            ("no token", {"identifier": "acme/x", "guidance": "B."}, "type: frame"),
+            ("v0.2 token", {"type": "frame [0.2]", "identifier": "acme/x", "guidance": "B."},
+             "type: frame [0.2]"),
+            ("v0.3 token", {"type": "frame [0.3]", "identifier": "acme/x", "guidance": "B."},
+             "type: frame [0.3]"),
+            ("bare sentinel", {"type": "frame", "identifier": "acme/x", "guidance": "B."},
+             "type: frame"),
+        ]
+        for label, doc, expected in cases:
+            with self.subTest(label):
+                frame, _ = yamljson.parse_json(json.dumps(doc), self.p, "file:///x.frame.json")
+                text = markdown.write(frame, self.p)
+                self.assertIn(f"{expected}\n", text)
+                again, findings = markdown.parse(text, self.p, None)
+                self.assertFalse(has_errors(findings), [str(f) for f in findings])
+                self.assertEqual(again.extras.get("type"), expected.split(": ", 1)[1])
+
+
+class AliasPrecedenceTests(unittest.TestCase):
+    """Section 6.2.1: the aliased spelling applies, whichever order they appear in.
+
+    A comprehension over the front matter let dict insertion order decide, so the
+    answer depended on which spelling the author wrote second.
+    """
+
+    def setUp(self):
+        self.p = Profile.load()
+
+    def test_the_aliased_spelling_wins_in_either_order(self):
+        cases = [
+            ("aliased first", "name: From Name\ntitle: From Title", "title", "From Name"),
+            ("aliased second", "title: From Title\nname: From Name", "title", "From Name"),
+            ("inherits first", "inherits: [a/b]\ncomposition: [c/d]", "composition", ["a/b"]),
+            ("inherits second", "composition: [c/d]\ninherits: [a/b]", "composition", ["a/b"]),
+        ]
+        for label, block, element, expected in cases:
+            with self.subTest(label):
+                if not HAVE_YAML and "[" in block:
+                    self.skipTest("the flow sequence needs a YAML parser")
+                text = ("---\ntype: frame\nidentifier: acme/t\ndescription: D\n"
+                        f"visibility: internal\n{block}\n---\n\nBody.\n")
+                frame, findings = markdown.parse(text, self.p, None)
+                self.assertFalse(has_errors(findings), [str(f) for f in findings])
+                self.assertEqual(frame.elements[element], expected)
+                self.assertIn("both-spellings", [f.code for f in findings])
+
+    def test_one_spelling_alone_warns_about_nothing(self):
+        for block in ("name: Only Name", "title: Only Title"):
+            with self.subTest(block):
+                text = ("---\ntype: frame\nidentifier: acme/t\ndescription: D\n"
+                        f"visibility: internal\n{block}\n---\n\nBody.\n")
+                frame, findings = markdown.parse(text, self.p, None)
+                self.assertNotIn("both-spellings", [f.code for f in findings])
+                self.assertEqual(frame.elements["title"], block.split(": ")[1])
 
 
 class FallbackParserTests(unittest.TestCase):
