@@ -48,7 +48,9 @@ def build_parser():
     modes.add_argument("--round-trip", action="store_true",
                        help="re-encode each Frame through json, yaml, and markdown and report differing elements")
     modes.add_argument("--self-check", action="store_true",
-                       help="check spec/profile/frame-core.csv against the element definitions in spec/frame-spec.md")
+                       help="check spec/profile/frame-core.csv against the element definitions in "
+                            "spec/frame-spec.md, and the draft's prose against the invariants of "
+                            "framespec.speclint")
     modes.add_argument("--compose", action="store_true",
                        help="resolve composition over PATHS given lowest precedence first; print the result as JSON")
     modes.add_argument("--check-profile", action="store_true",
@@ -369,8 +371,11 @@ def main(argv=None):
     if profile is None:
         return 1
     if args.self_check:
-        from framespec import selfcheck
-        findings = selfcheck.self_check(profile_path=args.profile)
+        from framespec import selfcheck, speclint
+        # One mode, two subjects: the element set against the profile, and the prose
+        # against the invariants two review rounds found it breaking. Both are checks
+        # of the specification rather than of a Frame, so both belong behind this flag.
+        findings = selfcheck.self_check(profile_path=args.profile) + speclint.lint()
         bad = has_errors(findings)
         # Under a path header with the findings indented under it, like every other
         # mode. No count line: this mode scans no paths, it checks the draft against

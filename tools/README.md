@@ -78,10 +78,25 @@ draft in all three encodings, driven from
 ```bash
 python tools/validate_frame.py examples spec/fixtures          # validate files or directories
 python tools/validate_frame.py --round-trip spec/fixtures/roundtrip/full.frame.md
-python tools/validate_frame.py --self-check                     # CSV versus the draft's prose
+python tools/validate_frame.py --self-check                     # the draft against the CSV, and against the prose invariants
 python tools/validate_frame.py --check-profile spec/profiles/*.yaml
 python tools/validate_frame.py --compose A.frame.json B.frame.json C.frame.json
 ```
+
+`--self-check` has two subjects. [framespec/selfcheck.py](framespec/selfcheck.py)
+compares the element set as the draft's prose defines it against
+[../spec/profile/frame-core.csv](../spec/profile/frame-core.csv), including
+Appendix B's embedded copy of that file and Section 4.7's level column.
+[framespec/speclint.py](framespec/speclint.py) checks the prose itself against
+five invariants, each one a defect a review of the draft actually found: a key
+word bound to a person or to a role the draft never defines; a value rule with
+no stated disposition, which makes it a rejection path the draft does not admit
+to; a rejection requirement outside Section 3.3, which enumerates them; a rule
+restated in another section in different words without citing it, which is how
+two passages come to disagree; and a key word in a part Section 2.1 calls
+non-normative. The five reduce that class of defect rather than eliminating it:
+each is a string test standing in for a question about meaning, and a
+restatement that reorders a rule across several sentences can still pass.
 
 Section 4.2.2 makes `guidance` MUST be present and MAY be empty, and does not
 say whether an explicit null is empty. This tool takes the permissive reading:
