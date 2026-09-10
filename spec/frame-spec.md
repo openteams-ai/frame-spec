@@ -133,7 +133,7 @@ This document therefore specifies the Frame itself, independent of any encoding,
 Four principles shape the specification.
 
 - **Minimum obligation:** Only what is required for two independent systems to exchange a Frame is mandatory: which Frame this is, and what it says. Everything else is optional in the model, with obligation declared by encodings and by implementation profiles ([Section 7](#profiles)). This follows the guidance of [[RFC2119]](#ref-RFC2119), Section 6, that requirement keywords are to be used "only where it is actually required for interoperation".
-- **Graceful degradation:** A Frame's content is free-form text that may optionally be structured into labeled sections. A reader that does not understand a section MUST treat its content as ordinary guidance and MUST NOT discard it ([Section 4.4.1](#dumb-down)). A minimal Frame and a richly structured Frame are therefore the same kind of object, read at two levels of detail.
+- **Graceful degradation:** A Frame's content is free-form text that may optionally be structured into labeled sections. A reader that does not implement a refinement it recognizes treats the content as ordinary guidance and never discards it. [Section 4.4.1](#dumb-down) states the rule and its scope; this paragraph is a summary and imposes nothing. A minimal Frame and a richly structured Frame are therefore the same kind of object, read at two levels of detail.
 - **Borrowed meaning:** Where an element means the same thing as a term in [[DCTERMS]](#ref-DCTERMS), [[SCHEMA-ORG]](#ref-SCHEMA-ORG), [[PROV-O]](#ref-PROV-O), [[SKOS]](#ref-SKOS), [[DCAT3]](#ref-DCAT3), or [[ADMS]](#ref-ADMS), the element is defined by reference to that term. One relation, composition, has no equivalent in any established vocabulary and is defined here.
 - **Declared variation:** Implementations differ in what they resolve and how they merge. Rather than forbid variation this specification cannot enforce, it requires each implementation to publish a conformance profile stating its behavior ([Section 7](#profiles)), so that authors can know how a layered set of Frames will behave in a given tool.
 
@@ -153,9 +153,9 @@ Frame Spec v0.2 [[FRAME-V02]](#ref-FRAME-V02) is not amended. Its file format is
 
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in BCP 14 [[RFC2119]](#ref-RFC2119) [[RFC8174]](#ref-RFC8174) when, and only when, they appear in all capitals, as shown here.
 
-These key words bind implementations: readers, writers, registries, and conformance profiles. This document places no requirement on a person, and a sentence about what a user or an author does is a statement of fact rather than a requirement.
+These key words bind implementations: readers, writers, and registries. They also bind the documents an implementation produces and consumes, and the registration procedures of [Section 10](#iana). They do not bind a person: this document places no requirement on an author or a user, and a sentence about what either does is a statement of fact rather than a requirement.
 
-Sections 3 through 10 and Appendices A, B, and C are normative. Appendix D records changes from the previous version and is informative.
+Sections 3 through 10 and Appendices A, B, and C are normative. Sections 1 and 2 introduce the document and define its terms and conventions; Appendix D records changes from the previous version. Neither is normative, and neither states a requirement that is not also stated in a normative section.
 
 <a id="terms"></a>
 
@@ -196,6 +196,8 @@ Frame                 the abstract artifact; persists across versions
         version, status, versionNotes, issued,
         guidance and its refinements
         |
+        +-- previousVersion (relation) the Version this one supersedes
+        |
         +-- composition    (relation) ordered references to other Frame
         |                  Versions; the declaring one has precedence
         +-- guards         (relation) Guards to run on output
@@ -205,7 +207,7 @@ Frame                 the abstract artifact; persists across versions
 
 *Figure 1: The Frame data model*
 
-A Frame persists across its versions and carries the elements that identify and describe it, and its lineage (`derivedFrom`). A Frame Version carries the content, the elements that describe a revision, and the relations that can differ between revisions (`composition`, `guards`). A Representation is one encoding of one version; this specification defines no elements on it, because the properties of bytes are carried by the layer that stores or transports them rather than by the Frame. In a single document the Frame-level and version-level elements appear together; the distinction matters to registries, which MAY treat Frame-level elements as shared across versions, and to consumers that must name a version unambiguously, which is done by `identifier` together with `version`.
+A Frame persists across its versions and carries the elements that identify and describe it, and its lineage (`derivedFrom`). A Frame Version carries the content, the elements that describe a revision, and the relations that can differ between revisions (`composition`, `guards`). A Representation is one encoding of one version; this specification defines no elements on it, because the properties of bytes are carried by the layer that stores or transports them rather than by the Frame. In a single document the Frame-level and version-level elements appear together; the distinction matters to registries, which MAY treat Frame-level elements as shared across versions, and to readers that must name a version unambiguously, which is done by `identifier` together with `version`.
 
 <a id="identity"></a>
 
@@ -222,7 +224,7 @@ Two rules govern changes to an identifier and are normative for readers and regi
 
 The second rule makes every fork visible. A Frame carrying `identifier: acme/brand-voice` that is imported into another organization's registry and stored as `contoso/brand-voice` MUST carry `derivedFrom: acme/brand-voice`. How a registry derives a new identifier is a profile concern ([Section 7](#profiles)), not a model one. A registry that wants an identifier no rename can invalidate MAY mint an opaque one, a UUID [[RFC9562]](#ref-RFC9562) for instance, and use `canonicalSource` to say how it resolves; the cost is that a reference then carries no information a reviewer can read, which the chain of authority in [[INTHUB]](#ref-INTHUB) depends on.
 
-A distribution mechanism may assign its own artifact identity at the envelope layer, as a package manager or content-addressed store does. Such an identity is distinct from the Frame's `identifier`. A distribution mechanism SHOULD record the Frame's `identifier` alongside its own and is bound by the rules above if it changes the Frame-level identifier. The `canonicalSource` element is where a Frame may point at its authoritative envelope location.
+A distribution mechanism may assign its own artifact identity at the envelope layer, as a package manager or content-addressed store does. Such an identity is distinct from the Frame's `identifier`. A registry or other distribution mechanism SHOULD record the Frame's `identifier` alongside its own and is bound by the rules above if it changes the Frame-level identifier. The `canonicalSource` element is where a Frame may point at its authoritative envelope location.
 
 <a id="conformance-model"></a>
 
@@ -232,7 +234,9 @@ Conformance is defined at two levels.
 
 A *document* conforms to an encoding of this specification if it satisfies that encoding's requirements ([Section 6](#encodings)). A document does not conform to "the Frame Specification" in the abstract; it conforms to the Markdown, YAML, or JSON encoding. The registered value vocabularies of [Section 4](#elements) are RECOMMENDED for documents; a value that is not registered does not make a document non-conformant, and readers preserve it.
 
-An *implementation* conforms to this specification if it satisfies the requirements of [Section 4](#elements), [Section 5](#composition), and [Section 3.2](#identity) for the encodings it supports, and publishes a conformance profile ([Section 7](#profiles)) declaring its choices among the behaviors this specification leaves optional.
+Two conditions, and only these two, are errors in a document: a mandatory element ([Section 4.2](#required)) that is absent and cannot be defaulted under [Section 6.1](#enc-common), and an element the encoding or the profile in force treats as non-repeatable carrying more than one value. A reader MUST report either as an error and MAY decline to use the document. Every other rule in this specification that a document breaks is preserved and, where the rule says so, warned about. This is what makes the specification's central promise checkable: a reader rejects a Frame for two reasons, and a Frame that carries something the reader does not understand is not one of them.
+
+An *implementation* conforms to this specification if it satisfies the requirements of [Section 4](#elements), [Section 5](#composition), [Section 3.2](#identity), and [Section 9](#security); satisfies [Section 6](#encodings) for each encoding it reads or writes; and publishes a conformance profile ([Section 7](#profiles)) declaring its choices among the behaviors this specification leaves optional. [Section 6](#encodings) is named explicitly because the alias requirement of [Section 6.2.1](#md-structure) is the whole mechanism of v0.2 compatibility, and an implementation that met every other section while ignoring it would not interoperate with a v0.2 reader.
 
 <a id="elements"></a>
 
@@ -244,7 +248,7 @@ An *implementation* conforms to this specification if it satisfies the requireme
 
 Each element is defined by a name, a label, a definition, an obligation, whether it is repeatable, the vocabulary term it corresponds to, and a comment. This follows the definition-and-comment convention of [[DCTERMS]](#ref-DCTERMS). Obligation uses the keywords of [Section 2.1](#reqlang) and applies at the model layer; encodings and profiles MAY require an element that the model leaves optional, and MUST NOT make a mandatory element optional.
 
-An element's correspondence to an established term is stated as "maps to". Where the correspondence is exact, the element means what the term means. Where it is partial, this is stated. Where no term exists, the element is marked Frame-native and the reason is given. Per [[DCAP]](#ref-DCAP), a profile "may add technical constraints on use of properties (such as repeatability), or provide more narrow interpretations of definitions for particular purposes, but they should not contradict the meaning of the properties intended by their maintainers"; the same rule binds this document's use of borrowed terms and binds implementation profiles' use of the elements defined here.
+An element's correspondence to an established term is stated as "maps to". Where the correspondence is exact, the element means what the term means. Where it is partial, this is stated, and the difference is given. A row may also name a secondary term, which is a term a consumer MAY emit in addition to the primary one and which is never a substitute for it. Where a row states two fits, they apply to the two terms in that order. Where no term exists, the element is marked Frame-native and the reason is given. Per [[DCAP]](#ref-DCAP), a profile "may add technical constraints on use of properties (such as repeatability), or provide more narrow interpretations of definitions for particular purposes, but they should not contradict the meaning of the properties intended by their maintainers"; the same rule binds this document's use of borrowed terms and binds implementation profiles' use of the elements defined here.
 
 Element names are given in lower camel case. Encodings state how names are spelled in each syntax.
 
@@ -301,8 +305,8 @@ The following elements describe the Frame or a version of it. None is mandatory 
 - **Definition:** An account of the Frame: what it is for and when it should be used.
 - **Obligation:** SHOULD
 - **Repeatable:** No
-- **Maps to:** `dcterms:description` [[DCTERMS]](#ref-DCTERMS); `schema:abstract` [[SCHEMA-ORG]](#ref-SCHEMA-ORG)
-- **Comment:** One or two sentences are RECOMMENDED. This specification imposes no length limit.
+- **Maps to:** `dcterms:description` [[DCTERMS]](#ref-DCTERMS); `schema:abstract` [[SCHEMA-ORG]](#ref-SCHEMA-ORG) (partial: that term is "a short description that summarizes" a work, and this element has no length limit)
+- **Comment:** One or two sentences are enough for the purpose. This specification imposes no length limit.
 
 <a id="el-version"></a>
 
@@ -313,7 +317,7 @@ The following elements describe the Frame or a version of it. None is mandatory 
 - **Obligation:** SHOULD
 - **Repeatable:** No
 - **Maps to:** `dcat:version` [[DCAT3]](#ref-DCAT3); `schema:version` [[SCHEMA-ORG]](#ref-SCHEMA-ORG)
-- **Comment:** Tracks the Frame's own revision history, not the version of this specification. Semantic Versioning [[SEMVER]](#ref-SEMVER) is RECOMMENDED. Registries SHOULD require `version` on publication even though the model does not require it on exchange. A Frame Version's content MUST NOT change once the Version has been issued: content that changes is a new Version. Without that, a `pinned-ref` would name nothing stable, and neither the version-selection policy of [Section 5.2](#declared-variation) nor the identical-precedence guarantee of that section would give an author a reproducible result. A system that cannot enforce this MUST say so in its conformance profile ([Section 7](#profiles)).
+- **Comment:** Tracks the Frame's own revision history, not the version of this specification. A writer SHOULD use Semantic Versioning [[SEMVER]](#ref-SEMVER). Registries SHOULD require `version` on publication even though the model does not require it on exchange. The content a Frame Version carries MUST NOT be revised once the Version has been issued: revised content is a new Version. Without that, a `pinned-ref` would name nothing stable, and neither the version-selection policy of [Section 5.2](#declared-variation) nor the identical-precedence guarantee of that section would give an author a reproducible result. Writing the same Version in another encoding produces another Representation of it, and where the target encoding cannot express a structure the value carries, [Section 4.4.1](#dumb-down) applies ([Section 6.2.3](#md-terminology) is the case that arises); neither is a revision. A system that cannot enforce this SHOULD record it in the notes of its conformance profile ([Appendix C](#profile-template)).
 
 <a id="el-versionnotes"></a>
 
@@ -379,7 +383,7 @@ The following elements describe the Frame or a version of it. None is mandatory 
 - **Obligation:** MAY
 - **Repeatable:** No
 - **Maps to:** `dcterms:license` [[DCTERMS]](#ref-DCTERMS)
-- **Comment:** A URI or an SPDX license identifier [[SPDX]](#ref-SPDX) is RECOMMENDED. Cross-organization exchange, which [[INTHUB]](#ref-INTHUB) anticipates for "the vast majority of Frames", depends on this being stated.
+- **Comment:** A writer SHOULD emit a URI or an SPDX license identifier [[SPDX]](#ref-SPDX). Cross-organization exchange, which [[INTHUB]](#ref-INTHUB) anticipates for "the vast majority of Frames", depends on this being stated.
 
 <a id="el-issued"></a>
 
@@ -390,7 +394,7 @@ The following elements describe the Frame or a version of it. None is mandatory 
 - **Obligation:** MAY
 - **Repeatable:** No
 - **Maps to:** `dcterms:issued` [[DCTERMS]](#ref-DCTERMS)
-- **Comment:** The value MUST be a date or date-time in the format of [[RFC3339]](#ref-RFC3339).
+- **Comment:** The value MUST be a date or date-time in the format of [[RFC3339]](#ref-RFC3339). A reader MUST preserve a value that is not in that format and MUST NOT reject a Frame for carrying one; it SHOULD warn. This is the disposition [Section 4.3.5](#el-status) and [Section 4.3.8](#el-visibility) give an unregistered value, for the same reason: rejecting a Frame over a malformed date would lose content that is otherwise intact.
 
 <a id="el-canonicalsource"></a>
 
@@ -409,7 +413,7 @@ The following elements describe the Frame or a version of it. None is mandatory 
 
 The content of a Frame is its `guidance`. Ten optional elements refine `guidance` to a named kind of content. Each refinement is a subproperty of `guidance` in the sense of [[DCTERMS]](#ref-DCTERMS): a value of a refinement is also a value of `guidance`.
 
-All ten are defined with obligation MAY and repeatable Yes. Their definitions are those of [[INTHUB]](#ref-INTHUB), Section 4.3, which lists them as what a Frame carries.
+All ten are defined with obligation MAY and repeatable Yes. Their definitions are given below and are drawn from [[INTHUB]](#ref-INTHUB), Section 4.3, which lists them as what a Frame carries.
 
 - **rules** (Rules): What is and is not acceptable behavior within the scope.
 - **terminology** (Terminology): The words, names, and definitions specific to the organization, function, or project. See [Section 4.4.2](#terminology-form).
@@ -554,10 +558,10 @@ Composition is the relation by which several Frames become one body of context. 
 5. Only content elements and `guards` compose. The values of `guidance` and its refinements combine according to rule 6. The values of `guards` accumulate: a Guard declared by any Frame in the composed set applies to the result. Every other element is the declaring Frame's own and MUST NOT be inherited from a composed Frame: the elements that describe the Frame or the version rather than its content, such as `identifier` and `maintainer`, and `composition` itself. That set is the complement of the rule's first sentence, and is every element in the registry of [Section 10.2](#iana-elements) that is neither `guidance`, nor refines `guidance`, nor is `guards`.
 6. Resolution follows repeatability. For a repeatable content element, composition concatenates the values of all composed Frames in order of increasing precedence. For a content element that a profile declares non-repeatable, the value of the highest-precedence Frame in which the element is present replaces all others. An empty value is meaningful and is distinct from no value: it contributes nothing when values concatenate, since there is nothing to add, but it is present for the purpose of replacement, which is how a Frame clears a value it would otherwise inherit. An element carrying no values at all is equivalent to omitting the element. A document that supplies several values for a content element the profile in force declares non-repeatable does not conform to that profile. This specification does not say which value a reader takes in that case; the handling is a profile concern ([Section 7](#profiles)). Where a profile deduplicates identical values, the first occurrence is the one kept.
 7. A reader that resolves composition and encounters a reference it cannot resolve MUST NOT silently ignore it; it MUST either fail or report the unresolved reference. A reader that resolves no composition MUST declare so in its conformance profile and SHOULD surface the presence of unresolved composition to the user.
-8. A reader that resolves composition MUST detect cycles and MUST NOT loop.
+8. A reader that resolves composition MUST detect cycles and MUST NOT loop. It MUST either fail or report the cycle, as rule 7 requires for a reference it cannot resolve.
 9. Reference syntax is classified, not enforced. A reader classifies each reference according to [Section 5.3](#ref-syntax) and declares in its conformance profile which forms it resolves. Reference syntax is never grounds for rejecting a Frame.
 
-Rules 1 through 4 are those of [[FRAME-V02]](#ref-FRAME-V02), carried over unchanged except that rule 4 now requires the declaration it previously recommended.
+Rules 1 through 4 restate the inheritance semantics of [[FRAME-V02]](#ref-FRAME-V02) rather than adding to them, with two differences: rule 4 now requires the declaration v0.2 recommended, and rule 2's second sentence, on Frames activated in a session, has no v0.2 counterpart, since v0.2 has no session composition. v0.2's own second semantic, that all parent guidance applies unless the child overrides it, is rules 5 and 6 here.
 
 Rule 5 exists for two reasons. For the descriptive elements, a Frame that omits `description` must not silently acquire its parent's; a Frame's description is its own. For `guards`, the reverse holds: a Guard attached by a composed Frame must not be silently dropped by a Frame that does not mention it. [[INTHUB]](#ref-INTHUB) gives the motivating case, a compliance Frame "pointing to a Guard that must be run after every output"; if a child could remove that Guard by omission, the compliance Frame would not do what it exists to do. Excluding a Frame from the composed set entirely removes its Guards along with its content.
 
@@ -571,7 +575,7 @@ Rule 7's second sentence exists so that rule 4 and rule 7 do not conflict. An im
 
 ### 5.2. Declared Variation
 
-[[INTHUB]](#ref-INTHUB), Section 8.1, asks that "a Frame inherited by one Cog will be interpreted the same way by another." This specification guarantees identical interpretation of content, since [Section 4.4.1](#dumb-down) forbids content loss, and identical precedence. It permits declared variation in resolution depth (rule 4), in merge narrowing (rule 6), and in the choice of Frame Version for a reference that carries none. Such a reference names a Frame, and which of its Versions is composed is a profile concern: an implementation MUST declare its selection policy in its conformance profile ([Section 7](#profiles)). This specification does not constrain that policy, because a plausible constraint would rest on `status`, whose registered values are RECOMMENDED rather than required ([Section 4.3.5](#el-status)). An implementation that resolves composition MUST make available, to the party that requested the resolution, the Frame Version it resolved for each reference, so that what an activation inherited is recoverable afterwards; rule 7 covers only the references it could not resolve. Full uniformity would require making transitive resolution mandatory, which [[FRAME-V02]](#ref-FRAME-V02) chose not to do and which at least one implementation does not perform [[FRAME-SPEC-21]](#ref-FRAME-SPEC-21). The tradeoff is stated rather than hidden: an author who needs identical behavior across tools consults their conformance profiles, which exist so that the variation is visible.
+[[INTHUB]](#ref-INTHUB), Section 8.1, asks that "a Frame inherited by one Cog will be interpreted the same way by another." This specification guarantees identical interpretation of the content both readers recognize, since [Section 4.4.1](#dumb-down) forbids content loss, and identical precedence. The qualification is necessary: a refinement registered after a reader was built is an unrecognized element to that reader, which preserves the value but does not present it as guidance ([Section 4.4.1](#dumb-down), [Section 4.6](#extensions)). Which elements a reader recognizes follows from the specification version it implements, which its conformance profile states, so this variation is declared rather than hidden. It permits declared variation in resolution depth (rule 4), in merge narrowing (rule 6), and in the choice of Frame Version for a reference that carries none. Such a reference names a Frame, and which of its Versions is composed is a profile concern: an implementation MUST declare its selection policy in its conformance profile ([Section 7](#profiles)). This specification does not constrain that policy, because a plausible constraint would rest on `status`, whose registered values are RECOMMENDED rather than required ([Section 4.3.5](#el-status)). An implementation that resolves composition MUST make available, to the party that requested the resolution, the Frame Version it resolved for each reference, so that what an activation inherited is recoverable afterwards; rule 7 covers only the references it could not resolve. Full uniformity would require making transitive resolution mandatory, which [[FRAME-V02]](#ref-FRAME-V02) chose not to do and which at least one implementation does not perform [[FRAME-SPEC-21]](#ref-FRAME-SPEC-21). The tradeoff is stated rather than hidden: an author who needs identical behavior across tools consults their conformance profiles, which exist so that the variation is visible.
 
 <a id="ref-syntax"></a>
 
@@ -579,7 +583,7 @@ Rule 7's second sentence exists so that rule 4 and rule 7 do not conflict. An im
 
 The values of `composition`, `guards`, and `derivedFrom` are references. This specification defines a grammar that classifies a reference by form. It does not define how any form is resolved; that is the concern of the implementation that holds the referenced artifact, and each implementation declares which forms it resolves.
 
-A `qualified-ref` and a `name-ref` are not globally unique, so they are resolved in the resolver's own context, and an implementation MUST declare that context in its conformance profile ([Section 7](#profiles)). A consequence worth stating: the same reference may resolve to different Frames in different contexts, which is why a Frame whose references must survive a move between registries SHOULD use a `uri-ref`, and why `canonicalSource` ([Section 4.3.11](#el-canonicalsource)) exists for a copy to point at the place its updates come from.
+Every form but a `uri-ref` is resolved in the resolver's own context, and an implementation MUST declare that context in its conformance profile ([Section 7](#profiles)). A `pinned-ref` is a `qualified-ref` with a version appended, so pinning a version does not make the publisher segment globally unique; a `path-ref` resolves against a filesystem or a package layout. A consequence worth stating: the same reference may resolve to different Frames in different contexts, which is why a Frame whose references must survive a move between registries SHOULD use a `uri-ref`, and why `canonicalSource` ([Section 4.3.11](#el-canonicalsource)) exists for a copy to point at the place its updates come from.
 
 ```abnf
 frame-ref     = pinned-ref / qualified-ref / uri-ref
@@ -617,7 +621,7 @@ This grammar is also the form in which a Cog or Op manifest names the Frames it 
 
 ### 5.4. Session Composition
 
-When an application combines Frames that do not declare each other, as when a user activates a company Frame, a department Frame, and a project Frame together, rules 2, 3, 5, and 6 apply with the activation order as the precedence order. The application is the reader for the purposes of rules 7 through 9. The result is that the layering a desktop application performs at runtime and the resolution a registry performs from declared composition are governed by the same rules and produce comparable results.
+When an application combines Frames that do not declare each other, as when a user activates a company Frame, a department Frame, and a project Frame together, rules 2, 3, 5, and 6 apply with the activation order as the precedence order. The application is the reader for the purposes of rules 7 through 9. Rules 1 and 4 do not apply: rule 1 governs a declaration this case has none of, and rule 4 governs transitive resolution of declared references, so an activated Frame that declares composition of its own resolves under rule 4 as it would anywhere. The result is that the layering a desktop application performs at runtime and the resolution a registry performs from declared composition are governed by the same rules and produce comparable results.
 
 <a id="composition-example"></a>
 
@@ -625,7 +629,7 @@ When an application combines Frames that do not declare each other, as when a us
 
 Three Frames: `acme/company-core`, composed by `acme/brand-voice`, composed by `acme/q4-playbook`. Each carries `rules` (repeatable), `style` (repeatable at the model layer), a `description`, and the first carries a `guards` reference.
 
-The result below assumes two things a profile declares rather than this specification: that the reader resolves composition transitively, since rule 4 makes that OPTIONAL and a non-transitive reader composes only `acme/brand-voice`, omitting `acme/company-core`'s rule and its Guard; and that its policy selects the Versions shown, since the references carry no version ([Section 5.2](#declared-variation)).
+The result below assumes two things a profile declares rather than this specification: that the reader resolves composition transitively, since rule 4 makes that OPTIONAL and a non-transitive reader composes only `acme/brand-voice`, omitting `acme/company-core`'s rule and its Guard; and that its policy selects one Version of each composed Frame, since the references carry no version and the figure names none ([Section 5.2](#declared-variation)).
 
 ```
 acme/company-core            (lowest precedence)
@@ -701,11 +705,11 @@ The Markdown encoding is the file format of [[FRAME-V02]](#ref-FRAME-V02). A doc
 
 A document is a Markdown file beginning with a YAML front matter block delimited by lines consisting of three hyphens, followed by a Markdown body.
 
-The front matter is a YAML mapping [[YAML12]](#ref-YAML12). Its keys are element names, with two aliases retained from v0.2: the key `name` denotes `title`, and the key `inherits` denotes `composition`. A writer producing this encoding MUST use the aliased spellings so that v0.2 readers continue to accept the document. A reader MUST accept either spelling, and where a document carries both, the aliased spelling is the one that applies, since it is the spelling this encoding requires of a writer.
+The front matter is a YAML mapping [[YAML12]](#ref-YAML12). Its keys are element names, with one exception and two aliases. The exception is `type`, which is this encoding's sentinel rather than an element: it is not in the registry of [Section 10.2](#iana-elements), the model has no place for it, and the rules of [Section 4.6](#extensions) for an unrecognized element do not apply to it. The aliases are retained from v0.2: the key `name` denotes `title`, and the key `inherits` denotes `composition`. A writer producing this encoding MUST use the aliased spellings so that v0.2 readers continue to accept the document. A reader MUST accept either spelling, and where a document carries both, the aliased spelling is the one that applies, since it is the spelling this encoding requires of a writer. The other value is then not used, which is the one place this encoding discards a value a document carries, so a reader SHOULD warn that the document carried both.
 
 A repeatable element MAY be written as a scalar or as a sequence; a scalar is exactly one value. A writer MUST emit a sequence, so that documents a tool produces carry one shape. A scalar is not split on any delimiter: `maintainer: Acme, Inc.` is one value, because two repeatable elements, `maintainer` and `versionNotes`, carry values in which a comma occurs literally.
 
-A front matter value MUST be a scalar or a sequence of scalars. This encoding defines no front matter syntax for a value with internal structure, such as a `terminology` concept ([Section 4.4.2](#terminology-form)); [Section 6.2.2](#md-body) carries such a value in the body instead. A reader that encounters a nested mapping or sequence MUST NOT reject the document: it MUST preserve the value, MUST NOT extract a structured form from it, and SHOULD warn.
+A writer MUST NOT emit a front matter value that is not a scalar or a sequence of scalars. This encoding defines no front matter syntax for a value with internal structure, such as a `terminology` concept ([Section 4.4.2](#terminology-form)); [Section 6.2.2](#md-body) carries such a value in the body instead. The constraint binds writers only, because [[FRAME-V02]](#ref-FRAME-V02) imposes none and every v0.2 document conforms here ([Section 1.3](#rel-v02)). A reader that encounters a nested mapping or sequence MUST NOT reject the document: it MUST preserve the value, MUST NOT extract a structured form from it, and SHOULD warn.
 
 The key `type` is REQUIRED in this encoding. It is the only one: a key is mandatory here only where two systems cannot exchange the document without it ([[RFC2119]](#ref-RFC2119), Section 6), and `type` is the sentinel a reader needs to tell a Frame from any other Markdown file. `name`, `description` and `visibility` are REQUIRED by [[FRAME-V02]](#ref-FRAME-V02) and are SHOULD here; a reader MUST NOT reject a document for omitting one. A writer SHOULD emit all four, so that documents it produces remain readable by a v0.2 reader.
 
@@ -825,7 +829,7 @@ terminology:
 
 ### 6.4. JSON Encoding
 
-A document is a single JSON object [[RFC8259]](#ref-RFC8259) whose members are element names in lower camel case. The structure is that of the YAML encoding: repeatable elements are arrays, non-repeatable elements are strings, and a structured `terminology` value is an array of objects with the members `term`, `definition`, and optionally `altTerms`.
+A document is a single JSON object [[RFC8259]](#ref-RFC8259) whose members are element names in lower camel case. The structure is that of the YAML encoding ([Section 6.3](#enc-yaml)), including its one exception: repeatable elements are arrays and non-repeatable elements are strings, except `guidance`, which is a string because a document has exactly one `guidance` value. A structured `terminology` value is an array of objects with the members `term`, `definition`, and optionally `altTerms`.
 
 A document MAY include a `@context` member whose value maps element names to the vocabulary terms of [Appendix A](#crosswalk), and a `@type` member with the value `Frame`, making the document a JSON-LD document [[JSON-LD11]](#ref-JSON-LD11). Readers that do not process JSON-LD MUST preserve these members as they would any unrecognized element.
 
@@ -914,7 +918,7 @@ Loading a Frame that composes others extends trust to every Frame in the compose
 
 ### 9.4. Identity Is a Claim
 
-An `identifier` is asserted by the Frame. A Frame may claim any identifier, including one belonging to a Frame its author does not control. The identity rules of [Section 3.2](#identity) make a change of identifier visible through `derivedFrom`; they do not prevent an attacker from omitting `derivedFrom`. Consumers that need to know whether a Frame is the one it claims to be MUST rely on a registry's attestation or on a digest of the bytes obtained through a trusted channel, not on the identifier alone. This document defines no element for such a digest, and could not usefully: a digest carried inside a document cannot describe that document, since adding it changes the bytes it would have to describe. `canonicalSource` helps a consumer find the authoritative copy; it does not prove that the copy in hand matches it.
+An `identifier` is asserted by the Frame. A Frame may claim any identifier, including one belonging to a Frame its author does not control. The identity rules of [Section 3.2](#identity) make a change of identifier visible through `derivedFrom`; they do not prevent an attacker from omitting `derivedFrom`. An implementation that needs to establish whether a Frame is the one it claims to be MUST rely on a registry's attestation or on a digest of the bytes obtained through a trusted channel, not on the identifier alone. This document defines no element for such a digest, and could not usefully: a digest carried inside a document cannot describe that document, since adding it changes the bytes it would have to describe. `canonicalSource` helps a consumer find the authoritative copy; it does not prove that the copy in hand matches it.
 
 <a id="visibility-security"></a>
 
@@ -1061,7 +1065,7 @@ Initial contents:
 
 ### 10.5. Frame Refinements Registry
 
-IANA is requested to create a registry named "Frame Refinements". The registration policy is Specification Required [[RFC8126]](#ref-RFC8126). Each entry consists of an element name (which MUST also be registered in the Frame Element Names registry), the label used to recognize it in the Markdown encoding, the element it refines, and a reference. Labels are compared case-insensitively and MUST be unique within the registry under that comparison.
+IANA is requested to create a registry named "Frame Refinements". The registration policy is Specification Required [[RFC8126]](#ref-RFC8126). Each entry consists of an element name (which MUST also be registered in the Frame Element Names registry), the label used to recognize it in the Markdown encoding, and a reference. The element it refines is recorded once, in the Frame Element Names registry ([Section 10.2](#iana-elements)); recording it in both would be two statements of one fact, which can drift. Labels are compared case-insensitively and MUST be unique within the registry under that comparison.
 
 Initial contents: the ten refinements of [Section 4.4](#refinements), each refining `guidance`, with the labels given in [Section 6.2.2](#md-body), with reference to this document.
 
@@ -1079,6 +1083,9 @@ Initial contents: the ten refinements of [Section 4.4](#refinements), each refin
 <a id="ref-COMMONMARK"></a>
 **[COMMONMARK]** MacFarlane, J., "CommonMark Spec", Version 0.31.2, January 2024, <https://spec.commonmark.org/0.31.2/>.
 
+<a id="ref-DCAP"></a>
+**[DCAP]** Dublin Core Metadata Initiative, "Guidelines for Dublin Core Application Profiles", May 2009, <https://www.dublincore.org/specifications/dublin-core/profile-guidelines/>.
+
 <a id="ref-DCAT3"></a>
 **[DCAT3]** W3C, "Data Catalog Vocabulary (DCAT) - Version 3", August 2024, <https://www.w3.org/TR/vocab-dcat-3/>.
 
@@ -1090,6 +1097,9 @@ Initial contents: the ten refinements of [Section 4.4](#refinements), each refin
 
 <a id="ref-FRAME-V02"></a>
 **[FRAME-V02]** "Frame Spec v0.2.0", August 2026, [spec/v0.2.md](v0.2.md) in this repository.
+
+<a id="ref-JSON-LD11"></a>
+**[JSON-LD11]** W3C, "JSON-LD 1.1", July 2020, <https://www.w3.org/TR/json-ld11/>.
 
 <a id="ref-PROV-O"></a>
 **[PROV-O]** W3C, "PROV-O: The PROV Ontology", April 2013, <https://www.w3.org/TR/prov-o/>.
@@ -1136,6 +1146,9 @@ Initial contents: the ten refinements of [Section 4.4](#refinements), each refin
 <a id="ref-SKOS"></a>
 **[SKOS]** W3C, "SKOS Simple Knowledge Organization System Reference", August 2009, <https://www.w3.org/TR/skos-reference/>.
 
+<a id="ref-SPDX"></a>
+**[SPDX]** The Linux Foundation, "The System Package Data Exchange (SPDX) Specification", 2024, <https://spdx.github.io/spdx-spec/>.
+
 <a id="ref-YAML12"></a>
 **[YAML12]** YAML Language Development Team, "YAML Ain't Markup Language (YAML) Version 1.2, Revision 1.2.2", October 2021, <https://yaml.org/spec/1.2.2/>.
 
@@ -1149,17 +1162,11 @@ Initial contents: the ten refinements of [Section 4.4](#refinements), each refin
 <a id="ref-DC-USAGE"></a>
 **[DC-USAGE]** Dublin Core Metadata Initiative, "Using Dublin Core", November 2005, <https://www.dublincore.org/specifications/dublin-core/usageguide/>.
 
-<a id="ref-DCAP"></a>
-**[DCAP]** Dublin Core Metadata Initiative, "Guidelines for Dublin Core Application Profiles", May 2009, <https://www.dublincore.org/specifications/dublin-core/profile-guidelines/>.
-
 <a id="ref-FRAME-SPEC-21"></a>
 **[FRAME-SPEC-21]** openteams-ai/frame-spec, issue 21, "Investigation: inherits field and frame composition behavior in Collab", July 2026, <https://github.com/openteams-ai/frame-spec/issues/21>.
 
 <a id="ref-INTHUB"></a>
 **[INTHUB]** Oliphant, T., "The Distributed AI Economy: Intelligence Hubs, Frames, Cogs, Ops, and the Accountability Plane (Revision 9)", August 2026, <https://github.com/openteams-ai/inthub-whitepaper>.
-
-<a id="ref-JSON-LD11"></a>
-**[JSON-LD11]** W3C, "JSON-LD 1.1", July 2020, <https://www.w3.org/TR/json-ld11/>.
 
 <a id="ref-NEBARI-FRAMES"></a>
 **[NEBARI-FRAMES]** nebari-dev, "Nebari Frames", 2026, <https://github.com/nebari-dev/nebari-frames>.
@@ -1179,22 +1186,19 @@ Initial contents: the ten refinements of [Section 4.4](#refinements), each refin
 <a id="ref-SINGAPORE"></a>
 **[SINGAPORE]** Dublin Core Metadata Initiative, "The Singapore Framework for Dublin Core Application Profiles", January 2008, <https://www.dublincore.org/specifications/dublin-core/singapore-framework/>.
 
-<a id="ref-SPDX"></a>
-**[SPDX]** The Linux Foundation, "The System Package Data Exchange (SPDX) Specification", 2024, <https://spdx.github.io/spdx-spec/>.
-
 <a id="crosswalk"></a>
 
 ## Appendix A. Relationship to Other Vocabularies
 
 This appendix collects the correspondences stated element by element in [Section 4](#elements). An implementation that emits JSON-LD [[JSON-LD11]](#ref-JSON-LD11) uses these as its context.
 
-One systematic difference applies to every element whose value is a reference, which are `composition`, `guards`, `derivedFrom` and `previousVersion`. This specification carries such values as strings, because a reference here need not be a URI ([Section 5.3](#ref-syntax)), while the terms they map to take a node as their value: `dcterms:requires` is intended for non-literal values, and `prov:wasDerivedFrom` has `prov:Entity` as its range. An implementation emitting JSON-LD MUST coerce such a value to a node rather than emit a string literal, and cannot do so for a reference form that is not a URI. The correspondence is in the meaning of the relation, not in the value's form.
+One systematic difference applies to every element whose value is a reference, which are `composition`, `guards` and `derivedFrom` ([Section 5.3](#ref-syntax)). This specification carries such values as strings, because a reference here need not be a URI ([Section 5.3](#ref-syntax)), while the terms they map to take a node as their value: `dcterms:requires` is intended for non-literal values, and `prov:wasDerivedFrom` has `prov:Entity` as its range. An implementation emitting JSON-LD MUST coerce such a value to a node rather than emit a string literal, and cannot do so for a reference form that is not a URI. The correspondence is in the meaning of the relation, not in the value's form.
 
 | Element | Term | Fit |
 |---|---|---|
 | identifier | dcterms:identifier | exact |
 | title | dcterms:title; schema:name | exact |
-| description | dcterms:description; schema:abstract | exact |
+| description | dcterms:description; schema:abstract | exact; partial |
 | version | dcat:version; schema:version | exact |
 | versionNotes | adms:versionNotes | exact |
 | status | schema:creativeWorkStatus | exact |
@@ -1204,11 +1208,11 @@ One systematic difference applies to every element whose value is a reference, w
 | license | dcterms:license | exact |
 | issued | dcterms:issued | exact |
 | canonicalSource | schema:sameAs; prov:specializationOf | exact; secondary |
-| guidance | (none; nearest schema:text) | Frame-native |
+| guidance | (none; nearest schema:text and dcterms:description) | Frame-native |
 | refinements | subproperties of guidance | Frame-native |
 | terminology values | skos:Concept, skos:prefLabel, skos:definition, skos:altLabel | exact |
 | composition | (none) | Frame-native |
-| derivedFrom | prov:wasDerivedFrom; prov:hadPrimarySource | exact |
+| derivedFrom | prov:wasDerivedFrom; prov:hadPrimarySource | exact; secondary |
 | previousVersion | dcat:previousVersion; prov:wasRevisionOf | exact |
 | guards | dcterms:requires | exact |
 
@@ -1220,7 +1224,7 @@ The Frame-native terms (`guidance`, the ten refinements, and `composition`) requ
 
 ## Appendix B. Machine-Readable Profile
 
-The element set of [Section 4](#elements) is published as a tabular application profile in the format of [[DCTAP]](#ref-DCTAP), with three columns beyond DCTAP's own: `mapsTo`, the crosswalk term; `refines`, the refined element; and `level`, the entity the element describes ([Section 3](#model)). DCTAP's own twelve elements cannot express the last three, and the element registry of [Section 10.2](#iana-elements) records all three, so the file carries everything an initial registration needs. A validator that reads this file can check obligation, repeatability, and value constraints without hard-coding the element set. Where a column and an element's definition in [Section 4](#elements) disagree, the definition governs; the columns carry the constraints DCTAP can express, and two elements accept a value the columns do not: `license` accepts an SPDX identifier as well as a URI ([Section 4.3.9](#el-license)), and `issued` accepts a date as well as a date-time ([Section 4.3.10](#el-issued)). The companion file `frame-core.csv` published with this specification is identical to the block below.
+The element set of [Section 4](#elements) is published as a tabular application profile in the format of [[DCTAP]](#ref-DCTAP), with three columns beyond DCTAP's own: `mapsTo`, the crosswalk term; `refines`, the refined element; and `level`, the entity the element describes ([Section 3](#model)). DCTAP's own twelve elements cannot express any of the three. The element registry of [Section 10.2](#iana-elements) records the last two, so the file carries everything an initial registration needs; `mapsTo` is published here rather than in the registry. A validator that reads this file can check obligation, repeatability, and value constraints without hard-coding the element set. A value-constraint mismatch is a warning and never a rejection, which is the disposition [Section 4.3.5](#el-status) gives an unregistered value and rule 9 of [Section 5.1](#composition-rules) gives a reference: the `pattern` constraint on `composition`, `derivedFrom` and `guards` names the grammar of [Section 5.3](#ref-syntax) so a reader can classify a reference, not so a validator can reject one. Where a column and an element's definition in [Section 4](#elements) disagree, the definition governs; the columns carry the constraints DCTAP can express, and three columns disagree with a definition. `license` accepts an SPDX identifier as well as a URI ([Section 4.3.9](#el-license)), and `issued` accepts a date as well as a date-time ([Section 4.3.10](#el-issued)); in both the definition is the wider of the two. The third runs the other way: `guidance` is `repeatable = true`, which is a property of composition rather than of a document, since a document carries exactly one `guidance` value ([Section 4.2.2](#el-guidance), [Section 6.3](#enc-yaml)). The companion file `frame-core.csv` published with this specification is identical to the block below.
 
 ```csv
 propertyID,propertyLabel,mandatory,repeatable,valueNodeType,valueDataType,valueConstraint,valueConstraintType,mapsTo,refines,level,note
@@ -1292,7 +1296,8 @@ Encodings written:     markdown
 Resolves composition:  yes, transitive, with cycle detection
 Version selection:     not performed; a pinned-ref names its own
                         version
-Resolver context:      not applicable; resolves pinned-ref only
+Resolver context:      the registry instance the reader is
+                        configured against
 Reference forms:       pinned-ref only
 Rule 6 narrowings:     dedup: all repeatable elements (first
                         occurrence kept); replace-by-key: terminology
