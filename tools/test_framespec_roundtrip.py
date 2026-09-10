@@ -124,14 +124,38 @@ class MarkdownLimitsTests(unittest.TestCase):
     def setUp(self):
         self.p = Profile.load()
 
+    def test_what_the_encoding_can_express_round_trips(self):
+        # Three shapes an earlier version of section 6.2.4 called limits of the
+        # encoding. Two independent implementations built from the specification
+        # showed they are not: a value of several blocks goes in one list item with
+        # its continuation indented, which CommonMark keeps as one item.
+        cases = [
+            ("a value of several blocks", "rules", ["First para.\n\nSecond para."]),
+            ("a value holding a level-2 heading", "rules",
+             ["Do this.\n\n## Not A Label\n\nAnd this."]),
+            ("a value holding a heading that matches a label", "rules",
+             ["Do this.\n\n## Terminology\n\nAnd this."]),
+            ("an empty value, which rule 6 makes meaningful", "rules", ["One.", "", "Two."]),
+        ]
+        for label, element, values in cases:
+            with self.subTest(label):
+                elements = {"identifier": "x/y", "guidance": "G", element: values}
+                frame, _ = yamljson.parse_json(json.dumps(elements), self.p, "file:///t.frame.json")
+                back, findings = markdown.parse(markdown.write(frame, self.p), self.p,
+                                                "file:///t.frame.md")
+                self.assertFalse(has_errors(findings), [str(f) for f in findings])
+                self.assertEqual(back.elements[element], values)
+
     def test_each_documented_limit_loses_structure_and_is_reported(self):
         cases = [
-            ("a refinement value containing a blank line",
-             {"identifier": "x/y", "guidance": "G", "rules": ["First para.\n\nSecond para."]},
-             "rules", ["First para.", "Second para."]),
             ("guidance holding a heading that matches a refinement label",
              {"identifier": "x/y", "guidance": "Be plain.\n\n## Rules\n\nBe nice."},
              "rules", ["Be nice."]),
+            ("a concept's alternative labels",
+             {"identifier": "x/y", "guidance": "G",
+              "terminology": [{"term": "Hub", "definition": "a deployed instance.",
+                               "altTerms": ["instance"]}]},
+             "terminology", None),
         ]
         for label, elements, element, expected in cases:
             with self.subTest(label):
@@ -139,10 +163,12 @@ class MarkdownLimitsTests(unittest.TestCase):
                 back, findings = markdown.parse(markdown.write(frame, self.p), self.p,
                                                 "file:///t.frame.md")
                 self.assertFalse(has_errors(findings), [str(f) for f in findings])
+                if expected is not None:
+                    self.assertEqual(back.elements[element], expected)
                 # The words survive, per section 4.4.1; the structure does not.
-                self.assertEqual(back.elements[element], expected)
-                self.assertIn("Second para." if element == "rules" and len(expected) == 2
-                              else "Be nice.", str(back.elements[element]))
+                self.assertNotEqual(back.elements.get(element), elements.get(element))
+                self.assertIn("instance" if element == "terminology" else "Be nice.",
+                              str(back.elements.get(element)))
 
     @unittest.skipUnless(HAVE_YAML, "round_trip passes through the YAML leg")
     def test_the_loss_is_visible_in_round_trip_output(self):

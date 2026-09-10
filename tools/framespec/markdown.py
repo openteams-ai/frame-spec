@@ -27,7 +27,9 @@ HEADING_RE = re.compile(r"^## (.+?)\s*$")
 # another starts a new list), neither of which the rule depends on and neither of which
 # this parser needs, since every item becomes its own value regardless of which list it
 # would belong to under full CommonMark parsing.
-BULLET_RE = re.compile(r"^(?:[-*+]|\d+[.)]) (.*)$")
+# A marker with no text after it is an empty list item under CommonMark, and rule 6
+# of section 5.1 makes an empty value meaningful, so it is a value like any other.
+BULLET_RE = re.compile(r"^(?:[-*+]|\d+[.)])(?: (.*))?$")
 # Section 6.2.3: the concept form is matched on the item's value, after BULLET_RE has
 # already removed the marker, so this carries no marker of its own and applies the same
 # way regardless of which of the five markers introduced the item.
@@ -141,37 +143,83 @@ def _split_body(body, profile):
 
 
 def _items(name, lines):
-    """Top-level list items are values; other paragraphs are values; terminology items may be concepts."""
+    """Top-level list items are values; other paragraphs are values; terminology items may be concepts.
+
+    A list item's continuation blocks belong to the item. Section 6.2.2 takes its block
+    and list terms from CommonMark, where an indented block following a list item is part
+    of that item, so
+
+        - First para.
+
+          Second para.
+
+    is one item and therefore one value. Reading the indented block as a separate
+    top-level block split it into two, which two independent implementations built from
+    the specification both got right and this one got wrong.
+    """
     values, paragraph, in_fence = [], [], False
+    item, item_blank = None, False        # the open list item, and a pending blank line
 
     def flush():
+        nonlocal item, item_blank
+        if item is not None:
+            values.append(_value(name, "\n".join(item).strip()))
+            item, item_blank = None, False
         if paragraph:
             values.append("\n".join(paragraph).strip())
             paragraph.clear()
 
     for line in lines:
-        if line.lstrip().startswith("```"):
-            in_fence = not in_fence
-            paragraph.append(line)
+        indented = line[:1] in (" ", "\t")
+        if not in_fence and line.lstrip().startswith("```"):
+            # An unindented fence is a new top-level block even after a list item, so
+            # the open item ends here. An indented one is the item's own content.
+            if item is not None and not indented:
+                flush()
+            in_fence = True
+            if item is not None:
+                if item_blank:
+                    item.append("")
+                    item_blank = False
+                item.append(line.strip())
+            else:
+                paragraph.append(line)
             continue
         if in_fence:                      # a list marker inside a fence is code, not a value
-            paragraph.append(line)
+            if line.lstrip().startswith("```"):
+                in_fence = False
+            (item if item is not None else paragraph).append(
+                line.strip() if item is not None else line)
             continue
         bullet = BULLET_RE.match(line)
         if bullet:
             flush()
-            value = bullet.group(1).strip()
-            concept = TERM_RE.match(value) if name == "terminology" else None
-            if concept:
-                values.append({"term": concept.group(1), "definition": concept.group(2)})
+            item = [bullet.group(1) or ""]
+            continue
+        if line.strip() == "":
+            if item is not None:
+                item_blank = True         # may be a loose item; the next line decides
             else:
-                values.append(value)
-        elif line.strip() == "":
-            flush()
-        else:
-            paragraph.append(line)
+                flush()
+            continue
+        if item is not None and line[:1] in (" ", "\t"):
+            if item_blank:
+                item.append("")
+                item_blank = False
+            item.append(line.strip())
+            continue
+        flush()
+        paragraph.append(line)
     flush()
     return values
+
+
+def _value(name, text):
+    """A list item's value: a concept where terminology's item form matches, else the text."""
+    concept = TERM_RE.match(text) if name == "terminology" else None
+    if concept:
+        return {"term": concept.group(1), "definition": concept.group(2)}
+    return text
 
 
 def write(frame, profile):
@@ -210,6 +258,18 @@ def write(frame, profile):
                 parts.append(_concept(value))
             elif isinstance(value, dict):
                 parts.append(f"- {_mapping_text(value)}\n")
+            elif isinstance(value, str) and "\n\n" in value:
+                # A value of several blocks goes in one list item with its
+                # continuation indented, which CommonMark keeps as one item and so
+                # one value. Emitted as bare blocks it comes back as several values,
+                # which is what this writer used to do and what an independent
+                # implementation built from the specification got right.
+                blocks = [b.strip() for b in value.split("\n\n") if b.strip()]
+                parts.append(f"- {blocks[0]}\n")
+                for block in blocks[1:]:
+                    body = "\n".join(f"  {line}" for line in block.splitlines())
+                    parts.append(f"\n{body}\n")
+                parts.append("\n")
             elif isinstance(value, str) and "\n" in value:
                 parts.append(f"{value}\n\n")
             else:

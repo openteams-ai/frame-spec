@@ -11,7 +11,7 @@ composition:
   - acme/company-core@2.0.0
 guards:
   - acme/pii-guard
-guidance: |
+guidance: |-
   Be plain and direct. Prefer short sentences.
 
   ## Things We Avoid
