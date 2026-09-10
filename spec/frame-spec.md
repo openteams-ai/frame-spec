@@ -75,8 +75,9 @@ This document is written in the structure of an IETF Internet-Draft and is inten
       - [6.2.1. Document Structure](#md-structure)
       - [6.2.2. Body Structure](#md-body)
       - [6.2.3. Terminology in Markdown](#md-terminology)
-      - [6.2.4. Media Type](#md-mediatype)
-      - [6.2.5. Example](#md-example)
+      - [6.2.4. What This Encoding Cannot Express](#md-limits)
+      - [6.2.5. Media Type](#md-mediatype)
+      - [6.2.6. Example](#md-example)
    - [6.3. YAML Encoding](#enc-yaml)
    - [6.4. JSON Encoding](#enc-json)
 - [7. Conformance Profiles](#profiles)
@@ -234,9 +235,20 @@ Conformance is defined at two levels.
 
 A *document* conforms to an encoding of this specification if it satisfies that encoding's requirements ([Section 6](#encodings)). A document does not conform to "the Frame Specification" in the abstract; it conforms to the Markdown, YAML, or JSON encoding. The registered value vocabularies of [Section 4](#elements) are RECOMMENDED for documents; a value that is not registered does not make a document non-conformant, and readers preserve it.
 
-Two conditions, and only these two, are errors in a document: a mandatory element ([Section 4.2](#required)) that is absent and cannot be defaulted under [Section 6.1](#enc-common), and an element the encoding or the profile in force treats as non-repeatable carrying more than one value. A reader MUST report either as an error and MAY decline to use the document. Every other rule in this specification that a document breaks is preserved and, where the rule says so, warned about. This is what makes the specification's central promise checkable: a reader rejects a Frame for two reasons, and a Frame that carries something the reader does not understand is not one of them.
+These conditions, and only these, are errors in a document:
 
-An *implementation* conforms to this specification if it satisfies the requirements of [Section 4](#elements), [Section 5](#composition), [Section 3.2](#identity), and [Section 9](#security); satisfies [Section 6](#encodings) for each encoding it reads or writes; and publishes a conformance profile ([Section 7](#profiles)) declaring its choices among the behaviors this specification leaves optional. [Section 6](#encodings) is named explicitly because the alias requirement of [Section 6.2.1](#md-structure) is the whole mechanism of v0.2 compatibility, and an implementation that met every other section while ignoring it would not interoperate with a v0.2 reader.
+1. A mandatory element ([Section 4.2](#required)) that is absent and cannot be defaulted under [Section 6.1](#enc-common).
+2. A key an encoding declares REQUIRED that is absent. The Markdown encoding declares one, `type` ([Section 6.2.1](#md-structure)), which is a sentinel rather than an element, so its absence is not condition 1.
+3. An element the encoding or the profile in force treats as non-repeatable carrying more than one value.
+4. A document a reader cannot decode as UTF-8 ([Section 6.1](#enc-common)).
+
+A reader MUST report any of these as an error and MAY decline to use the document. Every other rule in this specification that a document breaks is preserved and, where the rule says so, warned about.
+
+Rejecting a document and failing to resolve one are different, and a reader MUST report them as different. A reader may decline to complete a resolution under rules 7 and 8 of [Section 5.1](#composition-rules), or under the limits of [Section 9.7](#resources), for a document that is in none of the states above. That is a failure to resolve; the document is not in error.
+
+What makes this specification's central promise checkable is not the length of that list. It is that every entry on it describes a document a reader cannot read, and none of them describes a document that says more than the reader understands. A Frame is never rejected for carrying something the reader does not recognize.
+
+An *implementation* conforms to this specification if it satisfies the requirements of this section, [Section 3.2](#identity), [Section 4](#elements), [Section 5](#composition), [Section 9](#security) and [Appendix A](#crosswalk); satisfies [Section 6](#encodings) for each encoding it reads or writes; and publishes a conformance profile ([Section 7](#profiles)) declaring its choices among the behaviors this specification leaves optional. [Section 6](#encodings) is named explicitly because the alias requirement of [Section 6.2.1](#md-structure) is the whole mechanism of v0.2 compatibility, and an implementation that met every other section while ignoring it would not interoperate with a v0.2 reader.
 
 <a id="elements"></a>
 
@@ -567,7 +579,7 @@ Rule 5 exists for two reasons. For the descriptive elements, a Frame that omits 
 
 Rule 5 states the non-composing set as a complement rather than a list, because an enumeration would be a second statement of the same rule and the two would drift; an earlier draft's list had already omitted `composition`. That omission is the case that matters most and is least obvious: a Frame inheriting its parent's `composition` would acquire the parent's references as its own, so resolving it again would pull grandparents in as direct parents.
 
-Rule 6 makes merge behavior a consequence of the element definitions rather than a separate specification. It leaves two things to profiles rather than deciding them. It does not say which value a reader takes from a document that does not conform, because the case does not arise for one that does. It fixes deduplication on the first occurrence rather than on precedence, because identical values do not conflict; keeping the first makes the result a subsequence of the concatenation, so a narrowing removes values rather than reordering them. Two narrowings of rule 6 are permitted to profiles and MUST be declared: deduplication of identical values within a repeatable element, and replacement by key within a repeatable element whose values carry a natural key. The `terminology` element is the standing example of the second: [[SKOS]](#ref-SKOS) allows a concept at most one preferred label per language tag, and Frame terminology treats the preferred label as the key of a concept, so a composed Frame's definition of a term replaces a lower-precedence Frame's definition of the same term. A profile MUST NOT drop non-identical values under either narrowing.
+Rule 6 makes merge behavior a consequence of the element definitions rather than a separate specification. It leaves two things to profiles rather than deciding them. It does not say which value a reader takes from a document that does not conform, because the case does not arise for one that does. It fixes deduplication on the first occurrence rather than on precedence, because identical values do not conflict; keeping the first makes the result a subsequence of the concatenation, so a narrowing removes values rather than reordering them. Two narrowings of rule 6 are permitted to profiles and MUST be declared: deduplication of identical values within a repeatable element, and replacement by key within a repeatable element whose values carry a natural key. The `terminology` element is the standing example of the second: [[SKOS]](#ref-SKOS) allows a concept at most one preferred label per language tag, and Frame terminology treats the preferred label as the key of a concept, so a composed Frame's definition of a term replaces a lower-precedence Frame's definition of the same term. A profile MUST NOT drop a value that neither narrowing accounts for: deduplication removes only a value identical to one it keeps, and replacement by key removes only a value whose key a higher-precedence value repeats.
 
 Rule 7's second sentence exists so that rule 4 and rule 7 do not conflict. An implementation that silently ignores `composition` does not conform; the same implementation that declares "resolves no composition" in its profile does.
 
@@ -586,8 +598,8 @@ The values of `composition`, `guards`, and `derivedFrom` are references. This sp
 Every form but a `uri-ref` is resolved in the resolver's own context, and an implementation MUST declare that context in its conformance profile ([Section 7](#profiles)). A `pinned-ref` is a `qualified-ref` with a version appended, so pinning a version does not make the publisher segment globally unique; a `path-ref` resolves against a filesystem or a package layout. A consequence worth stating: the same reference may resolve to different Frames in different contexts, which is why a Frame whose references must survive a move between registries SHOULD use a `uri-ref`, and why `canonicalSource` ([Section 4.3.11](#el-canonicalsource)) exists for a copy to point at the place its updates come from.
 
 ```abnf
-frame-ref     = pinned-ref / qualified-ref / uri-ref
-              / path-ref / name-ref
+frame-ref     = path-ref / pinned-ref / qualified-ref
+              / uri-ref / name-ref
 
 pinned-ref    = qualified-ref "@" version
 qualified-ref = publisher "/" frame-name
@@ -605,7 +617,7 @@ name-ref      = VCHAR *( VCHAR / SP )
 
 The core rules ALPHA, DIGIT, SP, and VCHAR are those of [[RFC5234]](#ref-RFC5234), Appendix B.
 
-A reader classifies a reference by trying the alternatives in the order listed and taking the first that matches. Because `name-ref` matches any non-empty string of visible characters and spaces, every reference is at least a `name-ref`; the grammar never fails. In a `pinned-ref`, the last "@" in the string separates the version from the qualified reference. Encodings trim leading and trailing white space from a reference before classification.
+A reader classifies a reference by trying the alternatives in the order listed and taking the first that matches. `path-ref` is first because `.` is a `ref-char`, so `./company-core.frame.md` also matches `qualified-ref` in full, with `.` as the publisher; a reader that tried the qualified form first would classify every relative path as a `qualified-ref`, and then not resolve it unless its profile happened to declare that form. Because `name-ref` matches any non-empty string of visible characters and spaces, every reference is at least a `name-ref`; the grammar never fails. In a `pinned-ref`, the last "@" in the string separates the version from the qualified reference. Encodings trim leading and trailing white space from a reference before classification.
 
 The forms have the following intended meanings.
 
@@ -689,8 +701,8 @@ An encoding is a binding of the model to a syntax. This document defines three. 
 - **Identifier default:** A document with no explicit `identifier` is identified by the location it was retrieved from, expressed as a URI where one exists. A document exchanged without a location (for example, pasted into a message) has no identifier until a reader or registry assigns one, at which point [Section 3.2](#identity) applies.
 - **Unknown elements:** A reader MUST preserve, and a writer MUST emit, elements the implementation does not recognize ([Section 4.6](#extensions)).
 - **Composed Frames are not documents:** the encodings of this section define documents. A composed Frame ([Section 5](#composition)) is the result of resolution, and this specification defines no serialization for one; a document declares its own content and its `composition` references, never the resolved content of the Frames it composes.
-- **Round trip:** Converting a document from one encoding to another and back MUST preserve the value of every element, except where the target encoding cannot express a structure the value carries, in which case [Section 4.4.1](#dumb-down) applies and the words survive while the structure does not. [Section 6.2.3](#md-terminology) is the one such case this document defines. Encodings are not required to preserve source layout, comments, or key order.
-- **Character encoding:** Documents MUST be encoded in UTF-8.
+- **Round trip:** Converting a document from one encoding to another and back MUST preserve the value of every element, except where the target encoding cannot express a structure the value carries, in which case [Section 4.4.1](#dumb-down) applies and the words survive while the structure does not. [Section 6.2.4](#md-limits) enumerates every such case this document defines; all four are in the Markdown encoding. Encodings are not required to preserve source layout, comments, or key order.
+- **Character encoding:** Documents MUST be encoded in UTF-8. A document a reader cannot decode as UTF-8 is in error ([Section 3.3](#conformance-model)); no other part of this specification can apply to bytes a reader cannot read.
 - **Version token:** An encoding MAY carry a token declaring the specification version the document was written to. Readers MUST accept a token naming any version of this specification and SHOULD warn on a version they do not recognize.
 
 <a id="enc-markdown"></a>
@@ -705,7 +717,7 @@ The Markdown encoding is the file format of [[FRAME-V02]](#ref-FRAME-V02). A doc
 
 A document is a Markdown file beginning with a YAML front matter block delimited by lines consisting of three hyphens, followed by a Markdown body.
 
-The front matter is a YAML mapping [[YAML12]](#ref-YAML12). Its keys are element names, with one exception and two aliases. The exception is `type`, which is this encoding's sentinel rather than an element: it is not in the registry of [Section 10.2](#iana-elements), the model has no place for it, and the rules of [Section 4.6](#extensions) for an unrecognized element do not apply to it. The aliases are retained from v0.2: the key `name` denotes `title`, and the key `inherits` denotes `composition`. A writer producing this encoding MUST use the aliased spellings so that v0.2 readers continue to accept the document. A reader MUST accept either spelling, and where a document carries both, the aliased spelling is the one that applies, since it is the spelling this encoding requires of a writer. The other value is then not used, which is the one place this encoding discards a value a document carries, so a reader SHOULD warn that the document carried both.
+The front matter is a YAML mapping [[YAML12]](#ref-YAML12). Its keys are element names, with one exception and two aliases. The exception is `type`, which is this encoding's sentinel rather than an element: it is not in the registry of [Section 10.2](#iana-elements), the model has no place for it, and the rules of [Section 4.6](#extensions) for an unrecognized element do not apply to it. The aliases are retained from v0.2: the key `name` denotes `title`, and the key `inherits` denotes `composition`. A writer producing this encoding MUST use the aliased spellings so that v0.2 readers continue to accept the document. A reader MUST accept either spelling, and where a document carries both, the aliased spelling is the one that applies, since it is the spelling this encoding requires of a writer. The other value is then not used, so a reader SHOULD warn that the document carried both. This is one of the four structures [Section 6.2.4](#md-limits) lists as beyond this encoding.
 
 A repeatable element MAY be written as a scalar or as a sequence; a scalar is exactly one value. A writer MUST emit a sequence, so that documents a tool produces carry one shape. A scalar is not split on any delimiter: `maintainer: Acme, Inc.` is one value, because two repeatable elements, `maintainer` and `versionNotes`, carry values in which a comma occurs literally.
 
@@ -737,17 +749,41 @@ A writer emits exactly one `guidance` value per document, containing all non-ref
 
 [Section 6.2.2](#md-body) makes each top-level list item in a Terminology section one value of `terminology`. A list item whose value, after its marker is removed, has the form `**term**: definition` is additionally a concept in the structured form of [Section 4.4.2](#terminology-form); the bold text is the preferred label and the remainder is the definition. The marker may be of either kind ([Section 6.2.2](#md-body)), so a numbered item carries a concept exactly as a bulleted one does. A list item of any other shape, and any content in the section that is not a top-level list item, is unstructured `terminology` content governed by [Section 4.4.1](#dumb-down). A reader MUST NOT fail on the shape of a list item.
 
-This encoding defines no syntax for a concept's alternative labels, which [Section 4.4.2](#terminology-form) permits and which the YAML and JSON encodings carry as `altTerms`. The body carries prose, and front matter carries scalars and sequences of scalars ([Section 6.2.1](#md-structure)). A concept written here therefore has a preferred label and a definition and nothing else. A writer converting a concept that carries alternative labels MUST NOT discard them: [Section 4.4.1](#dumb-down) applies, so it keeps them as content by writing them into the item's text, which preserves the words and loses the structure. This is the one place where the model expresses something an encoding cannot, and a Frame whose alternative labels must survive a round trip SHOULD be held in the YAML or JSON encoding.
+This encoding defines no syntax for a concept's alternative labels, which [Section 4.4.2](#terminology-form) permits and which the YAML and JSON encodings carry as `altTerms`. The body carries prose, and front matter carries scalars and sequences of scalars ([Section 6.2.1](#md-structure)). A concept written here therefore has a preferred label and a definition and nothing else. A writer converting a concept that carries alternative labels MUST NOT discard them: [Section 4.4.1](#dumb-down) applies, so it keeps them as content by writing them into the item's text, which preserves the words and loses the structure. A Frame whose alternative labels must survive a round trip SHOULD be held in the YAML or JSON encoding ([Section 6.2.4](#md-limits) lists the other three cases).
+
+<a id="md-limits"></a>
+
+#### 6.2.4. What This Encoding Cannot Express
+
+The Markdown encoding is prose with labelled sections, so four structures the model
+permits have no form in it. Each is a case of the exception in
+[Section 6.1](#enc-common): a writer MUST preserve the words, [Section 4.4.1](#dumb-down)
+applies, and the structure does not survive. This list is exhaustive for this
+encoding; the YAML and JSON encodings have no such cases.
+
+1. A concept's alternative labels ([Section 6.2.3](#md-terminology)).
+2. A refinement value containing a blank line. [Section 6.2.2](#md-body) makes each
+   top-level block its own value, so such a value is read back as two.
+3. A `guidance` value containing an ATX heading of level 2 whose text matches a
+   refinement's label. [Section 6.2.2](#md-body) makes such a heading begin that
+   refinement's section, so the content below it is read back as that refinement's
+   value rather than as `guidance`.
+4. Both spellings of an aliased key in one document
+   ([Section 6.2.1](#md-structure)), where only the aliased spelling applies.
+
+A Frame carrying any of these SHOULD be held in the YAML or JSON encoding, which
+expresses all four. A writer converting into this encoding MUST NOT silently drop
+what it cannot express, and SHOULD warn.
 
 <a id="md-mediatype"></a>
 
-#### 6.2.4. Media Type
+#### 6.2.5. Media Type
 
 The media type of this encoding is `text/markdown` [[RFC7763]](#ref-RFC7763) with the parameters `charset=utf-8` and `variant=frame` ([Section 10.1.3](#iana-markdown-variant)).
 
 <a id="md-example"></a>
 
-#### 6.2.5. Example
+#### 6.2.6. Example
 
 ```markdown
 ---
@@ -875,9 +911,10 @@ A profile MUST state:
 4. Which narrowings of rule 6 it applies, and to which elements.
 5. Which elements it treats as non-repeatable beyond those the model defines as such, and which elements it requires beyond `identifier` and `guidance`.
 6. Which Frame Version it composes for a reference that carries no version, if it resolves composition at all ([Section 5.2](#declared-variation)).
-7. The context in which it resolves a `qualified-ref` or a `name-ref` ([Section 5.3](#ref-syntax)), since neither is globally unique.
+7. The context in which it resolves each reference form other than a `uri-ref` ([Section 5.3](#ref-syntax)), since no other form is globally unique.
 8. How it derives an identifier for a Frame that arrives without one ([Section 3.2](#identity)), if it does so.
 9. How it treats `visibility`, confirming that it is not used as an access control.
+10. The version of this specification it implements, and its own name and version. [Section 5.2](#declared-variation) depends on this one: which elements a reader recognizes follows from the version it implements ([Section 4.4.1](#dumb-down)), so a profile that does not state the version leaves that variation undeclared.
 
 [Appendix C](#profile-template) gives a template. Two implementations' profiles are described in [Section 8](#impl-status).
 
@@ -1271,8 +1308,9 @@ Encodings written:     <markdown | yaml | json>
 Resolves composition:  <no | yes, non-transitive | yes, transitive>
 Version selection:     <not performed | policy for a reference
                         that carries no version>
-Resolver context:      <the namespace or registry a qualified-ref
-                        or name-ref is resolved in>
+Resolver context:      <the namespace, registry, filesystem or
+                        package layout each form other than a
+                        uri-ref is resolved in>
 Reference forms:       <pinned-ref | qualified-ref | uri-ref
                         | path-ref | name-ref>
 Rule 6 narrowings:     <none | dedup: <elements>
@@ -1289,7 +1327,7 @@ Notes:                 <anything else an author should know>
 Example, for the registry described in [Section 8](#impl-status):
 
 ```
-Implementation:        Nebari Frames <version>
+Implementation:        Nebari Frames 0.1.x (beta)
 Specification:         draft-mcandrew-frame-spec-00
 Encodings read:        markdown
 Encodings written:     markdown
