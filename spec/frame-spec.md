@@ -235,7 +235,7 @@ Conformance is defined at two levels.
 
 A *document* conforms to an encoding of this specification if it satisfies that encoding's requirements ([Section 6](#encodings)). A document does not conform to "the Frame Specification" in the abstract; it conforms to the Markdown, YAML, or JSON encoding. The registered value vocabularies of [Section 4](#elements) are RECOMMENDED for documents; a value that is not registered does not make a document non-conformant, and readers preserve it.
 
-These conditions, and only these, are errors in a document:
+A document is in error in these conditions:
 
 1. A mandatory element ([Section 4.2](#required)) that is absent, for which [Section 6.1](#enc-common) supplies no default, and to which the reader assigns none. A document read from a location has a default `identifier`; one that arrives without a location, pasted into a message for instance, does not, and a reader that mints none for it has a document in error.
 2. A key an encoding declares REQUIRED that is absent. The Markdown encoding declares one, `type` ([Section 6.2.1](#md-structure)), which is a sentinel rather than an element, so its absence is not condition 1.
@@ -243,6 +243,8 @@ These conditions, and only these, are errors in a document:
 4. A document a reader cannot decode as UTF-8 ([Section 6.1](#enc-common)).
 
 A reader MUST report any of these as an error and MAY decline to use the document. Every other rule in this specification that a document breaks is preserved and, where the rule says so, warned about.
+
+A file that is not a Frame at all is a separate case, and not an error in a Frame document. The Markdown encoding has a sentinel for exactly this: a file whose `type` does not begin with the word `frame` is not a document of that encoding ([Section 6.2.1](#md-structure)), and neither is a file whose front matter is not a YAML mapping. A reader MUST distinguish reporting that a file is not a Frame from reporting that a Frame is in error.
 
 Rejecting a document and failing to resolve one are different, and a reader MUST report them as different. A reader may decline to complete a resolution under rules 7 and 8 of [Section 5.1](#composition-rules), or under the limits of [Section 9.7](#resources), for a document that is in none of the states above. That is a failure to resolve; the document is not in error.
 
@@ -518,7 +520,7 @@ Four elements relate a Frame to other artifacts.
 
 An element name beginning with `x-` is an extension element and is reserved for implementation-specific use. Extension names are never registered ([Section 10.2](#iana-elements)).
 
-Readers MUST preserve elements they do not recognize, including extension elements, and MUST NOT reject a Frame for carrying them. Writers MUST emit preserved unknown elements when producing a Representation, so that round trips through a reader that does not understand an element are lossless.
+Readers MUST preserve elements they do not recognize, including extension elements, and MUST NOT reject a Frame for carrying them. Writers MUST emit preserved unknown elements when producing a Representation, so that round trips through a reader that does not understand an element are lossless, except where the target encoding cannot express the value, in which case that encoding says so and [Section 4.4.1](#dumb-down) applies ([Section 6.2.4](#md-limits) is the one encoding with such cases).
 
 Unknown elements are metadata, not content. A reader MUST NOT present the value of an unrecognized element to an AI system as guidance. See [Section 9](#security).
 
@@ -698,11 +700,12 @@ An encoding is a binding of the model to a syntax. This document defines three. 
 
 ### 6.1. Requirements Common to All Encodings
 
-- **Identifier default:** A document with no explicit `identifier` is identified by the location it was retrieved from, expressed as a URI where one exists. A document exchanged without a location (for example, pasted into a message) has no identifier until a reader or registry assigns one, at which point [Section 3.2](#identity) applies.
+- **Identifier default:** A document with no explicit `identifier` is identified by the location it was retrieved from, expressed as a URI where one exists. A document exchanged without a location (for example, pasted into a message) has no identifier until a reader or registry assigns one, at which point [Section 3.2](#identity) applies. A reader MUST record whether the identifier it holds was stated by the document or derived, because [Section 3.2](#identity) forbids writing a derived one back and the round-trip rule below would otherwise require it. A derived identifier is not a value the round-trip rule preserves: a document that stated none is written with none, and a reader of the result derives one again from wherever it then sits.
 - **Unknown elements:** A reader MUST preserve, and a writer MUST emit, elements the implementation does not recognize ([Section 4.6](#extensions)).
 - **Composed Frames are not documents:** the encodings of this section define documents. A composed Frame ([Section 5](#composition)) is the result of resolution, and this specification defines no serialization for one; a document declares its own content and its `composition` references, never the resolved content of the Frames it composes.
 - **Round trip:** Converting a document from one encoding to another and back MUST preserve the value of every element, except where the target encoding cannot express a structure the value carries, in which case [Section 4.4.1](#dumb-down) applies and the words survive while the structure does not. [Section 6.2.4](#md-limits) enumerates every such case this document defines; all four are in the Markdown encoding. Encodings are not required to preserve source layout, comments, or key order.
 - **Character encoding:** Documents MUST be encoded in UTF-8. A document a reader cannot decode as UTF-8 is in error ([Section 3.3](#conformance-model)); no other part of this specification can apply to bytes a reader cannot read.
+- **Outer white space:** White space before the first and after the last non-white-space character of a value is syntax, not part of the value. A reader MUST strip it and a writer MAY add it; a reader MUST NOT reject a document over it. Without this rule an encoding's own conventions would change the value: a YAML block scalar written `|` ends in a newline and the same text as a JSON string does not, so two Representations of one Frame Version would carry different values.
 - **Version token:** An encoding MAY carry a token declaring the specification version the document was written to. Readers MUST accept a token naming any version of this specification and SHOULD warn on a version they do not recognize.
 
 <a id="enc-markdown"></a>
@@ -717,7 +720,7 @@ The Markdown encoding is the file format of [[FRAME-V02]](#ref-FRAME-V02). A doc
 
 A document is a Markdown file beginning with a YAML front matter block delimited by lines consisting of three hyphens, followed by a Markdown body.
 
-The front matter is a YAML mapping [[YAML12]](#ref-YAML12). Its keys are element names, with one exception and two aliases. The exception is `type`, which is this encoding's sentinel rather than an element: it is not in the registry of [Section 10.2](#iana-elements), the model has no place for it, and the rules of [Section 4.6](#extensions) for an unrecognized element do not apply to it. The aliases are retained from v0.2: the key `name` denotes `title`, and the key `inherits` denotes `composition`. A writer producing this encoding MUST use the aliased spellings so that v0.2 readers continue to accept the document. A reader MUST accept either spelling, and where a document carries both, the aliased spelling is the one that applies, since it is the spelling this encoding requires of a writer. The other value is then not used, so a reader SHOULD warn that the document carried both. This is one of the four structures [Section 6.2.4](#md-limits) lists as beyond this encoding.
+The front matter is a YAML mapping [[YAML12]](#ref-YAML12). Its keys are element names, with one exception and two aliases. The exception is `type`, which is this encoding's sentinel rather than an element: it is not in the registry of [Section 10.2](#iana-elements), and the rules of [Section 4.6](#extensions) for an unrecognized element do not apply to it. A reader retains its value alongside the model rather than as an element of it, which is what lets a writer preserve the version token as [Section 6.3](#enc-yaml) requires; how a reader holds it is its own concern, and no encoding carries it as an element. The aliases are retained from v0.2: the key `name` denotes `title`, and the key `inherits` denotes `composition`. A writer producing this encoding MUST use the aliased spellings so that v0.2 readers continue to accept the document. A reader MUST accept either spelling, and where a document carries both, the aliased spelling is the one that applies, since it is the spelling this encoding requires of a writer. The other value is then not used, so a reader SHOULD warn that the document carried both. This is one of the four structures [Section 6.2.4](#md-limits) lists as beyond this encoding.
 
 A repeatable element MAY be written as a scalar or as a sequence; a scalar is exactly one value. A writer MUST emit a sequence, so that documents a tool produces carry one shape. A scalar is not split on any delimiter: `maintainer: Acme, Inc.` is one value, because two repeatable elements, `maintainer` and `versionNotes`, carry values in which a comma occurs literally.
 
@@ -741,7 +744,7 @@ A refinement MAY also appear as a front matter key, since the keys of the front 
 
 Every other heading, and all content not within a refinement section, is `guidance`. A reader MUST NOT treat an unrecognized heading as an error. A heading whose text merely contains a label, such as "Rules of the Game" or "Review Norms", is not a match and its section is `guidance`; readers MUST NOT match labels by prefix, suffix, or similarity.
 
-A writer emits exactly one `guidance` value per document, containing all non-refinement content in document order with its own headings preserved, and emits each refinement as an ATX level 2 section with its label. A writer MUST emit the refinement sections in the order the element registry of [Section 10.2](#iana-elements) lists them, so that two writers produce the same document from the same Frame. Because refinement sections are extracted wherever they occur and re-emitted after the guidance, a document whose refinement sections are interleaved with loose prose will not preserve its layout across a round trip; it will preserve every element value. A document whose refinement sections come last preserves its layout as well as its values.
+A writer emits exactly one `guidance` value per document, containing all non-refinement content in document order with its own headings preserved, and where a refinement section separates two stretches of that content, joined by one blank line, which is the separator between any two blocks in this encoding, and emits each refinement as an ATX level 2 section with its label. A writer MUST emit the refinement sections in the order the element registry of [Section 10.2](#iana-elements) lists them, so that two writers produce the same document from the same Frame. A writer MUST emit each refinement value as one item of a top-level list, with any block after the first indented as that item's continuation, and MUST emit an empty value as a marker with no text after it. Both follow from CommonMark, where an indented block after a list item belongs to that item, so a value of several blocks is one item and is read back as one value. Because refinement sections are extracted wherever they occur and re-emitted after the guidance, a document whose refinement sections are interleaved with loose prose will not preserve its layout across a round trip; it will preserve every element value. A document whose refinement sections come last preserves its layout as well as its values.
 
 <a id="md-terminology"></a>
 
@@ -755,25 +758,35 @@ This encoding defines no syntax for a concept's alternative labels, which [Secti
 
 #### 6.2.4. What This Encoding Cannot Express
 
-The Markdown encoding is prose with labelled sections, so four structures the model
+The Markdown encoding is prose with labelled sections, and some structures the model
 permits have no form in it. Each is a case of the exception in
 [Section 6.1](#enc-common): a writer MUST preserve the words, [Section 4.4.1](#dumb-down)
-applies, and the structure does not survive. This list is exhaustive for this
-encoding; the YAML and JSON encodings have no such cases.
+applies, and the structure does not survive. These are the cases this document
+identifies, in this encoding only; it does not claim to have found them all.
 
 1. A concept's alternative labels ([Section 6.2.3](#md-terminology)).
-2. A refinement value containing a blank line. [Section 6.2.2](#md-body) makes each
-   top-level block its own value, so such a value is read back as two.
-3. A `guidance` value containing an ATX heading of level 2 whose text matches a
+2. A `guidance` value containing an ATX heading of level 2 whose text matches a
    refinement's label. [Section 6.2.2](#md-body) makes such a heading begin that
    refinement's section, so the content below it is read back as that refinement's
-   value rather than as `guidance`.
-4. Both spellings of an aliased key in one document
+   value rather than as `guidance`. A refinement value is not affected, because a
+   refinement value is written inside a list item ([Section 6.2.2](#md-body)) where
+   the heading is the item's content rather than a section of its own.
+3. Both spellings of an aliased key in one document
    ([Section 6.2.1](#md-structure)), where only the aliased spelling applies.
+4. A value with internal structure under an element this encoding does not otherwise
+   place, such as a preserved unknown element whose value is a mapping. Front matter
+   here carries scalars and sequences of scalars ([Section 6.2.1](#md-structure)), so
+   the requirement in [Section 4.6](#extensions) to re-emit a preserved unknown
+   element yields to this section for such a value.
 
 A Frame carrying any of these SHOULD be held in the YAML or JSON encoding, which
-expresses all four. A writer converting into this encoding MUST NOT silently drop
+expresses all of them. A writer converting into this encoding MUST NOT silently drop
 what it cannot express, and SHOULD warn.
+
+Two structures that look like cases and are not, because a writer that uses the list
+item form of [Section 6.2.2](#md-body) can express both: a value of several blocks,
+whose later blocks are the item's indented continuation, and an empty value, which is
+a marker with no text after it.
 
 <a id="md-mediatype"></a>
 
@@ -846,7 +859,7 @@ composition:
   - acme/company-core@2.0.0
 guards:
   - acme/pii-guard
-guidance: |
+guidance: |-
   Be plain and direct. Prefer short sentences.
 
   ## Things We Avoid
