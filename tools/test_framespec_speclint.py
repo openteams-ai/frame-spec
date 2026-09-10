@@ -38,6 +38,18 @@ MUTATIONS = [
      "A repeatable element is always an array and a non-repeatable element is always a string, so "
      "an element's type does not vary between documents.",
      "restatement-drops-a-qualification"),
+    ("R3 the worked profile omits a field its own template requires",
+     "Identifier minting:    slugified title; reject on collision\n",
+     "",
+     "example-profile-incomplete"),
+    ("R3 the worked profile leaves a placeholder unfilled",
+     "Implementation:        Nebari Frames 0.1.x (beta)",
+     "Implementation:        Nebari Frames <version>",
+     "example-profile-unfilled"),
+    ("R3 section 7 loses a declaration the template still has",
+     "9. How it treats `visibility`, confirming that it is not used as an access control.\n",
+     "",
+     "declarations-and-template-disagree"),
     ("W2 a requirement stated in a part section 2.1 calls non-normative",
      "A reader that does not implement a refinement it recognizes treats the content as ordinary "
      "guidance and never discards it.",
@@ -72,8 +84,10 @@ class SpecLintTests(unittest.TestCase):
     def test_each_check_is_reached_by_at_least_one_mutation(self):
         # A check nothing exercises is a check nobody knows is broken.
         covered = {expected for _, _, _, expected in MUTATIONS}
-        self.assertEqual(len(speclint.CHECKS), 5)
-        self.assertEqual(len(covered), 5, sorted(covered))
+        # One row per finding code, and one code per check except the profile-template
+        # check, which reports three distinct disagreements and has a row for each.
+        self.assertEqual(len(speclint.CHECKS), 6)
+        self.assertEqual(len(covered), 8, sorted(covered))
 
     def test_the_normative_classification_is_read_from_the_draft(self):
         # Hard-coding the section list here would let the draft's own statement drift

@@ -4,7 +4,7 @@ from pathlib import Path
 from unittest import mock
 
 from framespec import io as frame_io
-from framespec import markdown, roundtrip
+from framespec import markdown, roundtrip, yamljson
 from framespec.findings import has_errors
 from framespec.model import Frame
 from framespec.profile import Profile
@@ -109,6 +109,47 @@ class RoundTripTests(unittest.TestCase):
         self.assertEqual(diffs, [], diffs)
         codes = {leg: [f.code for f in leg_findings if f.level == "error"] for leg, leg_findings in legs}
         self.assertEqual(codes["markdown"], ["bad-type-token"])
+
+
+
+class MarkdownLimitsTests(unittest.TestCase):
+    """Section 6.2.4: four structures the Markdown encoding cannot express.
+
+    Section 6.1's round-trip rule carves these out, so losing the structure is
+    conforming. This tool still reports the loss, because a validator's job is to
+    surface it; the rows below pin what is lost so the behaviour is deliberate
+    rather than discovered.
+    """
+
+    def setUp(self):
+        self.p = Profile.load()
+
+    def test_each_documented_limit_loses_structure_and_is_reported(self):
+        cases = [
+            ("a refinement value containing a blank line",
+             {"identifier": "x/y", "guidance": "G", "rules": ["First para.\n\nSecond para."]},
+             "rules", ["First para.", "Second para."]),
+            ("guidance holding a heading that matches a refinement label",
+             {"identifier": "x/y", "guidance": "Be plain.\n\n## Rules\n\nBe nice."},
+             "rules", ["Be nice."]),
+        ]
+        for label, elements, element, expected in cases:
+            with self.subTest(label):
+                frame, _ = yamljson.parse_json(json.dumps(elements), self.p, "file:///t.frame.json")
+                back, findings = markdown.parse(markdown.write(frame, self.p), self.p,
+                                                "file:///t.frame.md")
+                self.assertFalse(has_errors(findings), [str(f) for f in findings])
+                # The words survive, per section 4.4.1; the structure does not.
+                self.assertEqual(back.elements[element], expected)
+                self.assertIn("Second para." if element == "rules" and len(expected) == 2
+                              else "Be nice.", str(back.elements[element]))
+
+    def test_the_loss_is_visible_in_round_trip_output(self):
+        elements = {"identifier": "x/y", "guidance": "Be plain.\n\n## Rules\n\nBe nice."}
+        frame, _ = yamljson.parse_json(json.dumps(elements), self.p, "file:///t.frame.json")
+        _final, diffs, _legs = roundtrip.round_trip(frame, self.p)
+        self.assertTrue(diffs, "a documented structural loss must not round-trip silently")
+        self.assertIn("guidance", [name for name, _before, _after in diffs])
 
 
 if __name__ == "__main__":

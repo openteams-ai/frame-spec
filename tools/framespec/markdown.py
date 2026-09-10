@@ -177,7 +177,10 @@ def write(frame, profile, spec_version="0.3"):
             continue
         parts.append(f"\n## {element.label}\n\n")
         for value in values:
-            if isinstance(value, dict) and element.name == STRUCTURED_FORM:
+            # The element name is not enough: nothing validates concept shape at read
+            # time, so a `terminology` value may be a mapping with no `term`, and
+            # _concept() would render it with empty bold markup, `- ****:  (foo: bar)`.
+            if isinstance(value, dict) and element.name == STRUCTURED_FORM and "term" in value:
                 parts.append(_concept(value))
             elif isinstance(value, dict):
                 parts.append(f"- {_mapping_text(value)}\n")

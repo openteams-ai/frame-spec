@@ -38,27 +38,53 @@ PRONOUN_SUBJECT = re.compile(r"^(It|Its|They|Their|Such|This|That|These|Those|Bo
 # A value-shape rule states what a value must look like. Section 4.3.10's date format
 # was the only one that never said what a reader does with a value that breaks it,
 # which made it a third rejection path in a specification that promises two.
-DISPOSITION = re.compile(r"preserv\w+|MUST NOT reject|warn\w*|report\w*|error", re.I)
-VALUE_RULE = re.compile(r"The value MUST\b|value MUST be\b")
+DISPOSITION = re.compile(r"MUST NOT reject|MUST NOT fail|MUST preserve|MUST report|"
+                         r"(?:MUST|SHOULD|MAY) warn|is (?:an|in) error", re.I)
+VALUE_RULE = re.compile(r"The value MUST\b|value MUST be\b|Documents MUST\b|"
+                        r"is REQUIRED\b|MUST begin with\b|MUST be a\b|MUST be one of\b")
 
 # Section 3.3's promise. A reader rejects a document for these two reasons only, so
 # any other sentence that says a reader rejects, refuses or fails on a document is
 # either a third path or needs rewording.
-REJECTION_RE = re.compile(r"MUST (?:reject|refuse|fail)", re.I)
+# The negative lookahead matters: "MUST NOT reject" is a prohibition on rejecting,
+# the opposite of the thing this check looks for, and the draft states it eight times.
+REJECTION_RE = re.compile(
+    r"MUST(?! NOT)(?: \w+){0,2} (?:reject|refuse|fail|decline|abort|discard|stop)", re.I)
+
+# Where a rejection may be stated. Section 3.3 defines when a document is in error;
+# section 5.1's rules 7 and 8 and section 9.7's limits define when a resolution fails,
+# which section 3.3 distinguishes from rejecting a document. Listed rather than left
+# to a phrasing accident, so a rejection introduced anywhere else fires.
+REJECTION_SECTIONS = {"3.3", "5.1", "9.7"}
 
 SENTENCE_RE = re.compile(r"(?<=[.!?])\s+(?=[A-Z`\[])")
 SECTION_CITE = re.compile(r"\[(?:Section|Appendix) [^\]]+\]\(#")
 SIMILARITY = 0.86
 IDENTICAL = 0.97
 HEAD_WORDS = 4
+# The length ratio below which SequenceMatcher cannot reach SIMILARITY at all,
+# from ratio = 2*matches/total: a wholly matched shorter string against a longer
+# one scores 2*short/(short+long), so short/long must be at least t/(2-t).
+LENGTH_FLOOR = SIMILARITY / (2 - SIMILARITY)
 MIN_SENTENCE = 60
 
 
+PREAMBLE = "preamble"
+
+
 def _sections(text):
-    """(number, title, body) per numbered heading, so a finding can name where it is."""
+    """(number, title, body) per numbered heading, so a finding can name where it is.
+
+    Everything before the first numbered heading is one pseudo-section named
+    `preamble`: the title block, Status of This Memo, the Abstract and the contents
+    list. Without it that text sits outside every section and so outside every check
+    here, and three requirements injected into the Abstract went unreported.
+    """
     heads = [(m.start(), m.group(1), m.group(2))
              for m in re.finditer(r"^#{2,4} ((?:\d+\.)+|Appendix [A-Z]\.) (.+)$", text, re.M)]
     out = []
+    if heads and heads[0][0] > 0:
+        out.append((PREAMBLE, "Front matter", text[:heads[0][0]]))
     for index, (start, number, title) in enumerate(heads):
         end = heads[index + 1][0] if index + 1 < len(heads) else len(text)
         out.append((number.rstrip("."), title.strip(), text[start:end]))
@@ -73,6 +99,8 @@ def _prose_lines(body):
             in_fence = not in_fence
             continue
         if in_fence or line.startswith(("|", "#", "*Figure", "*Table")) or line.startswith("**["):
+            continue
+        if re.match(r"^\s*(?:-|\d+\.)\s+\[", line):      # a contents entry, not prose
             continue
         lines.append(line)
     return lines
@@ -93,9 +121,12 @@ def check_parties(text, where):
                 # organization's registry MUST carry") and reports a sentence whose
                 # actual subject is fine. A pronoun subject is skipped, since the
                 # sentence that gave it its antecedent was scanned on its own.
-                subject = SENTENCE_RE.split(line[:match.start()])[-1].strip()
+                pieces = SENTENCE_RE.split(line[:match.start()])
+                subject = pieces[-1].strip()
                 if PRONOUN_SUBJECT.match(subject):
-                    continue
+                    if len(pieces) < 2:
+                        continue
+                    subject = pieces[-2].strip()
                 head = " ".join(subject.split()[:HEAD_WORDS])
                 if UNDEFINED_PARTIES.search(head):
                     findings.append(Finding(
@@ -125,27 +156,31 @@ def check_rejection_paths(text, where):
     for number, title, body in _sections(text):
         for line in _prose_lines(body):
             for match in REJECTION_RE.finditer(line):
-                if number == "3.3":
+                if number in REJECTION_SECTIONS:
                     continue
                 findings.append(Finding(
                     "error", "undeclared-rejection-path",
-                    f"section {number}: '{match.group(0)}' outside section 3.3, which enumerates "
-                    f"the error conditions: {line.strip()[:90]!r}", where))
+                    f"section {number}: '{match.group(0)}' in a section that does not define an "
+                    f"error condition or a resolution failure: {line.strip()[:90]!r}", where))
     return findings
 
 
 def check_restatements(text, where):
     """A rule restated in another section must cite the section that defines it (B6, W2).
 
-    Section 10 is exempt. Its media-type registrations and registry requests are
-    template-shaped by design, so three registries that each open "IANA is requested
-    to create a registry named" are parallel structure rather than drift.
+    Section 10's registration templates are exempt by shape, not by section: its
+    definition-list bullets and its "IANA is requested to create a registry named"
+    openings are parallel by design, while free prose inside a registration is
+    compared like any other. Exempting the whole section hid a divergence between
+    section 10.1.3's heading rule and section 6.2.2's.
     """
     findings, seen = [], []
     for number, title, body in _sections(text):
-        if number.startswith("10"):
-            continue
+
         for line in _prose_lines(body):
+            if number.startswith("10") and (line.startswith("- **")
+                                            or line.startswith("IANA is requested")):
+                continue
             sentences = [x.strip() for x in SENTENCE_RE.split(line)]
             # Single sentences and adjacent pairs. A restatement that merges two
             # sentences into one, or splits one into two, matches no single sentence,
@@ -158,11 +193,13 @@ def check_restatements(text, where):
                 bare = re.sub(r"\s+", " ", bare).strip()
                 # Cheap prefilters before the quadratic comparison: a length band,
                 # which SIMILARITY bounds outright, then a character-multiset ratio.
-                low, high = len(bare) * SIMILARITY, len(bare) / SIMILARITY
+                low, high = len(bare) * LENGTH_FLOOR, len(bare) / LENGTH_FLOOR
+                matcher = SequenceMatcher()
+                matcher.set_seq2(bare)
                 for other_number, other in seen:
                     if other_number == number or not low <= len(other) <= high:
                         continue
-                    matcher = SequenceMatcher(None, bare, other)
+                    matcher.set_seq1(other)
                     if matcher.quick_ratio() < SIMILARITY:
                         continue
                     ratio = matcher.ratio()
@@ -222,7 +259,9 @@ def check_normative_scope(text, where):
     for number, title, body in _sections(text):
         if number == "2.1":                     # quotes the key words to define them
             continue
-        if number.startswith("Appendix"):
+        if number == PREAMBLE:
+            normative = False
+        elif number.startswith("Appendix"):
             normative = number.split()[-1] in letters
         else:
             normative = int(number.split(".")[0]) in numbers
@@ -237,8 +276,90 @@ def check_normative_scope(text, where):
     return findings
 
 
+DECLARATION_RE = re.compile(r"^(\d+)\. (.+)$", re.M)
+TEMPLATE_LABEL_RE = re.compile(r"^([A-Z][A-Za-z0-9 -]*?):\s+", re.M)
+PLACEHOLDER_RE = re.compile(r"<[^>]+>")
+
+# Appendix C's template has one free-text field that declares nothing, and three of
+# its fields are covered by a section 7 item that asks for two things at once: item 1
+# asks which encodings an implementation reads and writes, item 5 asks which elements
+# it narrows and which it additionally requires, and item 10 asks for the
+# specification version and the implementation's own version. Both numbers are
+# deliberate: a legitimate change to either side updates them here, and any change to
+# one side alone fires the check.
+TEMPLATE_NON_DECLARATIONS = 1       # Notes
+TEMPLATE_FIELDS_PAIRED = 3          # items 1, 5 and 10 each cover two fields
+
+
+def _fenced_blocks(body):
+    blocks, current, in_fence = [], [], False
+    for line in body.splitlines():
+        if line.startswith("```"):
+            if in_fence:
+                blocks.append("\n".join(current))
+                current = []
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            current.append(line)
+    return blocks
+
+
+def check_profile_template(text, where):
+    """Section 7's declarations, Appendix C's template and Figure 11 stay in step.
+
+    A requirement about conformance profiles lives in five places: section 7's list,
+    Appendix C's template, Figure 11's worked example, the published profiles, and the
+    checker's required keys. Three defects of that shape have been found by review:
+    section 7 gained two declarations while the checker gained one, Figure 11 omitted
+    two fields its own template requires, and section 7's list omits a declaration
+    section 5.2's argument depends on. `conformance.REQUIRED_KEYS` is compared against
+    the template in tools/test_framespec_conformance.py, which holds the label-to-key
+    mapping; this check covers the three parts that need no mapping.
+    """
+    findings = []
+    sections = dict((number, body) for number, _title, body in _sections(text))
+    seven = sections.get("7")
+    appendix = sections.get("Appendix C")
+    if seven is None or appendix is None:
+        return [Finding("error", "profile-sections-not-found",
+                        "section 7 or Appendix C did not parse, so nothing compared the "
+                        "declarations against the template", where)]
+    declarations = DECLARATION_RE.findall(seven)
+    blocks = _fenced_blocks(appendix)
+    if len(blocks) < 2:
+        return [Finding("error", "profile-template-not-found",
+                        f"Appendix C holds {len(blocks)} fenced blocks; the template and the "
+                        "worked example are both needed", where)]
+    template, example = blocks[0], blocks[1]
+    template_labels = TEMPLATE_LABEL_RE.findall(template)
+    example_labels = TEMPLATE_LABEL_RE.findall(example)
+    if not declarations or not template_labels:
+        return [Finding("error", "profile-template-unreadable",
+                        f"read {len(declarations)} declarations and {len(template_labels)} template "
+                        "fields; one of the two patterns no longer matches", where)]
+    missing = sorted(set(template_labels) - set(example_labels))
+    if missing:
+        findings.append(Finding("error", "example-profile-incomplete",
+                                f"Figure 11 omits {', '.join(missing)}, which Appendix C's template "
+                                "requires of a profile", where))
+    left = PLACEHOLDER_RE.findall(example)
+    if left:
+        findings.append(Finding("error", "example-profile-unfilled",
+                                f"Figure 11 leaves a placeholder unfilled: {', '.join(left)}", where))
+    expected = len(template_labels) - TEMPLATE_NON_DECLARATIONS - TEMPLATE_FIELDS_PAIRED
+    if len(declarations) != expected:
+        findings.append(Finding(
+            "error", "declarations-and-template-disagree",
+            f"section 7 lists {len(declarations)} declarations; Appendix C's template has "
+            f"{len(template_labels)} fields, of which {TEMPLATE_NON_DECLARATIONS} declare nothing "
+            f"and {TEMPLATE_FIELDS_PAIRED} are the second half of a paired declaration, leaving "
+            f"{expected}; one side gained a requirement the other did not", where))
+    return findings
+
+
 CHECKS = (check_parties, check_dispositions, check_rejection_paths, check_restatements,
-          check_normative_scope)
+          check_normative_scope, check_profile_template)
 
 
 def lint(spec_path=DEFAULT_SPEC_PATH):

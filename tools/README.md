@@ -105,6 +105,14 @@ the `guidance-null` information finding rather than applied silently. The draft
 does not settle the question, so an implementation that read it the other way
 would conform too.
 
+Section 6.2.4 names four structures the Markdown encoding cannot express, and
+Section 6.1 carves them out of the round-trip requirement, so losing the
+structure is conforming. `--round-trip` reports the loss anyway, with the
+element and both values, because surfacing it is what a validator is for: a
+`guidance` value holding a level-2 heading that matches a refinement label, or
+a refinement value holding a blank line, comes back as two values and the mode
+exits 1. The words survive in both cases, which is what Section 4.4.1 requires.
+
 It never rejects a Frame for an unrecognized element, an unregistered
 `status` or `visibility` value, an unrecognized heading, or the form of a
 reference. The first two and the last are reported as a warning or as

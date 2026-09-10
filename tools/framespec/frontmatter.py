@@ -55,6 +55,14 @@ def _lift_nested(lines):
             kept.append(line)                       # a simple sequence: the parser handles it
             kept.extend(block)
         elif body:
+            # A column-zero sequence item after a block being lifted belongs to the
+            # same malformed construct, and must come with it: left in `kept` it is an
+            # ownerless list line, and the v0.2 parser attaches such a line to the last
+            # key it saw, which is some unrelated key whose value it then overwrites.
+            # Real YAML rejects this document outright; the fallback preserves it.
+            while cursor < len(lines) and lines[cursor].startswith(SEQUENCE_ITEM):
+                block.append(lines[cursor])
+                cursor += 1
             nested[key] = "\n".join(block)          # anything else: preserve verbatim
         else:
             kept.append(line)                       # an empty value
