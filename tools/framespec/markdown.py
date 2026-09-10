@@ -9,6 +9,11 @@ from .model import Frame, default_identifier, derived_names, normalize
 REQUIRED_KEYS = ("type",)
 RECOMMENDED_KEYS = ("name", "description", "visibility")
 ALIASES = {"name": "title", "inherits": "composition"}
+# The one refinement section 4.4.2 gives a structured form. Named here, not derived
+# from the profile, because the profile records the element set and this is a fact
+# about one element's definition; the CSV's note says the same in prose. Every other
+# refinement's value is plain content, so a mapping under one is rendered as text.
+STRUCTURED_FORM = "terminology"
 REVERSE_ALIASES = {v: k for k, v in ALIASES.items()}
 TYPE_RE = re.compile(r"^frame(?: \[\d+\.\d+\])?$")
 TYPE_SENTINEL_RE = re.compile(r"^frame\b")
@@ -37,13 +42,17 @@ def parse(text, profile, location=None):
     except ValueError as error:
         return None, [Finding("error", "front-matter", str(error), location)]
     try:
-        fm, fallback = frontmatter.load_mapping(fm_text)
+        fm, fallback, problems = frontmatter.load_mapping(fm_text)
     except ValueError as error:
         return None, [Finding("error", "front-matter", str(error), location)]
     if fallback:
         findings.append(Finding("info", "yaml-fallback",
                                 "PyYAML is not installed; front matter parsed with the line-based v0.2 parser",
                                 location))
+    # A line the fallback parser could not read is a warning, not silence: without
+    # this the parser's own complaints were discarded and the document looked clean.
+    for problem in problems:
+        findings.append(Finding("warning", "front-matter-not-fully-read", problem, location))
     for key in REQUIRED_KEYS:
         if fm.get(key) in (None, ""):
             findings.append(Finding("error", "missing-required-key",
@@ -168,8 +177,10 @@ def write(frame, profile, spec_version="0.3"):
             continue
         parts.append(f"\n## {element.label}\n\n")
         for value in values:
-            if isinstance(value, dict):
+            if isinstance(value, dict) and element.name == STRUCTURED_FORM:
                 parts.append(_concept(value))
+            elif isinstance(value, dict):
+                parts.append(f"- {_mapping_text(value)}\n")
             elif isinstance(value, str) and "\n" in value:
                 parts.append(f"{value}\n\n")
             else:
@@ -186,6 +197,17 @@ def _concept(value):
         kept = "; ".join(f"{k}: {_flat(v)}" for k, v in sorted(extra.items()))
         line += f" ({kept})"
     return line + "\n"
+
+
+def _mapping_text(value):
+    """A mapping under a refinement that has no structured form, rendered as text.
+
+    Section 4.4 gives only `terminology` a structured form, so a mapping here carries
+    no term and no definition and must not be shaped like one: doing so emitted empty
+    bold markup, `- ****:  (a: 1)`, which is malformed Markdown. The dumb-down rule of
+    section 4.4.1 wants the content kept, which this does, and the structure lost.
+    """
+    return "; ".join(f"{key}: {_flat(item)}" for key, item in sorted(value.items()))
 
 
 def _flat(value):

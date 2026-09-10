@@ -63,6 +63,16 @@ class ProfileTests(unittest.TestCase):
         # thing twice.
         self.assertEqual(self.p.content_elements(), ["guidance"] + REFINEMENTS)
 
+    def test_every_element_carries_the_level_the_csv_records(self):
+        # The level column feeds the section 10.2 registry, and selfcheck compares it
+        # against the draft's summary table. Here: it is read, and it is one of the
+        # two levels this document defines, for every row.
+        for name in self.p.order:
+            with self.subTest(name):
+                self.assertIn(self.p.elements[name].level, ("Frame", "Version"))
+        self.assertEqual(self.p.elements["identifier"].level, "Frame")
+        self.assertEqual(self.p.elements["guidance"].level, "Version")
+
     def test_missing_content_root_raises(self):
         with tempfile.TemporaryDirectory() as tmp_dir:
             csv_path = Path(tmp_dir) / "no-guidance.csv"

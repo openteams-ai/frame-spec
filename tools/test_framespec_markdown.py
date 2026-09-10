@@ -1,5 +1,8 @@
+import sys
 import unittest
-from framespec import markdown
+from unittest import mock
+
+from framespec import frontmatter, markdown
 from framespec.findings import has_errors
 from framespec.profile import Profile
 
@@ -60,6 +63,17 @@ visibility: shared
 """
 
 
+def document_codes(findings):
+    """Finding codes about the document, dropping the fallback's configuration notice.
+
+    Without PyYAML every parse also reports `yaml-fallback`, which says how the front
+    matter was read rather than anything about the front matter. Tests that assert the
+    exact set of findings must be independent of that, or the suite fails in the
+    PyYAML-absent configuration tools/README.md advertises as supported.
+    """
+    return [f.code for f in findings if f.code != "yaml-fallback"]
+
+
 class ParseTests(unittest.TestCase):
     def setUp(self):
         self.p = Profile.load()
@@ -111,8 +125,7 @@ class ParseTests(unittest.TestCase):
     def test_missing_type_is_an_error(self):
         text = "---\nname: N\ndescription: D\nvisibility: internal\n---\nbody\n"
         frame, findings = markdown.parse(text, self.p, None)
-        codes = [f.code for f in findings]
-        self.assertEqual(codes, ["missing-required-key"])
+        self.assertEqual(document_codes(findings), ["missing-required-key"])
         self.assertTrue(has_errors(findings))
 
     def test_missing_recommended_keys_are_warnings_and_the_document_is_accepted(self):
@@ -123,9 +136,9 @@ class ParseTests(unittest.TestCase):
         text = "---\ntype: frame [0.3]\n---\nbody\n"
         frame, findings = markdown.parse(text, self.p, None)
         self.assertIsNotNone(frame)
-        codes = [f.code for f in findings]
-        self.assertEqual(codes, ["missing-recommended-key"] * 3)
-        self.assertTrue(all(f.level == "warning" for f in findings))
+        self.assertEqual(document_codes(findings), ["missing-recommended-key"] * 3)
+        self.assertTrue(all(f.level == "warning" for f in findings
+                            if f.code != "yaml-fallback"))
         self.assertFalse(has_errors(findings), [str(f) for f in findings])
         self.assertEqual(frame.elements["guidance"], ["body"])
 
@@ -282,6 +295,20 @@ class DefectRegressionTests(unittest.TestCase):
         again, _ = markdown.parse(text, self.p, None)
         self.assertIn("instance, deployment", again.elements["terminology"][0]["definition"])
 
+    def test_a_mapping_under_a_refinement_without_a_structured_form_is_written_as_text(self):
+        # Section 4.4 gives only `terminology` a structured form. A mapping under any
+        # other refinement used to be shaped like a concept, emitting `- ****:  (a: 1)`.
+        frame, _ = markdown.parse(SPEC_EXAMPLE, self.p, None)
+        frame.elements["rules"] = [{"b": 2, "a": 1}]
+        text = markdown.write(frame, self.p)
+        self.assertIn("- a: 1; b: 2\n", text)
+        self.assertNotIn("****", text)
+        again, findings = markdown.parse(text, self.p, None)
+        self.assertFalse(has_errors(findings), [str(f) for f in findings])
+        self.assertEqual(again.elements["rules"], ["a: 1; b: 2"])
+        # terminology keeps its concept shape in the same document
+        self.assertIn("- **customer**:", text)
+
     def test_a_fenced_block_does_not_end_a_refinement_section(self):
         text = ("---\ntype: frame\nname: N\ndescription: D\nvisibility: internal\n---\n\n"
                 "## Rules\n\n- real bullet\n\n```\n## Not A Heading\n- not a bullet\n```\n")
@@ -289,6 +316,64 @@ class DefectRegressionTests(unittest.TestCase):
         self.assertEqual(frame.elements["guidance"], [""])
         self.assertEqual(frame.elements["rules"][0], "real bullet")
         self.assertIn("## Not A Heading", frame.elements["rules"][1])
+
+
+class FallbackParserTests(unittest.TestCase):
+    """The line-based parser used when PyYAML is absent (section 6.2.1's preserve rule).
+
+    Handed an indented block it cannot model, that parser used to drop the block's
+    own lines and reattribute any `- ` item inside it to the preceding key, so a
+    nested `terminology` came back as its altTerms list: a fabricated value, with
+    the parser's complaints discarded. It must preserve instead.
+    """
+
+    def setUp(self):
+        self.p = Profile.load()
+
+    def test_lift_nested_separates_only_what_the_parser_cannot_model(self):
+        cases = [
+            ("a scalar", ["maintainer: marketing"], [], None),
+            ("an empty value", ["maintainer:"], [], None),
+            ("a simple sequence", ["inherits:", "  - a/b", "  - c/d"], [], None),
+            ("a nested mapping", ["terminology:", "  term: client"], ["terminology"],
+             "  term: client"),
+            ("a mapping holding a sequence",
+             ["terminology:", "  term: client", "  altTerms:", "    - account"],
+             ["terminology"], "  term: client\n  altTerms:\n    - account"),
+        ]
+        for label, lines, nested_keys, block in cases:
+            with self.subTest(label):
+                kept, nested = frontmatter._lift_nested(lines)
+                self.assertEqual(sorted(nested), nested_keys)
+                if block is not None:
+                    self.assertEqual(nested["terminology"], block)
+                else:
+                    self.assertEqual(kept, lines)
+
+    def test_a_nested_value_is_preserved_verbatim_and_never_fabricated(self):
+        text = ("---\ntype: frame\nname: N\ndescription: D\nvisibility: internal\n"
+                "terminology:\n  term: client\n  altTerms:\n    - account\n---\n\nBody.\n")
+        with mock.patch.dict(sys.modules, {"yaml": None}):
+            frame, findings = markdown.parse(text, self.p, None)
+        codes = [f.code for f in findings]
+        self.assertIn("yaml-fallback", codes)
+        self.assertIn("front-matter-not-fully-read", codes)
+        self.assertFalse(has_errors(findings), [str(f) for f in findings])
+        # The value is the block's own text. Emphatically not ["account"], which is
+        # what the reattribution produced and what nothing would have caught.
+        self.assertEqual(frame.elements["terminology"],
+                         ["  term: client\n  altTerms:\n    - account"])
+
+    def test_a_v02_shaped_document_is_unaffected_by_the_lift(self):
+        # The common shape: scalars plus one simple sequence. Must parse exactly as
+        # before, or the fallback has regressed for every real v0.2 Frame.
+        text = ("---\ntype: frame\nname: N\ndescription: D\nvisibility: internal\n"
+                "inherits:\n  - acme/company-core\n  - acme/brand-voice\n---\n\nBody.\n")
+        with mock.patch.dict(sys.modules, {"yaml": None}):
+            frame, findings = markdown.parse(text, self.p, None)
+        self.assertNotIn("front-matter-not-fully-read", [f.code for f in findings])
+        self.assertEqual(frame.elements["composition"], ["acme/company-core", "acme/brand-voice"])
+        self.assertEqual(frame.elements["title"], "N")
 
 
 class FrontMatterShapeTests(unittest.TestCase):

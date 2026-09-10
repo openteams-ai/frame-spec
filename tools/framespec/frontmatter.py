@@ -23,20 +23,69 @@ def _unquote(value):
     return value
 
 
-def load_mapping(text):
-    """Parse front matter to a dict. Returns (mapping, used_fallback).
+SEQUENCE_ITEM = "- "
 
-    With PyYAML installed this is a real YAML parse. Without it, the
-    line-based parser from tools/validate_frames.py is used; it understands
-    scalars and simple lists, which is the shape v0.2 Frames use.
+
+def _lift_nested(lines):
+    """Separate indented blocks the line-based parser cannot model. Returns (kept, nested).
+
+    That parser understands scalars and simple sequences. Handed anything else it
+    drops the block's own lines and reattributes any `- ` item inside it to the
+    preceding key, so `terminology:` over a nested mapping containing `altTerms`
+    came back as the altTerms list. Section 6.2.1 requires a reader to preserve
+    such a value and not to extract a structured form from it, so the block is
+    lifted out here and kept verbatim as its key's value, and the caller warns.
+    """
+    kept, nested, index = [], {}, 0
+    while index < len(lines):
+        line = lines[index]
+        indented = line[:1] in (" ", "\t")
+        key = line.partition(":")[0].strip() if ":" in line and not indented else None
+        if key is None or line.partition(":")[2].strip():
+            kept.append(line)
+            index += 1
+            continue
+        # A bare `key:`; gather the indented block that belongs to it.
+        block, cursor = [], index + 1
+        while cursor < len(lines) and (lines[cursor][:1] in (" ", "\t") or not lines[cursor].strip()):
+            block.append(lines[cursor])
+            cursor += 1
+        body = [b for b in block if b.strip()]
+        if body and all(b.strip().startswith(SEQUENCE_ITEM) for b in body):
+            kept.append(line)                       # a simple sequence: the parser handles it
+            kept.extend(block)
+        elif body:
+            nested[key] = "\n".join(block)          # anything else: preserve verbatim
+        else:
+            kept.append(line)                       # an empty value
+            kept.extend(block)
+        index = cursor
+    return kept, nested
+
+
+def load_mapping(text):
+    """Parse front matter to a dict. Returns (mapping, used_fallback, problems).
+
+    With PyYAML installed this is a real YAML parse and problems is empty. Without
+    it, the line-based parser from tools/validate_frames.py is used; it understands
+    scalars and simple lists, which is the shape v0.2 Frames use. Its own complaints
+    are returned rather than discarded, since a line it cannot read is something the
+    caller must report.
     """
     try:
         import yaml
     except ImportError:
         from validate_frames import parse_frontmatter
-        data, _problems = parse_frontmatter(text.splitlines())
-        return {k: ([_unquote(i) for i in v] if isinstance(v, list) else _unquote(v))
-                for k, v in data.items()}, True
+        kept, nested = _lift_nested(text.splitlines())
+        data, problems = parse_frontmatter(kept)
+        out = {k: ([_unquote(i) for i in v] if isinstance(v, list) else _unquote(v))
+               for k, v in data.items()}
+        out.update(nested)
+        problems = list(problems) + [
+            f"front matter key '{key}' carries indented structure this parser cannot model; "
+            "its text is preserved verbatim and no structured form is read from it"
+            for key in nested]
+        return out, True, problems
     try:
         data = yaml.safe_load(text) or {}
     except yaml.YAMLError as error:
@@ -45,7 +94,7 @@ def load_mapping(text):
         raise ValueError(f"front matter is not valid YAML: {error}") from error
     if not isinstance(data, dict):
         raise ValueError("front matter is not a mapping")
-    return data, False
+    return data, False, []
 
 
 def dump_mapping(mapping):

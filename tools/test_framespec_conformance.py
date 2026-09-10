@@ -341,7 +341,7 @@ class ConformanceTests(unittest.TestCase):
             "implementation": "X", "version": "1", "specification": "draft-mcandrew-frame-spec-00",
             "encodings_read": "markdown", "encodings_written": "json",
             "resolves_composition": "transitive", "version_selection": "latest version with status approved",
-    "resolver_context": "the registry the reader is configured against",
+            "resolver_context": "the registry the reader is configured against",
             "reference_forms": "pinned-ref",
             "rule6_narrowings": {"dedup": "all-repeatable", "replace_by_key": "terminology"},
             "non_repeatable": "style", "additionally_required": "version",
