@@ -122,7 +122,7 @@ Two things follow from that definition and motivate this document. First, a Fram
 
 ### 1.1. Why a Data Model
 
-Frame Spec v0.2 [[FRAME-V02]](#ref-FRAME-V02) defines a Frame as a Markdown file whose YAML front matter carries four required fields, with a free-form body. That definition has served early adoption well, and its file format is the Markdown encoding of this specification ([Section 6.2](#enc-markdown)), which relaxes three of its four required fields to SHOULD ([Section 1.3](#rel-v02)). It is, however, a definition of a file layout rather than of a Frame. A registry that stores Frames as database rows, a desktop application that holds them in memory, and a Markdown file on disk all hold Frames, and a specification predicated on files cannot say what they have in common.
+Frame Spec v0.2 [[FRAME-V02]](#ref-FRAME-V02) defines a Frame as a Markdown file whose YAML front matter carries four required fields, with a free-form body. That definition has served early adoption well, and its file format is the Markdown encoding of this specification ([Section 6.2](#enc-markdown)), which makes three of its four required fields recommended rather than required ([Section 1.3](#rel-v02)). It is, however, a definition of a file layout rather than of a Frame. A registry that stores Frames as database rows, a desktop application that holds them in memory, and a Markdown file on disk all hold Frames, and a specification predicated on files cannot say what they have in common.
 
 This document therefore specifies the Frame itself, independent of any encoding, and then specifies encodings as bindings of that model. The approach follows the separation between an abstract artifact and its distributions in the W3C Data Catalog Vocabulary [[DCAT3]](#ref-DCAT3), and the separation between a domain model, an element set, and encoding syntax guidelines in the Singapore Framework for application profiles [[SINGAPORE]](#ref-SINGAPORE). Where an element of the model corresponds to a term already defined by an established vocabulary, this document says so ([Appendix A](#crosswalk)) rather than defining a new meaning.
 
@@ -141,7 +141,7 @@ Four principles shape the specification.
 
 ### 1.3. Relationship to Frame Spec v0.2
 
-Frame Spec v0.2 [[FRAME-V02]](#ref-FRAME-V02) is not amended. Its file format is the Markdown encoding of this specification. Compatibility is backward only: every document that conforms to v0.2 conforms to this specification. The reverse does not hold. This specification requires only `type` in front matter, where v0.2 requires four fields, so a document written to this specification may omit a field a v0.2 reader requires; a writer SHOULD emit all four to keep its output readable by one ([Section 6.2.1](#md-structure)). [Appendix D](#changes) lists what this document adds.
+Frame Spec v0.2 [[FRAME-V02]](#ref-FRAME-V02) is not amended. Its file format is the Markdown encoding of this specification. Compatibility is backward only: every document that conforms to v0.2 conforms to this specification. The reverse does not hold. This specification requires only `type` in front matter, where v0.2 requires four fields, so a document written to this specification may omit a field a v0.2 reader requires; and [Section 6.2.1](#md-structure) recommends that a writer emit all four, to keep its output readable by one. [Appendix D](#changes) lists what this document adds.
 
 <a id="conventions"></a>
 
@@ -697,7 +697,7 @@ An encoding is a binding of the model to a syntax. This document defines three. 
 
 ### 6.2. Markdown Encoding
 
-The Markdown encoding is the file format of [[FRAME-V02]](#ref-FRAME-V02). A document conforming to v0.2 conforms to this encoding. This section states v0.2's requirements in the terms of this specification, relaxes three of its four required front matter fields to SHOULD, and adds the mapping of body structure to elements.
+The Markdown encoding is the file format of [[FRAME-V02]](#ref-FRAME-V02). A document conforming to v0.2 conforms to this encoding. This section states v0.2's requirements in the terms of this specification, makes three of its four required front matter fields recommended rather than required, and adds the mapping of body structure to elements.
 
 <a id="md-structure"></a>
 
