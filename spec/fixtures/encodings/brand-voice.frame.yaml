@@ -1,0 +1,25 @@
+type: frame [0.3]
+identifier: acme/brand-voice
+title: Brand Voice
+description: How Acme sounds in public writing.
+visibility: internal
+version: 1.2.0
+status: approved
+maintainer: [marketing]
+license: CC-BY-4.0
+composition:
+  - acme/company-core@2.0.0
+guards:
+  - acme/pii-guard
+guidance: |-
+  Be plain and direct. Prefer short sentences.
+
+  ## Things We Avoid
+
+  - The word "revolutionary".
+rules:
+  - No performance claims without a cited benchmark.
+terminology:
+  - term: customer
+    definition: an organization that has deployed an Acme Hub.
+  - Prefer "Hub" over "instance".

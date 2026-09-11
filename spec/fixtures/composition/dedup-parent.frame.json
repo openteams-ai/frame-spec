@@ -1,0 +1,7 @@
+{
+  "identifier": "acme/dedup-parent",
+  "title": "Dedup Parent",
+  "visibility": "internal",
+  "guidance": "Parent guidance.",
+  "rules": ["cite sources", "no hype"]
+}

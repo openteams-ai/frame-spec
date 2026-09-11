@@ -1,0 +1,11 @@
+# The narrowing that expected-style-non-repeatable.json is resolved under: a profile
+# that declares one content element non-repeatable, which sends it through rule 6's
+# replace branch instead of its concatenate branch.
+#
+# Only the keys --compose reads are here. A conformance profile is a longer document
+# (draft section 7 and Appendix C), and the profiles of real implementations live in
+# spec/profiles/; the Nebari Frames profile declares these same two narrowings.
+non_repeatable: [style]
+rule6_narrowings:
+  dedup: all-repeatable
+  replace_by_key: [terminology]

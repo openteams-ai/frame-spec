@@ -18,8 +18,62 @@ jobs:
         with:
           python-version: "3.x"
 
+      - name: Install optional YAML support
+        run: python -m pip install pyyaml
+
       - name: Run validator tests
         run: python -m unittest discover -s tools
 
-      - name: Validate example Frames
+      - name: Validate example Frames (v0.2 validator)
         run: python tools/validate_frames.py examples
+
+      - name: Validate example Frames and fixtures (v0.3 working draft)
+        run: python tools/validate_frame.py examples spec/fixtures --quiet
+
+      - name: Round-trip the full fixture through every encoding
+        run: python tools/validate_frame.py --round-trip spec/fixtures/roundtrip/full.frame.md
+
+      - name: Self-check the profile CSV against the draft
+        run: python tools/validate_frame.py --self-check
+
+      - name: Check the conformance profiles
+        run: python tools/validate_frame.py --check-profile spec/profiles/nebari-frames.yaml spec/profiles/collab.yaml
+
+      # The three fixture paths below are the composed set in precedence order,
+      # lowest first: company-core, then brand-voice, then q4-playbook. They are
+      # listed explicitly and must stay that way. A shell glob (for example
+      # spec/fixtures/composition/*.frame.json) would sort them alphabetically,
+      # which swaps company-core and brand-voice and silently composes a
+      # different, still plausible-looking result instead of failing loudly.
+      - name: Composition fixture, model level
+        run: |
+          python tools/validate_frame.py --compose spec/fixtures/composition/company-core.frame.json spec/fixtures/composition/brand-voice.frame.json spec/fixtures/composition/q4-playbook.frame.json > /tmp/model.json
+          diff /tmp/model.json spec/fixtures/composition/expected-model.json
+
+      # Same explicit lowest-precedence-first order as above, not a glob.
+      - name: Composition fixture, under the Nebari Frames profile
+        run: |
+          python tools/validate_frame.py --compose --conformance-profile spec/profiles/nebari-frames.yaml spec/fixtures/composition/company-core.frame.json spec/fixtures/composition/brand-voice.frame.json spec/fixtures/composition/q4-playbook.frame.json > /tmp/profile.json
+          diff /tmp/profile.json spec/fixtures/composition/expected-style-non-repeatable.json
+
+      # parent then child, lowest precedence first, listed explicitly rather than
+      # globbed for the same reason as the fixture set above: alphabetically, child
+      # sorts before parent, so a glob here would not just reorder the composed set,
+      # it would swap which Frame is declaring, and print a different, still
+      # plausible-looking result instead of failing loudly. Rule 6: a single empty
+      # value is present for the replace branch and clears the value it would
+      # otherwise inherit, which is only visible under a profile that narrows style
+      # to non-repeatable.
+      - name: Composition fixture, an empty value clears an inherited one
+        run: |
+          python tools/validate_frame.py --compose --conformance-profile spec/fixtures/composition/style-non-repeatable.conformance.yaml spec/fixtures/composition/style-clear-parent.frame.json spec/fixtures/composition/style-clear-child.frame.json > /tmp/style-cleared.json
+          diff /tmp/style-cleared.json spec/fixtures/composition/expected-style-cleared.json
+
+      # parent then child, lowest precedence first, listed explicitly rather than
+      # globbed for the same reason as above: alphabetically, child sorts before
+      # parent. Rule 6: a deduplicated value keeps its first occurrence in the
+      # concatenation.
+      - name: Composition fixture, deduplication keeps the first occurrence
+        run: |
+          python tools/validate_frame.py --compose --conformance-profile spec/fixtures/composition/dedup-all-repeatable.conformance.yaml spec/fixtures/composition/dedup-parent.frame.json spec/fixtures/composition/dedup-child.frame.json > /tmp/dedup.json
+          diff /tmp/dedup.json spec/fixtures/composition/expected-dedup.json
