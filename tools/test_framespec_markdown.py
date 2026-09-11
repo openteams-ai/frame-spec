@@ -123,11 +123,32 @@ class ParseTests(unittest.TestCase):
         self.assertFalse(has_errors(findings), [str(f) for f in findings])
         self.assertEqual(frame.elements["rules"], ["a front matter rule", "a body rule"])
 
-    def test_missing_type_is_an_error(self):
+    def test_front_matter_with_no_type_is_not_a_frame_rather_than_a_frame_in_error(self):
+        # Sections 3.3 and 6.2.1 (amended): `type` is this encoding's sentinel, so a
+        # file carrying none is not a document of this encoding. Reporting an error
+        # instead is the defect the sentinel exists to prevent: a reader pointed at a
+        # directory reported one for every Jekyll post and Skill file in it.
+        # (None, None) is io.read_frame's contract for a file the caller skips.
         text = "---\nname: N\ndescription: D\nvisibility: internal\n---\nbody\n"
         frame, findings = markdown.parse(text, self.p, None)
-        self.assertEqual(document_codes(findings), ["missing-required-key"])
-        self.assertTrue(has_errors(findings))
+        self.assertIsNone(frame)
+        self.assertIsNone(findings)
+
+    def test_a_type_key_with_no_value_is_not_a_frame_either(self):
+        # A present key carrying nothing carries no sentinel. Both routes reach the
+        # same place, since an empty value does not begin with the word `frame`.
+        frame, findings = markdown.parse("---\ntype:\nname: N\n---\nbody\n", self.p, None)
+        self.assertIsNone(frame)
+        self.assertIsNone(findings)
+
+    @unittest.skipUnless(HAVE_YAML, "only a YAML parser produces a non-mapping front matter")
+    def test_front_matter_that_is_not_a_mapping_is_not_a_frame(self):
+        # Section 3.3 names this case in the same breath as the missing sentinel:
+        # not a document of this encoding, so not a Frame in error. It was reported
+        # as a front-matter error, which said a Frame was broken where no Frame was.
+        frame, findings = markdown.parse("---\n- a\n- b\n---\nbody\n", self.p, None)
+        self.assertIsNone(frame)
+        self.assertIsNone(findings)
 
     def test_missing_recommended_keys_are_warnings_and_the_document_is_accepted(self):
         # Section 6.2.1 (amended): only `type` is REQUIRED in the Markdown encoding.
@@ -143,24 +164,25 @@ class ParseTests(unittest.TestCase):
         self.assertFalse(has_errors(findings), [str(f) for f in findings])
         self.assertEqual(frame.elements["guidance"], ["body"])
 
-    def test_missing_required_key_and_missing_recommended_key_coexist(self):
+    def test_a_file_with_no_sentinel_is_skipped_before_its_recommended_keys_are_judged(self):
+        # The missing sentinel settles the file, so the two missing recommended keys
+        # are never reported. A file that is not a Frame gets no advice about the
+        # Frame it is not.
         text = "---\ndescription: D\nvisibility: internal\n---\nbody\n"
         frame, findings = markdown.parse(text, self.p, None)
-        codes = [f.code for f in findings]
-        self.assertIn("missing-required-key", codes)
-        self.assertIn("missing-recommended-key", codes)
-        required = next(f for f in findings if f.code == "missing-required-key")
-        recommended = next(f for f in findings if f.code == "missing-recommended-key")
-        self.assertEqual(required.level, "error")
-        self.assertEqual(recommended.level, "warning")
-        self.assertTrue(has_errors(findings))
+        self.assertIsNone(frame)
+        self.assertIsNone(findings)
 
-    def test_type_not_beginning_with_frame_is_an_error(self):
+    def test_type_not_beginning_with_frame_means_the_file_is_not_a_frame(self):
+        # Section 6.2.1: "a value that does not means the document is not a Frame",
+        # and section 3.3 files it with the other two sentinel cases rather than with
+        # the Frames in error. Reported as an error, `type: framework` was a broken
+        # Frame where the sentinel says it is somebody else's file. `frame` must match
+        # on a word boundary, so `framework` does not begin with the word.
         text = "---\ntype: framework\nname: N\ndescription: D\nvisibility: internal\n---\nbody\n"
         frame, findings = markdown.parse(text, self.p, None)
-        codes = [f.code for f in findings]
-        self.assertIn("bad-type-token", codes)
-        self.assertTrue(has_errors(findings))
+        self.assertIsNone(frame)
+        self.assertIsNone(findings)
 
     def test_three_part_version_token_warns_but_is_accepted(self):
         text = "---\ntype: frame [0.3.0]\nname: N\ndescription: D\nvisibility: internal\n---\nbody\n"
@@ -309,6 +331,17 @@ class DefectRegressionTests(unittest.TestCase):
         self.assertEqual(again.elements["rules"], ["a: 1; b: 2"])
         # terminology keeps its concept shape in the same document
         self.assertIn("- **customer**:", text)
+
+    def test_a_level_one_heading_ends_a_refinement_section(self):
+        # Section 6.2.2 (amended): a section extends to the next heading of level 2
+        # *or shallower*. It read "of level 2", so an author who wrote `## Rules` and
+        # later `# Appendix` had the appendix read as rules values, and the writer
+        # re-emitted the appendix as a bullet under Rules.
+        text = ("---\ntype: frame\nname: N\ndescription: D\nvisibility: internal\n---\n\n"
+                "## Rules\n\n- a real rule\n\n# Appendix\n\nnot a rule\n")
+        frame, findings = markdown.parse(text, self.p, None)
+        self.assertEqual(frame.elements["rules"], ["a real rule"])
+        self.assertEqual(frame.elements["guidance"], ["# Appendix\n\nnot a rule"])
 
     def test_a_fenced_block_does_not_end_a_refinement_section(self):
         text = ("---\ntype: frame\nname: N\ndescription: D\nvisibility: internal\n---\n\n"

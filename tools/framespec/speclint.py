@@ -228,18 +228,36 @@ def check_restatements(text, where):
 # Section 2.1 states which parts of the document are normative. Parsed rather than
 # hard-coded, so editing that sentence changes what this check enforces, and an
 # unparseable sentence is an error rather than a silent pass.
-CLASSIFICATION = re.compile(
-    r"Sections (\d+) through (\d+) and Appendices ([A-Z](?:, [A-Z])*,? and [A-Z]) are normative")
+CLASSIFICATION = re.compile(r"\b(Sections? \d[^.]*?) are normative")
+RANGE = re.compile(r"\b(\d+) through (\d+)\b")
+APPENDICES = re.compile(r"Appendices? ([A-Z](?:[,\s]+(?:and\s+)?[A-Z])*)")
 
 
 def normative_sections(text):
-    """(section numbers, appendix letters) declared normative by section 2.1."""
+    """(section numbers, appendix letters) declared normative by section 2.1.
+
+    The sentence names sections as ranges ("3 through 7"), as individual numbers
+    ("9 and 10"), or as both. It stopped being one range when section 8 came out of
+    the normative set: RFC 7942's implementation status is removed before
+    publication, so declaring it normative and declaring it temporary contradicted.
+    """
     m = CLASSIFICATION.search(text)
     if not m:
         return None
-    first, last = int(m.group(1)), int(m.group(2))
-    letters = set(re.findall(r"\b([A-Z])\b", m.group(3)))
-    return set(range(first, last + 1)), letters
+    clause = m.group(1)
+    numbers = set()
+    for first, last in RANGE.findall(clause):
+        numbers.update(range(int(first), int(last) + 1))
+    # Ranges are consumed before the loose numbers are read, so the endpoints of
+    # "3 through 7" are not read a second time as sections named on their own. Both
+    # readings reach the same set, but only this one leaves "names no range" and
+    # "names a range" distinguishable for whoever edits the sentence next.
+    numbers.update(int(n) for n in re.findall(r"\b(\d+)\b", RANGE.sub("", clause)))
+    appendices = APPENDICES.search(clause)
+    letters = set(re.findall(r"\b([A-Z])\b", appendices.group(1))) if appendices else set()
+    if not numbers or not letters:
+        return None
+    return numbers, letters
 
 
 def check_normative_scope(text, where):

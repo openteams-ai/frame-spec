@@ -53,15 +53,19 @@ class CliTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("Frames checked: 18   passed: 18   failed: 0", result.stdout)
 
-    def test_a_markdown_frame_missing_type_fails_with_exit_1(self):
-        # `type` is the only front matter key section 6.2.1 REQUIRES; without it the
-        # document is not a Frame at all.
+    def test_a_markdown_file_with_no_type_is_skipped_rather_than_failed(self):
+        # `type` is the only front matter key section 6.2.1 REQUIRES, and sections 3.3
+        # and 6.2.1 make its absence mean the file is not a document of this encoding
+        # rather than a Frame in error. The run used to exit 1 on any Markdown file
+        # with front matter, which is every Jekyll post and every Skill file.
         bad = TOOLS / "_cli_bad.frame.md"
         bad.write_text("---\nname: N\ndescription: D\nvisibility: internal\n---\nbody\n", encoding="utf-8")
         try:
             result = run(str(bad))
-            self.assertEqual(result.returncode, 1)
-            self.assertIn("missing-required-key", result.stdout)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("Frames checked: 0", result.stdout)
+            self.assertIn("skipped: 1", result.stdout)
+            self.assertNotIn("missing-required-key", result.stdout)
         finally:
             bad.unlink()
 

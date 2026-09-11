@@ -6,6 +6,16 @@ import json
 SCALAR_WIDTH = 1 << 20
 
 
+class NotAMapping(ValueError):
+    """Front matter parsed, and is not a mapping.
+
+    Section 3.3 puts this file with the ones that are not Frames rather than with the
+    Frames in error, alongside a file carrying no `type`, so the caller needs to tell
+    it from front matter that would not parse at all. A ValueError subclass, so a
+    caller that only wants "the front matter could not be used" still catches it.
+    """
+
+
 def split(text):
     """Return (front_matter, body). Raise ValueError if the block is missing or unclosed."""
     lines = text.splitlines()
@@ -101,7 +111,7 @@ def load_mapping(text):
         # front matter is reported rather than raised out of the parser.
         raise ValueError(f"front matter is not valid YAML: {error}") from error
     if not isinstance(data, dict):
-        raise ValueError("front matter is not a mapping")
+        raise NotAMapping("front matter is not a mapping")
     return data, False, []
 
 

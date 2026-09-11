@@ -92,14 +92,17 @@ class SpecLintTests(unittest.TestCase):
 
     def test_the_normative_classification_is_read_from_the_draft(self):
         # Hard-coding the section list here would let the draft's own statement drift
-        # away from what the check enforces.
+        # away from what the check enforces. Section 8 is the gap: RFC 7942's
+        # implementation status is removed before publication, so the draft stopped
+        # declaring it normative and the sentence stopped being one range.
         numbers, letters = speclint.normative_sections(self.text)
-        self.assertEqual(numbers, set(range(3, 11)))
+        self.assertEqual(numbers, {3, 4, 5, 6, 7, 9, 10})
         self.assertEqual(letters, {"A", "B", "C"})
+        self.assertNotIn(8, numbers)
 
     def test_an_unreadable_classification_is_an_error_not_a_pass(self):
         findings = self.lint_with(
-            "Sections 3 through 10 and Appendices A, B, and C are normative.",
+            "Sections 3 through 7, Sections 9 and 10, and Appendices A, B, and C are normative.",
             "Everything here is normative unless it says otherwise.")
         self.assertIn("classification-unreadable", [f.code for f in findings])
 

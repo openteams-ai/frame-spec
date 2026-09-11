@@ -94,21 +94,25 @@ class RoundTripTests(unittest.TestCase):
         self.assertEqual([(f.level, f.code) for f in markdown_findings],
                          [("warning", "missing-recommended-key")] * 3)
 
-    def test_an_error_level_leg_finding_still_fails_the_trip(self):
-        """The amendment closes the one gap that used to make a leg's re-read error
-        on element presence alone, but `type` is still REQUIRED and its value must
-        still begin with the word 'frame' (section 6.2.1); a leg can still write a
-        document it cannot read back for that reason. Built directly rather than
-        parsed, since going through the json and yaml legs first would not preserve
-        a `type` extra for the markdown leg to reproduce; `order` targets the leg
-        that can still fail on its own.
+    def test_a_leg_that_writes_a_non_frame_fails_the_trip(self):
+        """A leg can still write a document it cannot read back, and that fails.
+
+        Section 6.3 lets a structured document carry `type` with a value of the form
+        section 6.2.1 gives, and nothing rejects one of another form on the way in, so
+        a JSON Frame carrying `type: framework` writes a Markdown file that is not a
+        Frame at all. The markdown reader skips it, per sections 3.3 and 6.2.1, so the
+        trip has to notice the skip itself: reading it as an error used to do that job
+        and no longer does. Built directly rather than parsed, since the json and yaml
+        legs would not preserve a `type` extra for the markdown leg to reproduce;
+        `order` targets the leg that can fail on its own.
         """
         p = Profile.load()
         frame = Frame({"identifier": "acme/bad-type", "guidance": ["g"]}, "json", None, {"type": "framework"})
         final, diffs, legs = roundtrip.round_trip(frame, p, order=("markdown",))
+        self.assertIsNone(final)
         self.assertEqual(diffs, [], diffs)
         codes = {leg: [f.code for f in leg_findings if f.level == "error"] for leg, leg_findings in legs}
-        self.assertEqual(codes["markdown"], ["bad-type-token"])
+        self.assertEqual(codes["markdown"], ["wrote-a-non-frame"])
 
 
 

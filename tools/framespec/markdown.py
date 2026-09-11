@@ -6,7 +6,6 @@ from . import frontmatter
 from .findings import Finding
 from .model import Frame, default_identifier, derived_names, normalize
 
-REQUIRED_KEYS = ("type",)
 RECOMMENDED_KEYS = ("name", "description", "visibility")
 ALIASES = {"name": "title", "inherits": "composition"}
 # The one refinement section 4.4.2 gives a structured form. Named here, not derived
@@ -17,7 +16,7 @@ STRUCTURED_FORM = "terminology"
 REVERSE_ALIASES = {v: k for k, v in ALIASES.items()}
 TYPE_RE = re.compile(r"^frame(?: \[\d+\.\d+\])?$")
 TYPE_SENTINEL_RE = re.compile(r"^frame\b")
-HEADING_RE = re.compile(r"^## (.+?)\s*$")
+HEADING_RE = re.compile(r"^(#{1,2}) (.+?)\s*$")
 # Section 6.2.2: a list item may begin with a bullet marker, `-`, `*` or `+`, or an
 # ordered-list marker, a number followed by `.` or `)`; the marker is not part of the
 # value. This matches only an unindented marker followed by exactly one space, which is
@@ -45,6 +44,11 @@ def parse(text, profile, location=None):
         return None, [Finding("error", "front-matter", str(error), location)]
     try:
         fm, fallback, problems = frontmatter.load_mapping(fm_text)
+    except frontmatter.NotAMapping:
+        # Section 3.3: a file whose front matter is not a YAML mapping is not a
+        # document of this encoding. Not a Frame in error, so there is nothing to
+        # report; the caller skips it the way it skips a file with no front matter.
+        return None, None
     except ValueError as error:
         return None, [Finding("error", "front-matter", str(error), location)]
     if fallback:
@@ -55,23 +59,27 @@ def parse(text, profile, location=None):
     # this the parser's own complaints were discarded and the document looked clean.
     for problem in problems:
         findings.append(Finding("warning", "front-matter-not-fully-read", problem, location))
-    for key in REQUIRED_KEYS:
-        if fm.get(key) in (None, ""):
-            findings.append(Finding("error", "missing-required-key",
-                                    f"the Markdown encoding requires front matter key '{key}'", location))
+    # The sentinel decides whether there is a Frame here at all, so it is settled
+    # before anything else is judged. Section 3.3 names three ways a file can be
+    # someone else's rather than a Frame in error: front matter that is not a mapping,
+    # handled above; no `type` key; and a `type` whose value does not begin with the
+    # word `frame`. (None, None) is io.read_frame's contract for a file the caller
+    # skips. Reporting any of the three as an error is the defect the sentinel exists
+    # to prevent: a reader pointed at a directory reported a broken Frame for every
+    # Jekyll post and every Skill file in it.
+    type_value = fm.get("type")
+    type_token = "" if type_value is None else str(type_value).strip()
+    if not TYPE_SENTINEL_RE.match(type_token):
+        return None, None
+    if not TYPE_RE.match(type_token):
+        findings.append(Finding("warning", "nonstandard-type-version",
+                                f"type {type_token!r} has a version token that is not '[<major>.<minor>]'; "
+                                "accepted as a Frame", location))
     for key in RECOMMENDED_KEYS:
         if fm.get(key) in (None, ""):
             findings.append(Finding("warning", "missing-recommended-key",
                                     f"front matter key '{key}' is recommended but not present; "
                                     "the document is still a Frame", location))
-    type_token = str(fm.get("type", "")).strip()
-    if type_token and not TYPE_SENTINEL_RE.match(type_token):
-        findings.append(Finding("error", "bad-type-token",
-                                f"type must begin with the word 'frame', got {type_token!r}", location))
-    elif type_token and not TYPE_RE.match(type_token):
-        findings.append(Finding("warning", "nonstandard-type-version",
-                                f"type {type_token!r} has a version token that is not '[<major>.<minor>]'; "
-                                "accepted as a Frame", location))
     for key, value in fm.items():
         if key != "type" and not _is_flat(value):
             findings.append(Finding("warning", "nested-front-matter-value",
@@ -131,11 +139,15 @@ def _split_body(body, profile):
             in_fence = not in_fence
         match = None if in_fence else HEADING_RE.match(line)
         if match:
-            label = match.group(1).strip().lower()
-            if label in labels:
+            level, label = match.group(1), match.group(2).strip().lower()
+            if level == "##" and label in labels:
                 current = labels[label]
                 sections.setdefault(current, [])
                 continue
+            # Section 6.2.2: a section extends to the next heading of level 2 or
+            # shallower, so a level 1 heading ends one too. Without that, `## Rules`
+            # followed by `# Appendix` read the appendix as rules values and the
+            # writer re-emitted the appendix as a bullet under Rules.
             current = None
         (sections[current] if current else guidance_lines).append(line)
     guidance = "\n".join(guidance_lines).strip("\n")

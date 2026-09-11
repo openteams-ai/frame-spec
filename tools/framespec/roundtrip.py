@@ -1,6 +1,7 @@
 """Re-encode a Frame through the other encodings and compare element values."""
 
 from . import io as frame_io
+from .findings import Finding
 
 
 def diff_elements(before, after):
@@ -22,8 +23,22 @@ def round_trip(frame, profile, order=("json", "yaml", "markdown")):
     legs = []
     for encoding in order:
         text = frame_io.WRITERS[encoding](current, profile)
-        current, findings = frame_io.PARSERS[encoding](text, profile, frame.location)
-        legs.append((encoding, list(findings or [])))
-        if current is None:
-            raise RuntimeError(f"round trip broke while reading the {encoding} encoding")
+        read, findings = frame_io.PARSERS[encoding](text, profile, frame.location)
+        findings = list(findings or [])
+        if read is None:
+            # The leg wrote a document its own reader does not take as a Frame, so
+            # there is nothing to carry into the next leg. A parse error already says
+            # why; a reader that skipped the document says nothing at all, since
+            # (None, None) is how it reports someone else's file, so the leg needs a
+            # finding of its own. It is returned rather than raised because the caller
+            # reports findings and would crash on an exception.
+            if not findings:
+                findings.append(Finding(
+                    "error", "wrote-a-non-frame",
+                    f"the {encoding} writer produced a document that its own reader does "
+                    "not read as a Frame, so the trip stopped here", frame.location))
+            legs.append((encoding, findings))
+            return None, [], legs
+        current = read
+        legs.append((encoding, findings))
     return current, diff_elements(frame.elements, current.elements), legs
