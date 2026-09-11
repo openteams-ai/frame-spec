@@ -22,38 +22,36 @@ The definition comes from the Intelligence Hub whitepaper, linked from [docs/eco
 
 The specification has two layers.
 
-**The Frame itself (the model).** What a Frame is, independent of how it is written down: the elements it carries and what each one means, which of them are mandatory, how Frames combine, and how a Frame is identified. Exactly two elements are mandatory: an identifier (which Frame is this) and guidance (what it says). Everything else is optional, including a title, description, version, status, maintainer, scope, visibility, license, lineage and Guard references, and ten optional kinds of content that a Frame commonly carries (rules, terminology, goals, style, norms, skills, tool specifications, prompts, architecture, business process). A reader that does not recognize one of those kinds treats it as ordinary guidance and never discards it, so a Frame with no labeled sections and a Frame with all ten are the same kind of thing, read at two levels of detail. Where an element means the same thing as a term already defined by an established vocabulary such as Dublin Core or schema.org, the specification says so instead of inventing a new meaning.
+**The Frame itself (the model).** What a Frame is, independent of how it is written down: the elements it carries and what each one means, which of them are mandatory, how Frames combine, and how a Frame is identified. Exactly two elements are mandatory: an identifier (which Frame is this) and guidance (what it says). Everything else is optional, including a title, description, version, status, maintainer, scope, visibility, license, lineage and Guard references. Where an element means the same thing as a term already defined by an established vocabulary such as Dublin Core or schema.org, the specification says so instead of inventing a new meaning.
 
-**How a Frame is written down (the encodings).** Three: Markdown, YAML, and JSON. The Markdown encoding is the v0.2 file format, unchanged: a YAML front matter block with four required fields and a free-form Markdown body. Every valid v0.2 Frame is a valid Frame under the working draft.
+**How a Frame is written down (the encodings).** Three: Markdown, YAML, and JSON. The Markdown encoding is the v0.2 file format: a YAML front matter block and a free-form Markdown body. Every valid v0.2 Frame is a valid Frame under the working draft. The one requirement that changed runs the other way: v0.2 requires four front matter fields, and the working draft requires only `type`, the key that tells a Frame from any other Markdown file. The other three stay recommended, a reader must not reject a document for omitting one, and a writer should still emit all four so that its output stays readable by a v0.2 reader.
 
-The smallest Markdown Frame, which is the v0.2 minimal example:
+A whole Frame, from [examples/code-review-norms/](examples/code-review-norms/):
 
 ```markdown
 ---
 type: frame [0.2]
-name: Editorial Style Guide
-description: Shared guidance for clear, consistent external writing.
+name: Code Review Norms
+description: How this team reviews pull requests, including what a reviewer blocks on and what is only a suggestion.
 visibility: shared
 ---
 
-# Editorial Style Guide
+# Code Review Norms
 
-## Goals
+Block on correctness, security, and data loss. Everything else is a suggestion the author is free to decline.
 
-- Be clear, direct, and credible.
-- Avoid hype and overclaiming.
+Say which one you mean. Prefix blocking comments with "Blocking:" and everything else with "Nit:" so the author can triage a long review at a glance.
 
-## Terminology
+Review the change that was made, not the change you would have made. If a different approach is genuinely better, say so once, explain why, and leave the decision with the author.
 
-- Prefer "Frame" over "alignment file".
+Approve when the change is safe to merge, not when it is perfect. A follow-up issue costs less than a stalled pull request.
 
-## Style
-
-- Use calm, explanatory language.
-- Make important assumptions explicit.
+If a thread reaches three round trips without converging, move it to a call and post the outcome back in the thread.
 ```
 
-Under the working draft this same file is a Frame whose identifier is its location, whose guidance is the body, and whose Goals, Terminology, and Style sections are recognized kinds of content. Nothing in the file changes.
+The body has no headings, because neither the release nor the working draft requires or expects any. Everything useful in this Frame is prose. Under the working draft it is a Frame whose identifier is the location it was read from and whose guidance is the body, and nothing in the file changes.
+
+Headings are worth adding once a Frame is long enough that a reader needs to navigate it, and not before. For a Frame that has them, the working draft recognizes ten labels for kinds of content a Frame commonly carries: rules, terminology, goals, style, norms, skills, tool specifications, prompts, architecture, business process. They are what some authors have found useful, not a checklist, and none of them is ever required. A reader that recognizes one of those kinds but does not implement it treats the content as ordinary guidance and never discards it, so a Frame with no labeled sections and a Frame with all ten are the same kind of thing, read at two levels of detail. An element a reader does not recognize at all is preserved and passed on, and is never handed to a model as guidance.
 
 ## Versions and status
 
