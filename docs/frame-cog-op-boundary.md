@@ -1,5 +1,7 @@
 # Frame, Cog, and Op Boundary
 
+> Status note: the minimum contract listed near the end of this note (scope, status, sharing, composition, provenance) is now carried by elements of the v0.3 working draft ([../spec/frame-spec.md](../spec/frame-spec.md)), and its Section 5.3 defines the reference form a Cog or Op uses to name a Frame.
+
 This note is future-facing.
 
 It is not the Frame spec itself.

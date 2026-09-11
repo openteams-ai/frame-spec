@@ -56,6 +56,8 @@ Examples:
 
 - `spec/v0.2.md`
 
+In current practice `spec/` also holds the working draft, `spec/frame-spec.md`, which is not adopted and not normative; [../spec/README.md](../spec/README.md) describes that arrangement. The `enhancements/` directory proposed below does not yet exist.
+
 ### 2. Active Proposal
 
 Meaning:

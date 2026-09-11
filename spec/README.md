@@ -16,22 +16,19 @@ Released snapshots are the normative reference for implementers. Changes between
 
 At the moment of a release the working draft and the newest snapshot are identical. Between releases the working draft may drift ahead; edits to it are not normative until they land in a released snapshot.
 
+The working draft currently carries the proposed **v0.3**. It is written in the structure of an IETF Internet-Draft and adds what v0.2 left undefined: a data model independent of any file format (Frame, Frame Version, Representation), a definition and obligation for every element, rules for how Frames compose, YAML and JSON encodings alongside the existing Markdown one, conformance profiles for implementations, and security considerations. The v0.2 file format is preserved as the Markdown encoding, and every valid v0.2 Frame remains valid. Appendix D of the draft lists the changes. The element set is also published as a machine-readable profile at [profile/frame-core.csv](profile/frame-core.csv).
+
 ## Later
 
 As the format stabilizes through real usage, this directory may also hold:
 
 - richer human-readable specs
-- a machine-readable schema
+- a machine-readable schema (a first form is [profile/frame-core.csv](profile/frame-core.csv))
 - validation examples
 
 For future-facing discussion, see [../docs/future-directions.md](../docs/future-directions.md).
 For a proposed enhancement-track process that separates exploratory ideas from active spec proposals, see [../docs/spec-enhancement-process.md](../docs/spec-enhancement-process.md).
 
-Areas that now look important to formalize include:
+Of the areas identified earlier as important to formalize, the working draft addresses scope and inheritance (composition rules), canonical identity (`identifier`, `canonicalSource`), and provenance (`derivedFrom`, `previousVersion`), and publishes the element set as a profile. Still open after the draft: sharing semantics beyond a declared `visibility`, review workflow beyond a `status` value, validation examples, and a namespace for the Frame-native terms (see the draft's Appendix A).
 
-- scope and inheritance
-- canonical identity and authoritative-source metadata
-- sharing and review semantics
-- provenance and validation examples
-
-The current spec intentionally stops short of committing to a final schema because it still needs more real examples.
+The released spec intentionally stops short of committing to a final schema; the working draft is where that schema is being worked out.

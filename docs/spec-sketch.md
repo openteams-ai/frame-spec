@@ -2,7 +2,7 @@
 
 This document is a future-facing sketch, not the current adopt-now spec. The field names and structure below do not correspond to the released v0.2 format; see [../spec/v0.2.md](../spec/v0.2.md) for the current spec.
 
-For immediate use, see [../spec/frame-spec.md](../spec/frame-spec.md).
+For immediate use, see [../spec/v0.2.md](../spec/v0.2.md). The working draft, [../spec/frame-spec.md](../spec/frame-spec.md), adopts several ideas from this sketch in a different shape: the status and visibility values below became the draft's registries, `canonical_source` and `derived_from` became `canonicalSource` and `derivedFrom`, and the YAML shown here is not the draft's YAML encoding.
 
 This document describes a first draft shape for Frame artifacts and the packages that may carry them.
 
