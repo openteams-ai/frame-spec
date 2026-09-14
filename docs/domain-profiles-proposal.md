@@ -1,6 +1,6 @@
 # Domain Profiles Proposal Sketch
 
-> Status note: still exploratory. "Profile" here means a domain profile. The v0.3 working draft uses "conformance profile" (its Section 7) for an implementation's declaration of optional behaviors, which is a different thing; the draft's optional content refinements (its Section 4.4) cover part of what a domain profile might have specified.
+> Status note: still exploratory. "Profile" here means a domain profile. The working draft uses "conformance profile" (its Section 7) for an implementation's declaration of optional behaviors, which is a different thing; the draft's optional content refinements (its Section 4.4) cover part of what a domain profile might have specified.
 
 This note is exploratory.
 

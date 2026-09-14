@@ -727,7 +727,7 @@ A writer MUST NOT emit a front matter value that is not a scalar or a sequence o
 
 The key `type` is REQUIRED in this encoding. It is the only one: a key is mandatory here only where two systems cannot exchange the document without it ([[RFC2119]](#ref-RFC2119), Section 6), and `type` is the sentinel a reader needs to tell a Frame from any other Markdown file. A file whose front matter carries no `type` key is not a document of this encoding rather than a document in error ([Section 3.3](#conformance-model)). The distinction is the sentinel's whole purpose: a reader that reported an error instead would report one for every Markdown file with front matter it was pointed at, a Jekyll post or a Skill file included. `name`, `description` and `visibility` are REQUIRED by [[FRAME-V02]](#ref-FRAME-V02) and are SHOULD here; a reader MUST NOT reject a document for omitting one. A writer SHOULD emit all four, so that documents it produces remain readable by a v0.2 reader.
 
-The value of `type` MUST begin with the word `frame`, matched case-sensitively; a value that does not means the document is not a Frame. The contrast with refinement labels, which match ignoring case ([Section 6.2.2](#md-body)), is deliberate: a label is prose an author writes and may capitalize as they please, while this value is a token a reader matches. The word MAY be followed by a bracketed version token, which SHOULD name a major and a minor version only: `frame [0.3]` denotes this document, and `frame [0.2]` denotes [[FRAME-V02]](#ref-FRAME-V02) and remains valid. Patch releases clarify wording without changing requirements, so the patch component does not appear in the token. A reader MUST NOT reject a document because its version token names a version the reader does not recognize or is not in that shape, and SHOULD warn. This extends the rule of [Section 6.1](#enc-common), which covers any version, to cover any shape of token as well. This key is specific to the Markdown encoding; the structured encodings need no sentinel.
+The value of `type` MUST begin with the word `frame`, matched case-sensitively; a value that does not means the document is not a Frame. The contrast with refinement labels, which match ignoring case ([Section 6.2.2](#md-body)), is deliberate: a label is prose an author writes and may capitalize as they please, while this value is a token a reader matches. The word MAY be followed by a bracketed version token, which SHOULD name a major and a minor version only: `frame [0.2]` denotes [[FRAME-V02]](#ref-FRAME-V02) and remains valid. The token that denotes this document is assigned when this document is released; until then a document written to this draft omits the token, which the sentence above permits. Patch releases clarify wording without changing requirements, so the patch component does not appear in the token. A reader MUST NOT reject a document because its version token names a version the reader does not recognize or is not in that shape, and SHOULD warn. This extends the rule of [Section 6.1](#enc-common), which covers any version, to cover any shape of token as well. This key is specific to the Markdown encoding; the structured encodings need no sentinel.
 
 <a id="md-body"></a>
 
@@ -801,7 +801,7 @@ The media type of this encoding is `text/markdown` [[RFC7763]](#ref-RFC7763) wit
 
 ```markdown
 ---
-type: frame [0.3]
+type: frame
 identifier: acme/brand-voice
 name: Brand Voice
 description: How Acme sounds in public writing.
@@ -847,7 +847,7 @@ The key `type` MAY be present with a value of the form given in [Section 6.2.1](
 The media type of this encoding is `application/frame+yaml` ([Section 10.1.2](#iana-yaml)).
 
 ```yaml
-type: frame [0.3]
+type: frame
 identifier: acme/brand-voice
 title: Brand Voice
 description: How Acme sounds in public writing.
@@ -888,9 +888,9 @@ The media type of this encoding is `application/frame+json` ([Section 10.1.1](#i
 
 ```json
 {
-  "@context": "https://frames.example.org/context/v0.3",
+  "@context": "https://frames.example.org/context/",
   "@type": "Frame",
-  "type": "frame [0.3]",
+  "type": "frame",
   "identifier": "acme/brand-voice",
   "title": "Brand Voice",
   "description": "How Acme sounds in public writing.",
@@ -1332,10 +1332,10 @@ Notes:                 <anything else an author should know>
 
 *Figure 10: Conformance profile template*
 
-Example, for the registry described in [Section 8](#impl-status):
+Example, for a registry that resolves composition transitively. It describes no real implementation:
 
 ```
-Implementation:        Nebari Frames 0.1.x (beta)
+Implementation:        Example Registry 1.0
 Specification:         draft-mcandrew-frame-spec-00
 Encodings read:        markdown
 Encodings written:     markdown
