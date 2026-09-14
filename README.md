@@ -2,7 +2,7 @@
 
 This repository holds the specification for **Frames**: scoped, text-based artifacts that carry the cultural and operational context within which work happens. A Frame is written by an organization, read by people, and loaded as context for AI systems, so that the organization does not have to re-explain itself in every interaction.
 
-**Current release: [v0.2.0](https://github.com/openteams-ai/frame-spec/releases/tag/v0.2.0)** (2026-08-18), frozen at [spec/v0.2.md](spec/v0.2.md). It is the normative reference. **Working draft:** [spec/frame-spec.md](spec/frame-spec.md) carries the proposed v0.3, which is not normative until it is released. Changes between releases are tracked in the [changelog](CHANGELOG.md).
+**Current release: [v0.2.0](https://github.com/openteams-ai/frame-spec/releases/tag/v0.2.0)** (2026-08-18), frozen at [spec/v0.2.md](spec/v0.2.md). It is the normative reference. **Working draft:** [spec/frame-spec.md](spec/frame-spec.md) has drifted ahead of that release and is not normative until a release freezes it. Changes between releases are tracked in the [changelog](CHANGELOG.md).
 
 ## What a Frame is
 
@@ -56,7 +56,7 @@ Headings are worth adding once a Frame is long enough that a reader needs to nav
 ## Versions and status
 
 - **Released versions** are frozen snapshots in [spec/](spec/README.md) and never change after release. `v0.2.0` is the current release and the normative reference. It defines the Markdown file format, which the working draft preserves as the Markdown encoding.
-- **The working draft**, [spec/frame-spec.md](spec/frame-spec.md), carries the proposed `v0.3`: the model, the YAML and JSON encodings, rules for composition, conformance profiles for implementations, and security considerations. It is written in the structure of an IETF Internet-Draft because that structure forces the sections a specification of this kind needs; it has not been submitted to the IETF or anywhere else. It is not normative until released. Appendix D of the draft lists what it adds relative to v0.2, and [spec/README.md](spec/README.md) summarizes it.
+- **The working draft**, [spec/frame-spec.md](spec/frame-spec.md), carries the model, the YAML and JSON encodings, rules for composition, conformance profiles for implementations, and security considerations. It is written in the structure of an IETF Internet-Draft because that structure forces the sections a specification of this kind needs; it has not been submitted to the IETF or anywhere else. It is not normative until released. Appendix D of the draft lists what it adds relative to v0.2, and [spec/README.md](spec/README.md) summarizes it.
 - **The element set as data**: [spec/profile/frame-core.csv](spec/profile/frame-core.csv) lists every element with its obligation, repeatability, and vocabulary correspondence, in the DCTAP tabular-profile format, so validators do not have to hard-code the element set.
 - **Declaring a version.** A Markdown Frame states the specification version it was written to with `type: frame [<major>.<minor>]`, for example `frame [0.2]`; the YAML and JSON encodings may carry the same token but do not require it. Specification releases are three-part (`v0.2.0`); patch releases clarify wording without changing requirements, so the patch component never appears in the token.
 
@@ -102,7 +102,7 @@ These aids help people create or verify Frames. They do not define a runtime or 
 ```text
 spec/
   README.md
-  frame-spec.md          # working draft (proposed v0.3; not normative until released)
+  frame-spec.md          # working draft (not normative until released)
   v0.2.md                # released v0.2.0 snapshot (normative)
   profile/
     frame-core.csv       # element set as a machine-readable profile

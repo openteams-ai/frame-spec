@@ -1,6 +1,6 @@
 # Frame Spec V1 Gap Analysis
 
-> Status note: written against the pre-v0.2 spec sketch ([spec-sketch.md](spec-sketch.md)); "the current draft" below means that sketch. Several gaps are addressed by the v0.3 working draft ([../spec/frame-spec.md](../spec/frame-spec.md)): composition (gap 1), review state through `status` (gap 5), and canonical identity (gap 9). The rest remain open.
+> Status note: written against the pre-v0.2 spec sketch ([spec-sketch.md](spec-sketch.md)); "the current draft" below means that sketch. Several gaps are addressed by the working draft ([../spec/frame-spec.md](../spec/frame-spec.md)): composition (gap 1), review state through `status` (gap 5), and canonical identity (gap 9). The rest remain open.
 
 This document is future-facing.
 

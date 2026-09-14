@@ -21,7 +21,7 @@ The following text captures the current working definition that motivated this s
 > Architecture descriptions — relevant software and system context that orients the work
 > Business process details — the procedural backbone that the work follows
 
-That definition describes what Frames are *for*. It is deliberately broader than the released spec, which defines only the four required frontmatter fields and leaves the body entirely free-form (see [../spec/v0.2.md](../spec/v0.2.md)). The v0.3 working draft ([../spec/frame-spec.md](../spec/frame-spec.md)) adopts the ten categories listed above as optional refinements of the body (its Section 4.4), keeping the body free-form for anyone who does not use them.
+That definition describes what Frames are *for*. It is deliberately broader than the released spec, which defines only the four required frontmatter fields and leaves the body entirely free-form (see [../spec/v0.2.md](../spec/v0.2.md)). The working draft ([../spec/frame-spec.md](../spec/frame-spec.md)) adopts the ten categories listed above as optional refinements of the body (its Section 4.4), keeping the body free-form for anyone who does not use them.
 
 ## Why Frames Matter
 
@@ -77,7 +77,7 @@ The general idea is:
 
 Frames should also remain self-describing when copied or shared.
 
-That implies the spec should carry structured identity metadata (the v0.3 working draft does, as `identifier`, `version`, `maintainer`, and `canonicalSource`) for:
+That implies the spec should carry structured identity metadata (the working draft does, as `identifier`, `version`, `maintainer`, and `canonicalSource`) for:
 
 - what logical Frame an artifact is
 - which version it represents
