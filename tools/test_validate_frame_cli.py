@@ -156,7 +156,7 @@ class CliTests(unittest.TestCase):
             "validate": run("examples/sow-review/business-owner.frame.md"),
             "round-trip": run("--round-trip", "examples/this-path-does-not-exist.frame.md"),
             "self-check": run("--self-check"),
-            "check-profile": run("--check-profile", "spec/profiles/collab.yaml"),
+            "check-profile": run("--check-profile", "spec/profiles/desktop.yaml"),
         }
         for mode, result in runs.items():
             with self.subTest(mode=mode):
@@ -224,7 +224,7 @@ class CliTests(unittest.TestCase):
             modes = [["examples/minimal/frame.md"],
                      ["--round-trip", "examples/minimal/frame.md"],
                      ["--self-check"],
-                     ["--check-profile", "spec/profiles/collab.yaml"],
+                     ["--check-profile", "spec/profiles/desktop.yaml"],
                      ["--compose", "examples/minimal/frame.md"]]
             for args in modes:
                 with self.subTest(mode=args[0]):

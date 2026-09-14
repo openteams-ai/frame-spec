@@ -1,5 +1,5 @@
 ---
-type: frame [0.3]
+type: frame
 identifier: acme/brand-voice
 name: Brand Voice
 description: How Acme sounds in public writing.

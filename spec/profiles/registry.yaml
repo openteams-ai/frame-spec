@@ -1,5 +1,8 @@
-implementation: Nebari Frames
-version: 0.1.x (beta)
+# An example conformance profile: a registry that resolves composition and
+# narrows several elements. Illustrates Appendix C; it describes no real
+# implementation.
+implementation: Example Registry
+version: "1.0"
 specification: draft-mcandrew-frame-spec-00
 encodings_read: [markdown]
 encodings_written: [markdown]
@@ -19,12 +22,9 @@ identifier_minting: slugified title; reject on collision. A document read withou
 visibility: declared intent only; not an access control
 notes: >-
   Cycle detection on resolution. Internal storage is YAML but is not the YAML
-  encoding of the specification. At the time of writing the registry still
-  constrains title to an identifier syntax and rejects unrecognized headings,
-  unrecognized front matter keys, and unstructured terminology entries; those
-  behaviors do not conform and their removal is planned. Section 5.2 also
-  requires reporting the Frame Version resolved for each reference. Rule 5
-  keeps a Frame's own composition list from being inherited, so the
-  top-level reference's pinned version survives unresolved in the result;
-  whether the registry also reports the version of every Frame it resolves
-  transitively beneath that is not confirmed here.
+  encoding of the specification. Section 5.2 also requires reporting the Frame
+  Version resolved for each reference. Rule 5 keeps a Frame's own composition
+  list from being inherited, so the top-level reference's pinned version
+  survives unresolved in the result; a profile should say whether the
+  implementation also reports the version of every Frame it resolves
+  transitively beneath that.

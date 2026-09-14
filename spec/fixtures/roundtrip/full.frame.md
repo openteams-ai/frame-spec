@@ -1,5 +1,5 @@
 ---
-type: frame [0.3]
+type: frame
 identifier: acme/full-fixture
 name: Full Round-Trip Fixture
 description: Every optional element, all ten refinements, a Guard, and an extension element.

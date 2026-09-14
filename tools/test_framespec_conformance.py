@@ -148,8 +148,8 @@ class ConformanceTests(unittest.TestCase):
     @unittest.skipUnless(HAVE_YAML, "PyYAML not installed")
     def test_both_repository_profiles_validate_and_differ(self):
         from framespec.compose import load_conformance
-        nf = load_conformance(DIR / "nebari-frames.yaml")
-        cb = load_conformance(DIR / "collab.yaml")
+        nf = load_conformance(DIR / "registry.yaml")
+        cb = load_conformance(DIR / "desktop.yaml")
         self.assertFalse(has_errors(conformance.check_profile(nf, self.p)), [str(f) for f in conformance.check_profile(nf, self.p)])
         self.assertFalse(has_errors(conformance.check_profile(cb, self.p)), [str(f) for f in conformance.check_profile(cb, self.p)])
         self.assertNotEqual(nf["resolves_composition"], cb["resolves_composition"])
@@ -354,7 +354,7 @@ class ConformanceTests(unittest.TestCase):
 class CheckProfileCliTests(unittest.TestCase):
     @unittest.skipUnless(HAVE_YAML, "PyYAML not installed")
     def test_both_repository_profiles_pass_with_exit_0(self):
-        result = run("--check-profile", "spec/profiles/nebari-frames.yaml", "spec/profiles/collab.yaml")
+        result = run("--check-profile", "spec/profiles/registry.yaml", "spec/profiles/desktop.yaml")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertEqual(result.stdout.count("profile-ok"), 2)
 
@@ -373,7 +373,7 @@ class CheckProfileCliTests(unittest.TestCase):
         # The class's first test carries the same guard for the same reason: without
         # PyYAML the good profile is itself a pyyaml-required failure, so there is no
         # good path left for the missing one to hide.
-        result = run("--check-profile", "spec/profiles/nebari-frames.yaml", "spec/profiles/does-not-exist.yaml")
+        result = run("--check-profile", "spec/profiles/registry.yaml", "spec/profiles/does-not-exist.yaml")
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn("path-not-found", result.stdout)
         self.assertIn("profile-ok", result.stdout)
@@ -414,7 +414,7 @@ class CheckProfileCliTests(unittest.TestCase):
         # since the sentinel lives in this process, not a subprocess.
         out = io.StringIO()
         with mock.patch.dict(sys.modules, {"yaml": None}):
-            code = validate_frame.check_profile_paths(["spec/profiles/nebari-frames.yaml"], Profile.load(), out=out)
+            code = validate_frame.check_profile_paths(["spec/profiles/registry.yaml"], Profile.load(), out=out)
         self.assertEqual(code, 1)
         self.assertIn("pyyaml-required", out.getvalue())
         self.assertNotIn("Traceback", out.getvalue())
@@ -430,14 +430,14 @@ class CheckProfileCliTests(unittest.TestCase):
         # escape as a traceback, regardless of whether the routing above it is sound.
         out = io.StringIO()
         with mock.patch("framespec.conformance.check_profile", side_effect=RuntimeError("boom")):
-            code = validate_frame.check_profile_paths(["spec/profiles/nebari-frames.yaml"], Profile.load(), out=out)
+            code = validate_frame.check_profile_paths(["spec/profiles/registry.yaml"], Profile.load(), out=out)
         self.assertEqual(code, 1)
         self.assertIn("profile-check-failed", out.getvalue())
         self.assertIn("boom", out.getvalue())
         self.assertNotIn("Traceback", out.getvalue())
 
 
-class NebariFramesProfileCompositionTests(unittest.TestCase):
+class RegistryProfileCompositionTests(unittest.TestCase):
     # Task 13's continuous integration workflow composes spec/fixtures/composition/
     # under this profile and diffs the result against expected-style-non-repeatable.json
     # byte for byte; that fixture lives entirely outside this task's file list, and so
@@ -446,7 +446,7 @@ class NebariFramesProfileCompositionTests(unittest.TestCase):
     @unittest.skipUnless(HAVE_YAML, "PyYAML not installed")
     def test_reproduces_the_composition_fixture_byte_for_byte(self):
         order = ["company-core.frame.json", "brand-voice.frame.json", "q4-playbook.frame.json"]
-        result = run("--compose", "--conformance-profile", "spec/profiles/nebari-frames.yaml",
+        result = run("--compose", "--conformance-profile", "spec/profiles/registry.yaml",
                      *[f"spec/fixtures/composition/{name}" for name in order])
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         expected = (REPO / "spec" / "fixtures" / "composition" /

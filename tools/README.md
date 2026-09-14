@@ -71,7 +71,7 @@ The scope of this validator is limited to lightweight `v0.2` Frame frontmatter c
 
 ## Validating against the working draft
 
-[validate_frame.py](validate_frame.py) checks Frames against the v0.3 working
+[validate_frame.py](validate_frame.py) checks Frames against the working
 draft in all three encodings, driven from
 [../spec/profile/frame-core.csv](../spec/profile/frame-core.csv):
 

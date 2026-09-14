@@ -4,7 +4,7 @@
 #
 # Only the keys --compose reads are here. A conformance profile is a longer document
 # (draft section 7 and Appendix C), and the profiles of real implementations live in
-# spec/profiles/; the Nebari Frames profile declares these same two narrowings.
+# spec/profiles/; the example registry profile declares these same two narrowings.
 non_repeatable: [style]
 rule6_narrowings:
   dedup: all-repeatable

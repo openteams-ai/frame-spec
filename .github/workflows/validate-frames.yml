@@ -27,7 +27,7 @@ jobs:
       - name: Validate example Frames (v0.2 validator)
         run: python tools/validate_frames.py examples
 
-      - name: Validate example Frames and fixtures (v0.3 working draft)
+      - name: Validate example Frames and fixtures (working draft)
         run: python tools/validate_frame.py examples spec/fixtures --quiet
 
       - name: Round-trip the full fixture through every encoding
@@ -37,7 +37,7 @@ jobs:
         run: python tools/validate_frame.py --self-check
 
       - name: Check the conformance profiles
-        run: python tools/validate_frame.py --check-profile spec/profiles/nebari-frames.yaml spec/profiles/collab.yaml
+        run: python tools/validate_frame.py --check-profile spec/profiles/registry.yaml spec/profiles/desktop.yaml
 
       # The three fixture paths below are the composed set in precedence order,
       # lowest first: company-core, then brand-voice, then q4-playbook. They are
@@ -51,9 +51,9 @@ jobs:
           diff /tmp/model.json spec/fixtures/composition/expected-model.json
 
       # Same explicit lowest-precedence-first order as above, not a glob.
-      - name: Composition fixture, under the Nebari Frames profile
+      - name: Composition fixture, under the example registry profile
         run: |
-          python tools/validate_frame.py --compose --conformance-profile spec/profiles/nebari-frames.yaml spec/fixtures/composition/company-core.frame.json spec/fixtures/composition/brand-voice.frame.json spec/fixtures/composition/q4-playbook.frame.json > /tmp/profile.json
+          python tools/validate_frame.py --compose --conformance-profile spec/profiles/registry.yaml spec/fixtures/composition/company-core.frame.json spec/fixtures/composition/brand-voice.frame.json spec/fixtures/composition/q4-playbook.frame.json > /tmp/profile.json
           diff /tmp/profile.json spec/fixtures/composition/expected-style-non-repeatable.json
 
       # parent then child, lowest precedence first, listed explicitly rather than

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate Frames against the v0.3 working draft (spec/frame-spec.md).
+"""Validate Frames against the working draft (spec/frame-spec.md).
 
 Reads the Markdown, YAML, and JSON encodings, normalizes each to the Frame
 model, and checks it against spec/profile/frame-core.csv. Findings are
@@ -28,7 +28,7 @@ from framespec.profile import DEFAULT_PROFILE_PATH, Profile
 
 
 def build_parser():
-    parser = argparse.ArgumentParser(description="Validate Frames against the v0.3 working draft.")
+    parser = argparse.ArgumentParser(description="Validate Frames against the working draft.")
     parser.add_argument("paths", nargs="*", help="Frame files or directories")
     parser.add_argument("--encoding", default="auto", choices=["auto", "markdown", "yaml", "json"],
                         help="how to read each path; auto reads it from the file extension")

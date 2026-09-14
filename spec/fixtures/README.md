@@ -1,6 +1,6 @@
 # Fixtures
 
-Test inputs for the v0.3 working draft, each tied to a claim the draft makes.
+Test inputs for the working draft, each tied to a claim the draft makes.
 
 | Directory | Claim | Check |
 |---|---|---|
