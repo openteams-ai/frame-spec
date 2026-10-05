@@ -1,0 +1,12 @@
+{
+  "composition": [
+    "acme/style-clear-parent"
+  ],
+  "guidance": [
+    "Parent guidance."
+  ],
+  "identifier": "acme/style-clear-child",
+  "style": "",
+  "title": "Style Clear Child",
+  "visibility": "internal"
+}

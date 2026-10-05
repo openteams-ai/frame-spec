@@ -1,0 +1,21 @@
+{
+  "composition": [
+    "acme/brand-voice"
+  ],
+  "guards": [
+    "acme/pii-guard"
+  ],
+  "guidance": [
+    "Company-wide guidance.",
+    "Sound like us."
+  ],
+  "identifier": "acme/q4-playbook",
+  "rules": [
+    "cite sources",
+    "no hype",
+    "lead with impact"
+  ],
+  "style": "plain",
+  "title": "Q4 Playbook",
+  "visibility": "internal"
+}

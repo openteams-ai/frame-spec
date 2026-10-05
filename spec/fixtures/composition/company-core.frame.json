@@ -1,0 +1,10 @@
+{
+  "identifier": "acme/company-core",
+  "title": "Company Core",
+  "description": "Company-wide context.",
+  "visibility": "internal",
+  "guards": ["acme/pii-guard"],
+  "guidance": "Company-wide guidance.",
+  "rules": ["cite sources"],
+  "style": ["formal"]
+}

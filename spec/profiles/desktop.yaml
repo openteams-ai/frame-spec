@@ -1,0 +1,26 @@
+# An example conformance profile: a desktop application that reads one
+# encoding and resolves no composition. Illustrates the minimum a profile
+# must state under Appendix C; it describes no real implementation.
+implementation: Example Desktop Application
+version: "1.0"
+specification: draft-mcandrew-frame-spec-00
+encodings_read: [markdown]
+encodings_written: [markdown]
+resolves_composition: none
+version_selection: not applicable; resolves no composition, so no reference is ever selected among versions
+resolver_context: not applicable; resolves no composition, so no reference is ever resolved
+reference_forms: []
+rule6_narrowings: {}
+non_repeatable: []
+additionally_required: []
+identifier_minting: an opaque id minted per Frame on creation and held beside the
+  document rather than in it; a document read from a location also has that location
+  as its identifier, per Section 6.1. Neither is written back into a document
+visibility: declared intent only; not an access control
+notes: >-
+  Rule 7 requires that an implementation resolving no composition declare so,
+  and this profile is that declaration. Because it resolves none, Section
+  5.2's requirement to report the Frame Version resolved for each reference
+  does not reach it. An application that groups Frames by some mechanism of
+  its own, and resolves those groups when a session starts, should say so
+  here and say what it does with a group it cannot resolve.
