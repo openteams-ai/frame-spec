@@ -213,7 +213,7 @@ They do support a few things that are already becoming clearer in the repository
 
 People expect Frames to be combined from broader to narrower scope.
 
-That aligns with the current `v0.2` direction in [../spec/frame-spec.md](../spec/frame-spec.md), which now includes suggested `version` and optional `inherits` support.
+That aligns with the `v0.2` direction in [../spec/v0.2.md](../spec/v0.2.md), which includes suggested `version` and optional `inherits` support.
 
 ### Strong support for keeping the core simple
 
@@ -359,7 +359,7 @@ The current repository has already started responding to the adoption signals fr
 
 Notable examples include:
 
-- `v0.2` in [../spec/frame-spec.md](../spec/frame-spec.md), which strengthens the adopt-now format with suggested `version` and optional `inherits`
+- `v0.2` in [../spec/v0.2.md](../spec/v0.2.md), which strengthens the adopt-now format with suggested `version` and optional `inherits`
 - [../USING-FRAMES.md](../USING-FRAMES.md), which gives a direct operational guide for everyday usage
 - [../tools/frame-reader/SKILL.md](../tools/frame-reader/SKILL.md), which supports more consistent consumption
 - [../tools/customer-shared-frame-prompt.md](../tools/customer-shared-frame-prompt.md), which reflects the emerging cross-organization use case

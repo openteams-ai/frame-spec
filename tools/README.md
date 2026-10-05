@@ -19,7 +19,7 @@ The generated output can be:
 - saved as `frame.md`
 - shared by email, chat, or git
 
-This builder is intentionally simple and tracks the current [../spec/frame-spec.md](../spec/frame-spec.md) spec.
+This builder is intentionally simple and generates Frames in the released v0.2 format ([../spec/v0.2.md](../spec/v0.2.md)), which the working draft preserves as its Markdown encoding.
 
 It starts in a guided blank state and lets the user load an example on demand.
 

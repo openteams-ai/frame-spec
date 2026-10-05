@@ -1,0 +1,28 @@
+propertyID,propertyLabel,mandatory,repeatable,valueNodeType,valueDataType,valueConstraint,valueConstraintType,mapsTo,refines,level,note
+identifier,Identifier,true,false,literal,xsd:string,,,dcterms:identifier,,Frame,defaults to retrieval location
+guidance,Guidance,true,true,literal,xsd:string,,,,,Version,Frame-native; may be empty
+title,Title,false,false,literal,xsd:string,,,dcterms:title,,Frame,MUST NOT be slug-constrained
+description,Description,false,false,literal,xsd:string,,,dcterms:description,,Frame,
+version,Version,false,false,literal,xsd:string,,,dcat:version,,Version,SemVer recommended
+versionNotes,Version Notes,false,true,literal,xsd:string,,,adms:versionNotes,,Version,
+status,Status,false,false,literal,xsd:string,draft review approved deprecated revoked,picklist,schema:creativeWorkStatus,,Version,registry; recommended values; others preserved
+maintainer,Maintainer,false,true,literal,xsd:string,,,schema:maintainer,,Frame,accountable party
+scope,Scope,false,false,literal,xsd:string,,,dcterms:audience,,Frame,partial mapping
+visibility,Visibility,false,false,literal,xsd:string,private internal shared public,picklist,dcterms:accessRights,,Frame,not an access control; recommended values; others preserved
+license,License,false,false,IRI,,,,dcterms:license,,Frame,
+issued,Issued,false,false,literal,xsd:dateTime,,,dcterms:issued,,Version,RFC 3339
+canonicalSource,Canonical Source,false,false,IRI,,,,schema:sameAs,,Frame,
+rules,Rules,false,true,literal,xsd:string,,,,guidance,Version,
+terminology,Terminology,false,true,literal,xsd:string,,,,guidance,Version,structured form is skos:Concept
+goals,Goals,false,true,literal,xsd:string,,,,guidance,Version,
+style,Style,false,true,literal,xsd:string,,,,guidance,Version,
+norms,Norms,false,true,literal,xsd:string,,,,guidance,Version,
+skills,Skills,false,true,literal,xsd:string,,,,guidance,Version,
+toolSpecs,Tool Specifications,false,true,literal,xsd:string,,,,guidance,Version,typically references to spec files
+prompts,Prompts,false,true,literal,xsd:string,,,,guidance,Version,
+architecture,Architecture,false,true,literal,xsd:string,,,,guidance,Version,
+businessProcess,Business Process,false,true,literal,xsd:string,,,,guidance,Version,
+composition,Composition,false,true,literal,xsd:string,frame-ref,pattern,,,Version,Frame-native; ordered
+derivedFrom,Derived From,false,true,literal,xsd:string,frame-ref,pattern,prov:wasDerivedFrom,,Frame,
+previousVersion,Previous Version,false,false,literal,xsd:string,frame-ref,pattern,dcat:previousVersion,,Version,
+guards,Guards,false,true,literal,xsd:string,frame-ref,pattern,dcterms:requires,,Version,composes by accumulation

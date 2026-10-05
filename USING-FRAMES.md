@@ -8,7 +8,7 @@ It does not require any special infrastructure.
 
 ## What A Frame Is
 
-A Frame is a Markdown file that carries context for work.
+Under the released spec, a Frame is a Markdown file that carries context for work.
 
 That context might include:
 
@@ -20,7 +20,7 @@ That context might include:
 - process expectations
 - customer or partner context
 
-Include only what applies to you. The spec requires four frontmatter fields and nothing more, so there are no sections you have to fill in and no minimum length. One clear rule in the body is a perfectly good Frame.
+Include only what applies to you. The released spec requires four frontmatter fields and nothing more, so there are no sections you have to fill in and no minimum length. One clear rule in the body is a perfectly good Frame.
 
 Think of a Frame as a reusable context document that helps an AI tool work in the right way for your team, company, customer, or project.
 
